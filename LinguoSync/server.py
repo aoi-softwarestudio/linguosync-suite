@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -313,13 +313,55 @@ async def auth_user_data(req: UserDataRequest):
     user_record = users[ulower]
     return {"status": "success", "username": user_record["username"], "data": user_record.get("data", {})}
 
+# In-memory store for rate limiting: date_str -> client_ip -> request_count
+proxy_usage = {}
+
 class GeminiPayload(BaseModel):
     contents: List[dict]
     model: str = "gemini-3.5-flash"
 
 @app.post("/api/gemini-proxy")
-async def gemini_proxy(payload: GeminiPayload):
+async def gemini_proxy(payload: GeminiPayload, request: Request):
     import requests
+    import datetime
+
+    # 1. License Check via Headers
+    license_key = request.headers.get("X-License-Key")
+    is_premium = False
+    if license_key:
+        license_key_str = license_key.strip()
+        if license_key_str.upper().startswith("LS-") and len(license_key_str) >= 10:
+            is_premium = True
+
+    # 2. Get Client IP (supporting X-Forwarded-For)
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0].strip()
+    else:
+        ip = request.client.host if request.client else "127.0.0.1"
+
+    # 3. Apply Rate Limit (3 requests per day) for Free Tier
+    if not is_premium:
+        today = datetime.date.today().isoformat()
+        
+        # Clean up old dates to prevent memory growth
+        for d in list(proxy_usage.keys()):
+            if d != today:
+                proxy_usage.pop(d, None)
+                
+        if today not in proxy_usage:
+            proxy_usage[today] = {}
+            
+        current_count = proxy_usage[today].get(ip, 0)
+        if current_count >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="無料枠の上限（1日3回）に達しました。悪用防止のため制限されています。継続して利用するにはライセンスキーをご登録ください。"
+            )
+            
+        proxy_usage[today][ip] = current_count + 1
+
+    # 4. Forward requests to Gemini API
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY not configured on server"}
