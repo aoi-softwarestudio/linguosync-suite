@@ -30,7 +30,7 @@ let tutorChatCount = 0; // Tracks consecutive tutor Q&As for achievements
 let geminiApiKey = (typeof SuiteGatekeeper !== 'undefined' && typeof SuiteGatekeeper.getGeminiKey === 'function' ? SuiteGatekeeper.getGeminiKey() : '') || localStorage.getItem('gemini_api_key') || '';
 let isGeminiEnabled = true;
 let geminiModel = localStorage.getItem('studyflow_gemini_model') || 'gemini-3.5-flash';
-let backendApiUrl = 'https://coastal-provision-hearings-installing.trycloudflare.com'; // Dynamic local routing API Gateway fallback
+let backendApiUrl = 'https://meeting-reproduce-modems-highway.trycloudflare.com'; // Dynamic local routing API Gateway fallback
 // Gamification State
 let userXp = parseInt(localStorage.getItem('studyflow_xp') || '50');
 let userStreak = parseInt(localStorage.getItem('studyflow_streak') || '3');
@@ -704,14 +704,23 @@ async function callGeminiAPI(text, fileName) {
             })
         });
     } else {
+        const licenseKey = localStorage.getItem('studyflow_license_key') || '';
         response = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-License-Key': licenseKey,
+                'X-App-Id': 'studyflow'
+            },
             body: JSON.stringify({
                 model: activeModel,
                 contents: [{ parts: [{ text: prompt }] }]
             })
         });
+    }
+
+    if (response.status === 429) {
+        alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
     }
 
     if (!response.ok) throw new Error(`Gateway Error: ${response.status}`);
@@ -1345,14 +1354,23 @@ window.triggerSocraticRecallQuestion = async () => {
                 })
             });
         } else {
+            const licenseKey = localStorage.getItem('studyflow_license_key') || '';
             response = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-License-Key': licenseKey,
+                    'X-App-Id': 'studyflow'
+                },
                 body: JSON.stringify({
                     model: activeModel,
                     contents: [{ parts: [{ text: socraticPrompt }] }]
                 })
             });
+        }
+        
+        if (response.status === 429) {
+            alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
         }
         
         if (!response.ok) throw new Error("API Failure");
@@ -1473,14 +1491,23 @@ window.sendTutorMessage = async () => {
                 })
             });
         } else {
+            const licenseKey = localStorage.getItem('studyflow_license_key') || '';
             response = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-License-Key': licenseKey,
+                    'X-App-Id': 'studyflow'
+                },
                 body: JSON.stringify({
                     model: activeModel,
                     contents: [{ parts: [{ text: `${systemRole}\n\nContext:\n${relevantContext}\n\nQuery:\n${userPrompt}` }] }]
                 })
             });
+        }
+        
+        if (response.status === 429) {
+            alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
         }
         
         if (!response.ok) throw new Error("API Failure");
