@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguoSync Studio | AI Video Localization</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="i18n.js"></script>
+</head>
+<body data-app="linguosync">
+    <header>
+        <div class="logo" data-i18n="brand-name">
+            <i class="fas fa-sync-alt"></i> LINGUOSYNC STUDIO
+        </div>
+        <div class="header-actions" style="display: flex; gap: 1.5rem; align-items: center;">
+            <div class="lang-switcher">
+                <button class="lang-btn" data-lang="ja" onclick="setLanguage('ja')">JP</button>
+                <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            </div>
+            <button class="btn-neon" id="exportBtn">
+                <i class="fas fa-file-export"></i> <span data-i18n="btn-export">最終書き出し</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="studio-container">
+        <!-- Left Sidebar removed for cleaner workspace -->
+
+        <!-- Main Canvas Area -->
+        <main class="canvas-area" id="mainCanvas">
+            
+            <!-- Phase 1: Upload State -->
+            <div class="upload-state" id="uploadState" onclick="document.getElementById('fileInput').click()">
+                <div class="glass-card">
+                    <div class="icon-pulse">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h2 data-i18n="upload-title" style="margin: 1.5rem 0 0.5rem 0; font-size: 1.4rem; letter-spacing: 1px; color: white;">Start New Project</h2>
+                    <p data-i18n="upload-desc" style="color: var(--text-dim); font-size: 0.85rem; line-height: 1.6;">Click or drag and drop your media file here.<br>AI will automatically analyze and localize your content.</p>
+                </div>
+                <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*">
+            </div>
+
+            <!-- Phase 2: Preview State (Hidden initially) -->
+            <div class="preview-state" id="previewState" style="display: none; height: 100%; flex-direction: column;">
+                
+                <div class="video-grid">
+                    <div class="video-wrapper" id="originalVideo">
+                        <div class="video-label" data-i18n="label-original">ORIGINAL</div>
+                        <div class="scan-line" id="scanLine"></div>
+                        <img id="sourceImage" src="" style="width: 100%; height: 100%; object-fit: contain;">
+                    </div>
+                    
+                    <div class="video-wrapper" id="dubbedVideo">
+                        <div class="target-lang-selector" style="position: absolute; top: 1rem; left: 1rem; z-index: 50; display: flex; align-items: center; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.3s;" id="langSelectorBtn">
+                            <span style="font-size: 0.65rem; font-weight: 800; color: var(--secondary); margin-right: 12px; letter-spacing: 1px;">TARGET</span>
+                            <div id="currentLangDisplay" style="color: white; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                🇺🇸 English (Original) <i class="fas fa-chevron-down" style="font-size: 0.7rem; opacity: 0.7; margin-left: 4px;"></i>
+                            </div>
+                        </div>
+                        <div class="scan-line" id="dubScanLine"></div>
+                        <img id="targetImage" src="" style="width: 100%; height: 100%; object-fit: contain;">
+                        <div id="lipSyncStatus" data-i18n="label-lip-sync" style="position: absolute; bottom: 1rem; right: 1rem; background: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800;">
+                            LIP-SYNC: ACTIVE
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleek Playback Controller -->
+                <div class="playback-bar">
+                    <button class="control-btn" id="playBtn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <div class="playback-info" id="playbackStatus" data-i18n="playback-ready">PREVIEW READY</div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="timeline">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-dim);">
+                        <span>00:00:00</span>
+                        <span id="currentTime">00:00:00</span>
+                        <span id="timeEnd">00:00:54</span>
+                    </div>
+                    <div class="timeline-track" id="mainTimelineTrack" style="cursor: pointer;">
+                        <div class="timeline-clip" id="timelineProgress" style="left: 0; width: 0%;"></div>
+                        <div id="playhead" style="position: absolute; left: 0%; top: 0; bottom: 0; width: 2px; background: white; z-index: 20; pointer-events: none;"></div>
+                    </div>
+                    <div class="timeline-track" style="opacity: 0.5; height: 15px;">
+                        <div class="timeline-clip" id="secondaryProgress" style="left: 0; width: 0%; background: var(--secondary-glow); border-left: 2px solid var(--secondary);"></div>
+                    </div>
+                    
+                    <!-- Script Editor Panel -->
+                    <div class="script-editor" style="margin-top: 2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-dim);"><i class="fas fa-align-left"></i> <span data-i18n="script-title">Translation Script</span></h4>
+                            <span class="badge" data-i18n="badge-ai-refined" style="background: rgba(34,197,94,0.1); color: var(--secondary); font-size: 0.6rem; padding: 2px 8px; border-radius: 10px;">AI REFINED</span>
+                        </div>
+                        <div id="scriptGrid" style="display: grid; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding-right: 0.5rem;">
+                            <!-- Scripts injected by studio.js -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel: AI Controls -->
+        <aside class="panel" style="border-right: none; border-left: 1px solid var(--border);">
+            <div class="panel-header" data-i18n="panel-ai-params">AI パラメータ</div>
+            <div style="padding: 1.5rem;">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-dim); display: block; margin-bottom: 0.5rem;" data-i18n="label-voice-accuracy">Voice Matching Accuracy</label>
+                    <input type="range" id="voiceAccuracySlider" min="50" max="100" value="92" style="width: 100%; margin-top: 0.5rem; accent-color: var(--primary); cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.6rem; margin-top: 0.3rem;">
+                        <span>Natural</span>
+                        <span id="voiceAccuracyValue" style="color: var(--primary);">92% Clone</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 0.7rem; color: var(--text-dim); display: block; margin-bottom: 0.5rem;" data-i18n="label-emotion">Emotion Preservation</label>
+                    <select id="emotionSelect" style="width: 100%; background: var(--border); border: none; color: white; padding: 0.5rem; border-radius: 4px; outline: none; cursor: pointer;">
+                        <option value="excited">Excited (High Energy)</option>
+                        <option value="professional">Professional (Neutral)</option>
+                        <option value="casual">Casual (Natural)</option>
+                    </select>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Language Selection Modal -->
+    <div id="langModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content glass-card" style="width: 90%; max-width: 500px; padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 data-i18n="modal-title" style="margin: 0; font-size: 1.2rem; color: white;">Select Target Language</h3>
+                <button id="closeLangModal" style="background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; opacity: 0.7;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="lang-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div class="lang-option" data-lang="en" data-name="English (Original)">🇺🇸 English</div>
+                <div class="lang-option" data-lang="ja" data-name="Japanese">🇯🇵 日本語</div>
+                <div class="lang-option" data-lang="es" data-name="Spanish">🇪🇸 Español</div>
+                <div class="lang-option" data-lang="fr" data-name="French">🇫🇷 Français</div>
+                <div class="lang-option" data-lang="de" data-name="German">🇩🇪 Deutsch</div>
+                <div class="lang-option" data-lang="it" data-name="Italian">🇮🇹 Italiano</div>
+                <div class="lang-option" data-lang="ko" data-name="Korean">🇰🇷 한국어</div>
+                <div class="lang-option" data-lang="zh-CN" data-name="Chinese">🇨🇳 中文</div>
+                <div class="lang-option" data-lang="pt" data-name="Portuguese">🇵🇹 Português</div>
+                <div class="lang-option" data-lang="hi" data-name="Hindi">🇮🇳 हिन्दी</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="suite-gatekeeper.js"></script>
+    <script src="studio.js"></script>
+</body>
+</html>
