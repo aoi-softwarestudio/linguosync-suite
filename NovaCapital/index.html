@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Capital | Niche Market Alpha Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-app="novacapital">
+    <header class="header">
+        <div class="brand">
+            <i class="fas fa-gem"></i>
+            <span data-i18n="brand-name">NOVA CAPITAL</span>
+        </div>
+        <div class="header-ticker-wrap">
+            <div class="ticker mono" id="tickerContent">
+                <!-- Ticker content injected here -->
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="add-asset-btn" onclick="openAddAssetModal()">
+                <i class="fas fa-plus-circle"></i>
+                <span data-i18n="btn-add-asset">資産を追加</span>
+            </button>
+            <div class="lang-switcher">
+                <button class="lang-btn" data-lang="ja" onclick="setLanguage('ja')">JP</button>
+                <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            </div>
+            <div class="market-status mono" data-i18n="market-status">MARKET_STATUS: OPEN</div>
+            <div class="time mono" id="currentTime">00:00:00 UTC</div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Left Sidebar (Alpha Signals) -->
+        <aside class="panel-side">
+            <div class="panel-header">
+                <span data-i18n="header-alerts">Alpha Signals</span>
+                <i class="fas fa-bolt" style="color: var(--accent-gold);"></i>
+            </div>
+            <div class="alerts-list" id="alertsList">
+                <!-- Alerts injected here -->
+            </div>
+        </aside>
+
+        <!-- Main Heatmap -->
+        <main class="panel-main">
+            <div class="main-padding">
+                <div class="section-header" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h2 style="font-size: 1.5rem; font-weight: 800;" data-i18n="market-pulse-title">Market Pulse</h2>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="market-pulse-desc">Real-time aggregated price movement across alternative asset classes.</p>
+                    </div>
+                    <div class="mono" style="font-size: 0.75rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border: 1px solid var(--border-dim); border-radius: 4px;">
+                        <span data-i18n="label-updated">UPDATED</span>: <span id="lastUpdated">11:24:01</span>
+                    </div>
+                </div>
+
+                <div class="heatmap-grid" id="marketHeatmap">
+                    <!-- Heatmap cells injected here -->
+                </div>
+
+                <div class="section-header" style="margin-top: 3rem; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary);" data-i18n="volume-leaders">Volume Leaders (24H)</h3>
+                </div>
+                <div id="volumeLeaders">
+                    <!-- Tables or cards injected here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Analysis Sidebar -->
+        <aside class="panel-analysis">
+            <div id="marketSentiment" style="padding: 1.5rem; border-bottom: 1px solid var(--border-dim); flex-shrink: 0;">
+                <!-- Sentiment meter injected here -->
+            </div>
+            <div class="panel-header">
+                <span data-i18n="header-analysis">Asset Analysis</span>
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="analysis-panel" id="analysisPanel">
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 2rem;">
+                    <div>
+                        <i class="fas fa-chart-line" style="font-size: 2.5rem; margin-bottom: 1.5rem; opacity: 0.2; color: var(--primary-green);"></i>
+                        <p style="font-size: 0.85rem; line-height: 1.6; font-weight: 600;" data-i18n="placeholder-analysis">
+                            SELECT_AN_ASSET_TO_START_AI_ANALYSIS
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+...
+    <!-- Add Asset Modal -->
+    <div id="addAssetModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 data-i18n="modal-title-add">ASSET_INTELLIGENCE_SCAN</h3>
+                    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:0.3rem;">市場名を解析し、基準価格とトレンドを自動取得します</p>
+                </div>
+                <button class="close-modal" onclick="closeAddAssetModal()">&times;</button>
+            </div>
+            <form id="addAssetForm" onsubmit="submitNewAsset(event)">
+                <div class="input-group" style="position: relative;">
+                    <label><i class="fas fa-search"></i> <span data-i18n="label-asset-name">ASSET_IDENTIFIER</span></label>
+                    <input type="text" id="newAssetName" placeholder="例: Patek Philippe Nautilus 5711" required autocomplete="off">
+                    <div id="searchSuggestions" class="search-suggestions"></div>
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-microchip"></i>
+                    <span data-i18n="btn-register">INITIATE_AI_FETCH</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="i18n.js"></script>
+    <script src="suite-gatekeeper.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="analysis.js"></script>
+</body>
+</html>
