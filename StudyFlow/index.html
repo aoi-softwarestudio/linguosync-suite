@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyFlow AI | 自動試験対策プラットフォーム</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:5000; justify-content:center; align-items:center;">
+        <div class="result-card" style="max-width: 400px; text-align: center; border: 1px solid var(--primary-glow);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #f43f5e; margin-bottom: 1rem;"></i>
+            <h3>プロジェクトの削除</h3>
+            <p style="color: var(--text-dim); margin: 1rem 0;">このプロジェクトを完全に削除しますか？<br>この操作は取り消せません。</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                <button class="btn-premium" id="cancelDeleteBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">キャンセル</button>
+                <button class="btn-premium" id="confirmDeleteBtn" style="background: #f43f5e; border: none; color: white;">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="i18n.js"></script>
+</head>
+<body data-app="studyflow">
+    <div class="container">
+        <header>
+            <div class="logo-area" onclick="createNewProject()" style="cursor: pointer;">
+                <div class="logo" data-i18n="header-logo">STUDYFLOW AI</div>
+                <div class="chip">PERSONAL COACH</div>
+            </div>
+            
+            <!-- Gamified Stats Ring in Header -->
+            <div class="header-gamify">
+                <div class="streak-badge" id="dailyStreakBadge" title="連続学習日数">
+                    🔥 <span id="streakCount">0</span> 日継続中
+                </div>
+                <div class="level-badge" title="累計XPと学識レベル">
+                    <div class="level-circle" id="userLevelCircle">1</div>
+                    <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <span class="level-text" id="userLevelText">学者見習い</span>
+                        <div class="level-progress-bar">
+                            <div class="level-progress-fill" id="levelProgressFill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <button class="btn-demo" id="headerDashboardBtn" onclick="jumpToActiveProject()" style="display: none; background: rgba(99, 102, 241, 0.15); border: 1px solid var(--glow-border); color: var(--text-main); font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; height: 38px; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.3s;">
+                    <i class="fas fa-columns"></i> <span data-i18n="btn-dashboard">プロジェクト画面へ</span>
+                </button>
+                <div class="lang-switcher">
+                    <button class="lang-btn" data-lang="ja" onclick="setLanguage('ja')">JP</button>
+                    <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+                </div>
+                <button class="btn-demo" id="headerAuthBtn" onclick="openAuthModal()" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); color: var(--text-main); font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.3s;">
+                    <i class="fas fa-user-circle"></i> <span data-i18n="auth-btn-login">ログイン / 登録</span>
+                </button>
+                <button class="btn-settings" onclick="document.getElementById('settingsModal').style.display='flex'" style="background: transparent; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; transition: 0.3s; margin-right: 0.5rem;">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="btn-premium" id="headerUpgradeBtn">
+                    <i class="fas fa-crown"></i> <span data-i18n="btn-premium">プレミアムへ</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Landing Hero -->
+        <section class="hero" id="heroSection">
+            <h1 data-i18n="hero-title">NotebookLMの要約を<br>「ゲーム感覚の特訓」に変える。</h1>
+            <p data-i18n="hero-desc">Google NotebookLM で生成した講義ノートや要約エクスポートをそのまま流し込むだけで、AIがあなたを合格へ導く「アバターAI対話コーチ」「暗記カード」「模擬試験」「勲章クエスト」を瞬時にコンバート生成します。</p>
+            
+            <div class="upload-section" style="max-width: 800px; margin: 0 auto;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left;">
+                    <!-- Left: Paste Area -->
+                    <div class="result-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: rgba(13, 19, 41, 0.5); border: 1px solid var(--glow-border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="font-size: 0.95rem; font-weight: 800; color: white;"><i class="fas fa-paste" style="color: #10b981;"></i> NotebookLMの要約をペースト</h3>
+                            <span class="chip" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 0.55rem; padding: 2px 6px;">RECOMMENDED</span>
+                        </div>
+                        <p style="font-size: 0.72rem; color: var(--text-dim);">NotebookLMで作成した高品質な要約ノートテキストをコピペしてください。</p>
+                        <textarea id="notebookPasteArea" placeholder="# NotebookLM の要約・講義ガイドをここにペースト..." style="flex: 1; min-height: 160px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.8rem; color: white; font-family: monospace; font-size: 0.78rem; resize: none; outline: none; transition: 0.3s;"></textarea>
+                        <button class="btn-premium" onclick="importNotebookTextDirect()" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.25);">
+                            <i class="fas fa-magic"></i> ゲーミフィケーション特訓を開始
+                        </button>
+                    </div>
+
+                    <!-- Right: Drop Area -->
+                    <div class="upload-card" id="dropZone" style="padding: 2.2rem 1rem; height: 100%; display: flex; flex-direction: column; justify-content: center; background: rgba(13, 19, 41, 0.4);">
+                        <div class="upload-icon" style="font-size: 2.5rem; margin-bottom: 0.8rem; color: #10b981;">
+                            <i class="fas fa-file-import"></i>
+                        </div>
+                        <h3 style="font-size: 0.95rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">エクスポートファイルを読込</h3>
+                        <p style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 1rem;">NotebookLM から出力した Markdown (.md) または Text (.txt)</p>
+                        <button class="btn-demo" onclick="document.getElementById('fileInput').click()" style="background: rgba(255,255,255,0.03); font-size: 0.78rem; padding: 0.6rem 1.2rem;">
+                            <i class="fas fa-folder-open"></i> ファイルを選択
+                        </button>
+                        <input type="file" id="fileInput" hidden>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-demo" id="demoBtn">
+                        <i class="fas fa-vial"></i> 💡 NotebookLM デモデータで即時体験
+                    </button>
+                    <button class="btn-demo" id="heroDashboardBtn" onclick="jumpToActiveProject()" style="display: none; background: rgba(99, 102, 241, 0.15); border: 1px solid var(--primary); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25); color: white; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s;">
+                        <i class="fas fa-columns"></i> <span data-i18n="btn-dashboard">プロジェクト画面へ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features" style="padding: 3rem 0;">
+            <h2 style="text-align: center; margin-bottom: 2rem;" data-i18n="nav-features">能動的アクティブリコール機能</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div class="result-card" style="text-align: center;">
+                    <i class="fas fa-robot" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 0.5rem;">AI対話ソクラテスコーチ</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">AIが「ソクラテス式問いかけ」を行い、答えを引き出すことで本物の理解を定着させます。</p>
+                </div>
+                <div class="result-card" style="text-align: center;">
+                    <i class="fas fa-volume-up" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 0.5rem;">音声オーディオブック学習</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">音声読み上げ機能（TTS）を搭載。ハンズフリーで通勤・通学中も暗記や要約を耳から学習できます。</p>
+                </div>
+                <div class="result-card" style="text-align: center;">
+                    <i class="fas fa-fire" style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 0.5rem;">学習ゲーミフィケーション</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">毎日の学習でXPが貯まり、学識レベルがアップ！カレンダー連続継続ストリークでモチベを爆発させます。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section class="pricing" id="pricing" style="padding: 3rem 0; text-align: center;">
+            <h2 style="margin-bottom: 2rem;" data-i18n="nav-pricing">料金</h2>
+            <div style="max-width: 400px; margin: 0 auto;" class="result-card">
+                <h3>StudyFlow AI プレミアム</h3>
+                <div style="font-size: 2.2rem; font-weight: 900; margin: 1rem 0; color: var(--accent);">¥980 <span style="font-size: 1rem; color: var(--text-dim);">/ 月</span></div>
+                <ul style="text-align: left; margin: 1.5rem 0; list-style: none; font-size: 0.9rem;">
+                    <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 8px;"></i> AIソクラテス学習コーチ無制限</li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 8px;"></i> 複数ファイル一括・PDF超高精度解析</li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 8px;"></i> プレミアム音声オーディオ読み上げ</li>
+                    <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 8px;"></i> Lemon Squeezy 決済シミュレーター接続</li>
+                </ul>
+                <button class="btn-premium" style="width: 100%; justify-content: center;" id="upgradeBtnDirect">
+                    <i class="fas fa-crown"></i> 今すぐ体験する
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Split Dashboard -->
+        <main class="dashboard" id="mainDashboard">
+            <aside class="sidebar">
+                <div style="margin: 0.5rem 0 0.5rem; font-size: 0.85rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-folder-open" style="color: var(--primary);"></i> プロジェクト履歴
+                </div>
+                <button class="btn-new-proj" onclick="createNewProject()">
+                    <i class="fas fa-plus-circle"></i> 新規プロジェクト
+                </button>
+                <div class="sidebar-scroll">
+                    <div id="sessionList" style="margin-bottom: 1.5rem;">
+                        <!-- Project history injected here -->
+                    </div>
+
+                    <div style="margin: 0.5rem 0; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-file-alt"></i> アップロード資料
+                    </div>
+                    <div id="sourceList" style="margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-main);">
+                        <!-- Source items injected here -->
+                    </div>
+                    <div class="sidebar-item" onclick="document.getElementById('fileInput').click()" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--glass-border); justify-content: center; font-size: 0.75rem;">
+                        <i class="fas fa-plus"></i> 追加資料アップロード
+                    </div>
+
+
+                    <div style="margin: 0.5rem 0; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-brain"></i> 学習メニュー
+                    </div>
+
+                    <div class="sidebar-item active" data-view="summary">
+                        <i class="fas fa-book-open"></i> <span>要約 ＆ キーワード</span>
+                    </div>
+                    <div class="sidebar-item" data-view="flashcards">
+                        <i class="fas fa-clone"></i> <span>単語帳カード</span>
+                    </div>
+                    <div class="sidebar-item" data-view="exam">
+                        <i class="fas fa-file-signature"></i> <span>模擬試験</span>
+                    </div>
+                    <div class="sidebar-item" data-view="tutor">
+                        <i class="fas fa-robot"></i> <span>AI Coach (対話学習)</span>
+                    </div>
+
+                    <!-- Daily Quests Section -->
+                    <div style="margin: 1.2rem 0 0.5rem; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-tasks"></i> <span data-i18n="sidebar-quests">デイリー学習クエスト</span>
+                    </div>
+                    <div class="quests-panel" id="questsPanel">
+                        <!-- Quests dynamically loaded here -->
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div style="margin: 1.2rem 0 0.5rem; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-trophy"></i> <span data-i18n="sidebar-trophies">学術勲章・トロフィー</span>
+                    </div>
+                    <div class="achievements-grid" id="achievementsGrid">
+                        <!-- Achievements dynamically loaded here -->
+                    </div>
+                </div>
+
+                <div id="readinessMeterContainer" style="margin-top: auto; padding-top: 1rem;">
+                    <!-- Circle meter injected here -->
+                </div>
+            </aside>
+
+            <!-- Split Panel System -->
+            <section class="dashboard-main-view">
+                <!-- Left Split: Scrollable textbook document with clickable interactive words -->
+                <div class="dashboard-panel-left">
+                    <h3 style="font-size: 1.1rem; font-weight: 800; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.8rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fas fa-file-invoice" style="color: var(--primary); margin-right: 8px;"></i> 統合資料ビューアー</span>
+                        <button class="audio-tts-btn" onclick="playTts(fullDocumentText)" title="全ドキュメントを音声で聴く">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                    </h3>
+                    <div class="document-viewer" id="interactiveDocViewer">
+                        <!-- Loaded document texts with interactive terms will be injected here -->
+                        <div style="text-align: center; color: var(--text-dim); padding-top: 5rem;">
+                            資料を解析すると、ここにインタラクティブなテキストが表示され、単語をクリックしてAI家庭教師に即座に質問できます。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Split: Interactive Views (Summary, Flashcard, Test, Chat) -->
+                <div class="dashboard-panel-right">
+                    <div class="result-card" style="height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 1.5rem;">
+                        <h2 id="viewTitle" contenteditable="true" onblur="renameProject(this.innerText)" style="font-size: 1.2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.8rem; margin-bottom: 1rem;">生成中...</h2>
+                        <div id="viewContent" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <h3 style="margin-top: 1.5rem;">AIがコンテンツを解析中...</h3>
+        <p style="color: var(--text-dim);">これには数十秒かかる場合があります</p>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
+        <div class="result-card" style="max-width: 500px; text-align: center;">
+            <i class="fas fa-crown" style="font-size: 3rem; color: #fbbf24; margin-bottom: 1rem;"></i>
+            <h2>StudyFlow Premium</h2>
+            <p style="margin: 1rem 0;">無制限のアップロード、詳細な解説、そしてAI家庭教師機能を開放しましょう。</p>
+            <div style="font-size: 2rem; font-weight: 900; margin: 1.5rem 0;">¥980 <span style="font-size: 1rem; color: var(--text-dim);">/ 月</span></div>
+            <button class="btn-premium" style="width: 100%; padding: 1rem;" onclick="alert('決済システムへの接続準備中です。')">今すぐアップグレード</button>
+            <button style="background:transparent; border:none; color:var(--text-dim); margin-top:1rem; cursor:pointer;" onclick="document.getElementById('upgradeModal').style.display='none'">あとで</button>
+        </div>
+    </div>
+
+    <div id="importModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000; justify-content:center; align-items:center;">
+        <div class="result-card" style="max-width: 650px; width: 95%; padding: 2rem; border: 1px solid rgba(66, 133, 244, 0.25); background: rgba(10, 15, 30, 0.95); backdrop-filter: blur(25px); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="display: flex; align-items: center; gap: 10px; color: #fff; font-size: 1.25rem; margin: 0; border: none; padding: 0;">
+                    <i class="fab fa-google" style="color: #4285f4;"></i> NotebookLM インポートウィザード
+                </h3>
+                <button onclick="document.getElementById('importModal').style.display='none'" style="background: transparent; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; transition: 0.3s;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="wizard-tabs" style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 1.5rem; gap: 5px;">
+                <button class="wizard-tab active" onclick="switchImportTab('paste-text')" id="tab-btn-paste-text">
+                    <i class="fas fa-paste"></i> テキスト貼付
+                </button>
+                <button class="wizard-tab" onclick="switchImportTab('file-upload')" id="tab-btn-file-upload">
+                    <i class="fas fa-file-upload"></i> ファイル読込
+                </button>
+            </div>
+
+            <!-- Tab 1: Paste Text Content -->
+            <div class="wizard-tab-content active" id="wizard-content-paste-text" style="display: block;">
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;">
+                    NotebookLM で作成した『学習ガイド』や『要約』のノートをコピーし、以下に貼り付けてください。
+                </p>
+                <textarea id="modalNotebookPasteArea" placeholder="ここにNotebookLMのノートテキストを貼り付けてください..." style="width: 100%; height: 180px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: white; padding: 1rem; outline: none; font-size: 0.8rem; font-family: monospace; resize: none;"></textarea>
+                <div style="display: flex; gap: 1rem; margin-top: 1.2rem; justify-content: flex-end;">
+                    <button class="btn-demo" onclick="document.getElementById('importModal').style.display='none'">キャンセル</button>
+                    <button class="btn-premium" style="background: #4285f4; box-shadow: 0 4px 10px rgba(66,133,244,0.2);" onclick="processNotebookImport()">
+                        <i class="fas fa-magic"></i> 解析開始
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 3: File Upload Content -->
+            <div class="wizard-tab-content" id="wizard-content-file-upload" style="display: none;">
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;">
+                    NotebookLM からエクスポートした Markdown (.md) または Text (.txt)、PDF (.pdf) ファイルを読み込みます。
+                </p>
+                <div class="upload-card" id="modalDropZone" style="padding: 2.2rem 1rem; border: 2px dashed var(--glass-border); background: rgba(255, 255, 255, 0.01); border-radius: 16px; max-width: 100%;">
+                    <div style="font-size: 2.2rem; color: #4285f4; margin-bottom: 0.6rem;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.8rem;">ファイルをここにドラッグ＆ドロップするか、以下から選択</p>
+                    <button class="btn-demo" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="document.getElementById('modalFileInput').click()">
+                        <i class="fas fa-folder-open"></i> ファイルを選択
+                    </button>
+                    <input type="file" id="modalFileInput" hidden>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth / Sync Modal -->
+    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:3000; justify-content:center; align-items:center;">
+        <div class="result-card" style="max-width: 450px; width: 90%; position: relative;">
+            <div style="position: absolute; right: 1.5rem; top: 1.5rem;">
+                <button onclick="closeAuthModal()" style="background: transparent; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; transition: 0.3s;"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <!-- Tab switches (only visible if logged out) -->
+            <div class="auth-tabs" id="authTabs" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+                <button class="wizard-tab active" id="authTabBtnLogin" onclick="switchAuthTab('login')" data-i18n="auth-tab-login">ログイン</button>
+                <button class="wizard-tab" id="authTabBtnRegister" onclick="switchAuthTab('register')" data-i18n="auth-tab-register">新規登録</button>
+            </div>
+
+            <!-- Form Area -->
+            <div class="auth-form-container" id="authFormContainer">
+                <h2 id="authModalTitle" style="margin-bottom: 1.5rem; text-align: left;" data-i18n="auth-modal-title-login">ログイン</h2>
+                
+                <div style="margin-bottom: 1rem; text-align: left;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.85rem;" data-i18n="auth-label-username">ユーザー名</label>
+                    <input type="text" id="authUsername" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; outline: none;">
+                </div>
+                
+                <div style="margin-bottom: 1.5rem; text-align: left;">
+                    <label style="display: block; margin-bottom: 0.3rem; font-size: 0.85rem;" data-i18n="auth-label-password">パスワード</label>
+                    <input type="password" id="authPassword" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; outline: none;">
+                </div>
+                
+                <button class="btn-premium" id="authSubmitBtn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="submitAuthForm()">
+                    <span id="authSubmitText" data-i18n="auth-btn-submit-login">ログインする</span>
+                </button>
+            </div>
+
+            <!-- Logged In / Status Screen -->
+            <div class="auth-status-container" id="authStatusContainer" style="display: none; text-align: left;">
+                <h2 style="margin-bottom: 1.5rem;" data-i18n="auth-modal-title-status">アカウント同期設定</h2>
+                
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div>
+                        <span style="color: var(--text-dim); font-size: 0.85rem;" data-i18n="auth-status-logged-in">ログイン中: </span>
+                        <strong style="color: white; font-size: 1.1rem; margin-left: 0.3rem;" id="authStatusUsername">---</strong>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-dim); font-size: 0.85rem;" data-i18n="auth-status-last-sync">最終同期時間: </span>
+                        <span style="color: var(--text-dim); font-size: 0.85rem; font-family: monospace; font-weight: 700; margin-left: 0.3rem;" id="authStatusLastSync">---</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <button class="btn-premium" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="triggerManualSync()">
+                        <i class="fas fa-sync-alt"></i> <span data-i18n="auth-btn-sync">今すぐ同期する</span>
+                    </button>
+                    
+                    <button class="btn-demo" style="width: 100%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> <span data-i18n="auth-btn-logout">ログアウト</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
+        <div class="result-card" style="max-width: 500px; width: 90%;">
+            <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-cog"></i> 設定</h2>
+            <div style="margin-bottom: 2rem; text-align: left;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 700;">Gemini API Key</label>
+                <input type="password" id="geminiKey" placeholder="AI解析を有効にするにはキーを入力" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white;">
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">※キーはローカルにのみ保存されます。</p>
+            </div>
+            <div style="margin-bottom: 2rem; text-align: left;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 700;">推論AIモデル (Reasoning Engine)</label>
+                <select id="geminiModel" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: #0f172a; color: white; outline: none; cursor: pointer;">
+                    <option value="gemini-3.1-pro">Gemini 3.1 Pro (最新フラッグシップ推論型)</option>
+                    <option value="gemini-3.5-flash" selected>Gemini 3.5 Flash (最新爆速・最高精度)</option>
+                </select>
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">※大容量PDFや詳細な概念対比には Pro 推奨です。</p>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <span style="font-weight: 700;">超高精度AIモード</span>
+                <label class="switch">
+                    <input type="checkbox" id="geminiToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <button class="btn-premium" style="width: 100%;" onclick="saveSettings()">設定を保存</button>
+            <button style="background:transparent; border:none; color:var(--text-dim); margin-top:1rem; cursor:pointer; width: 100%;" onclick="document.getElementById('settingsModal').style.display='none'">閉じる</button>
+        </div>
+    </div>
+
+    <script src="i18n.js"></script>
+    <script src="suite-gatekeeper.js"></script>
+    <script src="app.js"></script>
+    <script src="premium.js"></script>
+</body>
+</html>
