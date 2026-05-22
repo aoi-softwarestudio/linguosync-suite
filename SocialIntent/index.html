@@ -405,7 +405,7 @@
 
     <script src="suite-gatekeeper.js"></script>
     <script>
-    let backendApiUrl = 'https://coastal-provision-hearings-installing.trycloudflare.com';
+    let backendApiUrl = 'https://meeting-reproduce-modems-highway.trycloudflare.com';
 
     // ── State ─────────────────────────────────────────────
     let currentKeyword = '';
@@ -458,15 +458,26 @@
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 1800 } })
                 });
             } else {
+                const licenseKey = localStorage.getItem('socialintent_license_key') || '';
                 res = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-License-Key': licenseKey,
+                        'X-App-Id': 'socialintent'
+                    },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
                         model: "gemini-3.5-flash"
                     })
                 });
             }
+            
+            if (res.status === 429) {
+                alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
+                return null;
+            }
+            
             if (!res.ok) return null;
             const data = await res.json();
             if (data.error) {
