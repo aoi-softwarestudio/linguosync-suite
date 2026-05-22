@@ -1,6 +1,6 @@
 const VENTURE_LINKS = {
-    studyflow: "https://skiing-mesh-threatened-final.trycloudflare.com",
-    novacapital: "https://featured-limit-transition-neighborhood.trycloudflare.com",
-    linguosync: "https://coastal-provision-hearings-installing.trycloudflare.com",
-    socialintent: "https://breath-constraints-style-dvds.trycloudflare.com"
+    studyflow: "https://trigger-detector-seating-hopes.trycloudflare.com",
+    novacapital: "https://hotels-solid-sunny-assists.trycloudflare.com",
+    linguosync: "https://meeting-reproduce-modems-highway.trycloudflare.com",
+    socialintent: "https://populations-burlington-bubble-euro.trycloudflare.com"
 };
