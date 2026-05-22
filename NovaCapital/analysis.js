@@ -1,5 +1,5 @@
 let currentChart = null;
-let backendApiUrl = 'https://coastal-provision-hearings-installing.trycloudflare.com';
+let backendApiUrl = 'https://meeting-reproduce-modems-highway.trycloudflare.com';
 
 async function reportActivity(venture, action) {
     try {
@@ -86,9 +86,14 @@ window.renderAnalysis = async function(assetId) {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const licenseKey = localStorage.getItem('novacapital_license_key') || '';
             const response = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-License-Key': licenseKey,
+                    'X-App-Id': 'novacapital'
+                },
                 body: JSON.stringify({
                     model: "gemini-3.5-flash",
                     contents: [{ parts: [{ text: prompt }] }]
@@ -96,6 +101,11 @@ window.renderAnalysis = async function(assetId) {
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
+            if (response.status === 429) {
+                alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
+                renderAnalysis(asset);
+                return;
+            }
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
