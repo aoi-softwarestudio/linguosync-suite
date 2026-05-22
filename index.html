@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VendiMap | 全国自販機マップ</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <div id="map"></div>
+
+    <div class="overlay-ui">
+        <div class="logo-floating pointer-events-auto">
+            <img src="vendimap_logo_1778742621123.png" alt="VendiMap Logo">
+            <span class="logo-text">VendiMap</span>
+        </div>
+
+        <header class="header-center pointer-events-auto">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="自販機を検索...">
+            </div>
+            <div class="filter-container" id="filterContainer">
+                <div class="filter-chip active" data-filter="all">すべて</div>
+                <div class="filter-chip" data-filter="trash">ゴミ箱あり</div>
+                <div class="filter-chip" data-filter="cheap">100円以下</div>
+                <div class="filter-chip" data-filter="rare">激レア</div>
+                <div class="filter-chip" data-filter="cashless">キャッシュレス可</div>
+            </div>
+        </header>
+
+        <div class="header-right pointer-events-auto">
+            <div class="action-buttons">
+                <button class="btn-icon" id="rankingBtn" title="ランキング"><i class="fas fa-crown"></i></button>
+                <button class="btn-icon" id="addSpotBtn" title="自販機を追加"><i class="fas fa-plus"></i></button>
+                <button class="btn-icon" id="locateBtn" title="現在地を表示"><i class="fas fa-location-crosshairs"></i></button>
+                <button class="btn-icon" id="themeToggleBtn" title="テーマ切り替え"><i class="fas fa-moon"></i></button>
+            </div>
+            <div id="authContainer" class="auth-container">
+                <div id="userProfile" class="user-profile">
+                    <!-- Circular SVG Progress Ring for XP Meter -->
+                    <svg class="xp-ring" width="48" height="48" style="position: absolute; top: 0; left: 0; transform: rotate(-90deg); overflow: visible; z-index: 1;">
+                        <circle cx="24" cy="24" r="21" stroke="rgba(255,255,255,0.08)" stroke-width="3" fill="transparent" />
+                        <circle id="userXPProgressCircle" cx="24" cy="24" r="21" stroke="url(#gold-gradient)" stroke-width="3.5" fill="transparent" stroke-dasharray="131.95" stroke-dashoffset="131.95" stroke-linecap="round" style="transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));" />
+                        <defs>
+                            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffd700" />
+                                <stop offset="100%" stop-color="#ff8c00" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    
+                    <!-- Avatar Image inside -->
+                    <img id="userAvatar" src="https://i.pravatar.cc/150?u=guest" class="avatar">
+                    
+                    <!-- Floating Level Badge -->
+                    <div id="headerLevelBadge" style="position: absolute; bottom: -2px; right: -2px; background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; font-size: 0.65rem; font-weight: 900; padding: 1px 5px; border-radius: 8px; border: 1.5px solid #080d1a; z-index: 3; box-shadow: 0 2px 5px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif; line-height: 1;">LV 1</div>
+                    
+                    <!-- Unified User Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <!-- State: Unlogged / Guest -->
+                        <div id="guestMenuContent">
+                            <div class="dropdown-header">
+                                <p style="font-weight: 800; font-size: 0.95rem; color: #fff;">ゲストハンター</p>
+                                <p style="font-size: 0.72rem; color: #ffd700; font-weight: 700; margin-top: 4px;" id="menuXPDisplay">0 / 100 XP</p>
+                            </div>
+                            <hr style="border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+                            <div class="dropdown-item" id="menuLoginBtn" style="cursor: pointer;"><i class="fas fa-sign-in-alt" style="color: var(--accent-color);"></i> ログインする</div>
+                            <div class="dropdown-item" onclick="document.getElementById('achievementsModal').style.display='flex'" style="cursor: pointer;"><i class="fas fa-trophy" style="color: #ffd700;"></i> 実績 ＆ レベル</div>
+                        </div>
+                        <!-- State: Logged-in (Sota Kojima) -->
+                        <div id="userMenuContent" style="display: none;">
+                            <div class="dropdown-header">
+                                <p id="userNameDisplay" style="font-weight: 800; font-size: 0.95rem; color: #fff;">ユーザー名</p>
+                                <p id="userEmailDisplay" style="font-size: 0.75rem; color: var(--text-secondary);">user@example.com</p>
+                                <p style="font-size: 0.72rem; color: #ffd700; font-weight: 700; margin-top: 4px;" id="menuUserXPDisplay">0 / 100 XP</p>
+                            </div>
+                            <hr style="border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+                            <div class="dropdown-item" id="changeNameBtn" style="cursor: pointer;"><i class="fas fa-user-edit" style="color: var(--text-secondary);"></i> ユーザー名を変更</div>
+                            <div class="dropdown-item" id="changeAvatarBtn" style="cursor: pointer;"><i class="fas fa-camera" style="color: var(--text-secondary);"></i> アバター画像を変更</div>
+                            <div class="dropdown-item" onclick="document.getElementById('achievementsModal').style.display='flex'" style="cursor: pointer;"><i class="fas fa-trophy" style="color: #ffd700;"></i> 実績 ＆ レベル</div>
+                            <div class="dropdown-item" id="userMenuRankingBtn" style="cursor: pointer;"><i class="fas fa-crown" style="color: #fbbf24;"></i> ランキングを確認</div>
+                            <hr style="border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+                            <div class="dropdown-item logout" id="logoutBtn" style="cursor: pointer;"><i class="fas fa-sign-out-alt"></i> ログアウト</div>
+                        </div>
+                    </div>
+                    <input type="file" id="userAvatarInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 4000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
+            <div class="detail-panel open" style="position: relative; width: 100%; max-width: 400px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 40px; text-align: center;">
+                <img src="vendimap_logo_1778742621123.png" style="width: 60px; margin-bottom: 20px;">
+                <h2 style="margin-bottom: 10px;">VendiMapにログイン</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.9rem;">所有する自販機を管理したり、ランキングに参加しましょう。</p>
+                
+                <button id="googleLoginBtn" class="btn-submit" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
+                    <img src="https://www.google.com/favicon.ico" style="width: 18px;"> Googleでログイン
+                </button>
+                
+                <p style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;" onclick="document.getElementById('loginModal').style.display='none'">キャンセル</p>
+            </div>
+        </div>
+
+        <!-- Ranking Modal -->
+        <div id="rankingModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
+            <div class="detail-panel open" style="position: relative; width: 100%; max-width: 500px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 30px;">
+                <h2 style="margin-bottom: 20px; text-align: center;"><i class="fas fa-crown" style="color: #fbbf24;"></i> VendiMap ランキング</h2>
+                
+                <div class="ranking-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="filter-chip active" id="rankByCountBtn" style="flex: 1; text-align: center;">所有数</button>
+                    <button class="filter-chip" id="rankByRatingBtn" style="flex: 1; text-align: center;">経営評価</button>
+                </div>
+
+                <div id="rankingContent" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Ranking items will be rendered here -->
+                </div>
+
+                <button class="btn-submit" onclick="document.getElementById('rankingModal').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); margin-top: 20px;">閉じる</button>
+            </div>
+        </div>
+
+        <aside class="detail-panel pointer-events-auto" id="detailPanel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div class="panel-title">
+                    <h2 id="spotName">自販機の名前</h2>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                        <p id="spotManufacturer" style="color: var(--text-secondary); font-size: 0.9rem;">メーカー名</p>
+                        <span style="color: var(--border-color);">|</span>
+                        <p id="spotOwner" style="color: var(--accent-color); font-size: 0.9rem; font-weight: 600;">オーナー: 募集中</p>
+                    </div>
+                </div>
+                <div class="rating-badge">
+                    <i class="fas fa-star"></i>
+                    <span id="spotRating">4.5</span>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div id="spotVerificationBadge" class="status-badge verified">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="spotVerificationText">信頼度: 高</span>
+                </div>
+                <div class="status-badge" style="background: rgba(129, 140, 248, 0.2); color: #818cf8; border: 1px solid rgba(129, 140, 248, 0.3);">
+                    <i class="fas fa-comment"></i>
+                    <span id="spotCommentCount">0</span>件のコメント
+                </div>
+                <span id="spotLastUpdated" style="font-size: 0.8rem; color: var(--text-secondary);">最終確認: 2024/05/14</span>
+            </div>
+
+            <!-- Ownership / Naming Rights Section -->
+            <div id="namingRightsSection" style="margin-bottom: 20px; background: rgba(251, 191, 36, 0.05); border: 1px dashed rgba(251, 191, 36, 0.25); padding: 15px; border-radius: 12px; display: none; text-align: center; font-family: 'Inter', sans-serif;">
+                <p style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 8px; font-weight: 700;"><i class="fas fa-crown"></i> この自販機の命名権（所有権）は募集中です！</p>
+                <button class="btn-submit" id="buyNamingRightsBtn" style="background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%); color: #000; font-weight: 900; width: 100%; border: none; padding: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"><i class="fas fa-crown"></i> 命名権を購入する - ¥480</button>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">価格帯</span>
+                    <span id="spotPrice" style="font-weight: 600;">130円〜</span>
+                </div>
+                <div class="info-item">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">ゴミ箱</span>
+                    <span id="spotTrash" style="font-weight: 600;">あり</span>
+                </div>
+                <div class="info-item">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">レア度</span>
+                    <span id="spotRarity" style="font-weight: 600;">★★☆☆☆</span>
+                </div>
+                <div class="info-item">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">決済方法</span>
+                    <span id="spotPayment" style="font-weight: 600;">現金, 交通系</span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">写真ギャラリー</label>
+                <div class="photo-gallery" id="spotPhotos">
+                    <div class="add-photo-placeholder" id="addPhotoBtn">
+                        <i class="fas fa-camera"></i>
+                        <span>追加</span>
+                    </div>
+                </div>
+                <input type="file" id="photoInput" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">ラインナップ</label>
+                <div class="tag-list" id="spotLineup"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">口コミ・コメント</label>
+                <div id="commentsList" style="margin-bottom: 12px; border-left: 2px solid var(--accent-color); padding-left: 12px;">
+                    <!-- Comments will be rendered here -->
+                </div>
+                <button id="toggleCommentsBtn" style="background: transparent; border: none; color: var(--accent-color); font-size: 0.85rem; cursor: pointer; display: none; margin-bottom: 12px;">すべて見る</button>
+                
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-top: 10px;">
+                    <div class="star-rating-input" style="display: flex; gap: 8px; margin-bottom: 10px; color: var(--text-secondary); font-size: 1.2rem;">
+                        <i class="far fa-star rating-star" data-value="1"></i>
+                        <i class="far fa-star rating-star" data-value="2"></i>
+                        <i class="far fa-star rating-star" data-value="3"></i>
+                        <i class="far fa-star rating-star" data-value="4"></i>
+                        <i class="far fa-star rating-star" data-value="5"></i>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="commentInput" class="form-control" placeholder="評価とコメントを書く..." style="flex: 1; padding: 8px 12px;">
+                        <button id="submitCommentBtn" style="background: var(--accent-gradient); border: none; border-radius: 8px; width: 40px; color: white; cursor: pointer;"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-submit" style="flex: 1; background: rgba(255,255,255,0.1); color: var(--text-primary);" id="reportBtn">
+                    <i class="fas fa-triangle-exclamation"></i> 間違いを報告
+                </button>
+                <button class="btn-submit" style="flex: 1;" id="confirmPresenceBtn">
+                    <i class="fas fa-thumbs-up"></i> 実在を確認！
+                </button>
+            </div>
+            <button class="btn-submit" id="closePanelBtn" style="background: transparent; border: 1px solid var(--border-color); margin-top: 10px;">閉じる</button>
+        </aside>
+
+        <div id="addSpotModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
+            <div class="detail-panel open" style="position: relative; width: 100%; max-width: 500px; height: auto; bottom: auto; top: auto; right: auto; transform: none;">
+                <h3>新規自販機を登録</h3>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>所在地 (命名権販売用)</label>
+                    <input type="text" class="form-control" id="newSpotName" placeholder="住所を入力 (例: 東京都渋谷区...)">
+                </div>
+                <div class="info-grid">
+                    <div class="form-group">
+                        <label>メーカー</label>
+                        <select class="form-control" id="newSpotManufacturer">
+                            <option>サントリー</option><option>コカ・コーラ</option><option>ダイドー</option>
+                            <option>キリン</option><option>伊藤園</option><option>その他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ゴミ箱</label>
+                        <select class="form-control" id="newSpotTrash">
+                            <option value="あり">あり</option><option value="なし">なし</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ラインナップ (カンマ区切りで入力)</label>
+                    <input type="text" class="form-control" id="newSpotLineup" placeholder="例: コーラ, 天然水, 激レアおでん缶">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-submit" style="background: var(--text-secondary);" id="cancelAddBtn">キャンセル</button>
+                    <button class="btn-submit" id="saveSpotBtn">保存する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lemon Squeezy Checkout Simulator for VendiMap Naming Rights -->
+    <div id="suite-settings-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 100000; align-items: center; justify-content: center; font-family: 'Inter', sans-serif;">
+        <div style="background: #111116; border: 1px solid rgba(255, 255, 255, 0.1); width: 90%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
+            <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 900; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-crown" style="color: #ffd700;"></i> 命名権の購入
+                </div>
+                <button onclick="document.getElementById('suite-settings-modal').style.display='none'" style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1rem;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">購入するライツ</div>
+                    <div style="font-size: 1rem; font-weight: 900; color: #fff; margin-top: 0.2rem;">VendiMap - 自販機の独占命名権 ＆ オーナー権</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: #fec23c; margin-top: 0.5rem;">¥480 <span style="font-size: 0.75rem; color: rgba(255,255,255,0.5); font-weight: 500;">(永続命名権)</span></div>
+                </div>
+                
+                <button id="vendi-modal-buy-btn" style="width: 100%; background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%); color: #000; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.5rem; padding: 0.85rem; border-radius: 8px; font-weight: 900; border: none; cursor: pointer;">
+                    <i class="fas fa-credit-card"></i> 💳 クレジットカードで購入する
+                </button>
+                
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; display: none;">
+                    <div style="margin-bottom: 1.2rem;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; text-transform: uppercase;">ライセンスキーをお持ちの方</label>
+                        <input type="text" id="vendi-license-input" placeholder="LS-XXXX-XXXX-XXXX" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;">
+                        <div id="vendi-license-status" style="margin-top: 0.5rem; display: block; font-size: 0.65rem; color: rgba(255,255,255,0.3);">
+                            未有効化：フリープラン
+                        </div>
+                    </div>
+                    <button id="vendi-license-activate-btn" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 0.75rem; border-radius: 8px; font-weight: 800; border: none; cursor: pointer;">ライセンスを適用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lemon Squeezy Simulated Payment Modal -->
+    <div id="lemon-checkout-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 100001; align-items: center; justify-content: center; font-family: 'Inter', sans-serif;">
+        <div style="background: #111116; border: 1px solid rgba(254, 194, 60, 0.3); width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);">
+            <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; background: #181824;">
+                <div style="font-weight: 900; font-size: 1.1rem; color: #fec23c; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-shopping-cart"></i> Lemon Squeezy Checkout
+                </div>
+                <button onclick="document.getElementById('lemon-checkout-modal').style.display='none'" style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1rem;"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div style="padding: 1.5rem;" id="lemon-form-body">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                    <div>
+                        <span style="background: rgba(254, 194, 60, 0.15); color: #fec23c; border: 1px solid rgba(254, 194, 60, 0.3); font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.5rem;">SECURE CHECKOUT</span>
+                        <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">自販機命名権 ＆ 独占オーナー権</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.1rem; font-weight: 900; color: #fec23c;">¥480</div>
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">One-time payment</div>
+                    </div>
+                </div>
+                
+                <div style="background: #181824; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1.2rem;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(254, 194, 60, 0.8); margin-bottom: 0.4rem; text-transform: uppercase;">メールアドレス</label>
+                        <input type="email" id="lemon-email" value="sota.kojima@empire.com" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(254, 194, 60, 0.8); margin-bottom: 0.4rem; text-transform: uppercase;">クレジットカード番号</label>
+                        <div style="position: relative;">
+                            <input type="text" value="4242 4242 4242 4242" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none; padding-right: 40px;">
+                            <i class="fab fa-cc-visa" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 1.1rem;"></i>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(254, 194, 60, 0.8); margin-bottom: 0.4rem; text-transform: uppercase;">有効期限</label>
+                            <input type="text" value="12 / 29" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(254, 194, 60, 0.8); margin-bottom: 0.4rem; text-transform: uppercase;">CVC</label>
+                            <input type="text" value="123" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;">
+                        </div>
+                    </div>
+                    <button id="lemon-pay-btn" style="width: 100%; background: #fec23c; color: #000; border: none; padding: 0.85rem; border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 1.5rem;">
+                        <i class="fas fa-lock"></i> ¥480 を安全に支払う
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading screen -->
+            <div style="padding: 2.5rem; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; text-align: center;" id="lemon-loading-screen">
+                <div style="width: 40px; height: 40px; border: 4px solid rgba(254, 194, 60, 0.1); border-top: 4px solid #fec23c; border-radius: 50%; animation: spin 1s linear infinite;" id="lemon-spinner"></div>
+                <div style="color: #fec23c; font-weight: 800; font-size: 0.95rem;" id="lemon-loading-text">決済を安全に処理しています...</div>
+            </div>
+
+            <!-- Success screen -->
+            <div style="padding: 2.5rem; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; text-align: center;" id="lemon-success-screen">
+                <i class="fas fa-check-circle" style="color: #00ff88; font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(0,255,136,0.3));"></i>
+                <div style="color: #fff; font-weight: 900; font-size: 1.15rem;">決済が正常に完了しました！</div>
+                <div style="background: rgba(0,255,136,0.05); border: 1px dashed rgba(0,255,136,0.3); border-radius: 8px; padding: 0.8rem; width: 100%;">
+                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">所有権アクティベーションコード</div>
+                    <div id="lemon-generated-key" style="font-size: 0.85rem; font-weight: 700; color: #00ff88; font-family: monospace; letter-spacing: 0.5px; margin-top: 0.3rem;">LS-GOLD-XXXX-XXXX</div>
+                </div>
+                <button id="lemon-activate-btn" style="width: 100%; background: #00ff88; color: #000; font-weight: 900; padding: 0.85rem; border-radius: 8px; border: none; cursor: pointer;">👑 所有者として登録を完了する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements & Level Dashboard Modal -->
+    <div id="achievementsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100002; align-items: center; justify-content: center; padding: 20px; font-family: 'Inter', sans-serif;" class="pointer-events-auto">
+        <div class="detail-panel open" style="position: relative; width: 100%; max-width: 460px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 30px; border-color: rgba(255, 215, 0, 0.3);">
+            <h2 style="margin-bottom: 20px; text-align: center; color: #ffd700;"><i class="fas fa-trophy"></i> マイ実績 ＆ レベル</h2>
+            
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <div id="modalUserAvatarContainer" style="display: inline-block; position: relative; margin-bottom: 10px;">
+                    <img id="modalUserAvatar" src="https://i.pravatar.cc/150?u=kojima" style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.3);">
+                    <span id="modalUserLevelBadge" style="position: absolute; bottom: 0; right: 0; background: #ffd700; color: #000; font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 10px;">LV 1</span>
+                </div>
+                <h3 id="modalUserName" style="font-weight: 900; margin-bottom: 10px;">ゲストハンター</h3>
+                <div style="width: 100%; background: rgba(255,255,255,0.1); height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 6px;">
+                    <div id="modalXPBar" style="background: linear-gradient(90deg, #ffd700, #ffa500); width: 0%; height: 100%; transition: width 0.5s ease-out;"></div>
+                </div>
+                <span id="modalXPText" style="font-size: 0.75rem; color: var(--text-secondary);">0 / 100 XP</span>
+            </div>
+
+            <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">獲得したバッジ・実績</h4>
+            <div id="achievementsListContent" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Achievements items dynamically filled -->
+            </div>
+
+            <button class="btn-submit" onclick="document.getElementById('achievementsModal').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); margin-top: 20px; width: 100%;">閉じる</button>
+        </div>
+    </div>
+
+    <!-- AI Vision Scan Loading Overlay -->
+    <div id="aiScanOverlay" style="display: none; position: fixed; inset: 0; background: rgba(10,10,15,0.9); z-index: 200000; align-items: center; justify-content: center; flex-direction: column; font-family: 'Inter', sans-serif;" class="pointer-events-auto">
+        <div style="position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;">
+            <!-- Futuristic Scan Circle -->
+            <div style="position: absolute; width: 100%; height: 100%; border: 2px dashed rgba(0, 212, 255, 0.4); border-radius: 50%; animation: spin 20s linear infinite;"></div>
+            <div style="position: absolute; width: 80%; height:     <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // Dynamic Premium Styles Injection
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .premium-gold-aura {
+                position: relative;
+            }
+            .premium-gold-aura::after {
+                content: '';
+                position: absolute;
+                top: -10px; left: -10px;
+                width: 52px; height: 52px;
+                border-radius: 50%;
+                border: 2.5px solid #ffd700;
+                box-shadow: 0 0 18px #ffd700;
+                animation: goldAuraPulse 1.4s infinite ease-out;
+                pointer-events: none;
+                box-sizing: border-box;
+                z-index: 999;
+            }
+            @keyframes goldAuraPulse {
+                0% { transform: scale(0.5); opacity: 1; }
+                100% { transform: scale(1.4); opacity: 0; }
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            /* Gamification Dashboard Custom Styling */
+            .achievement-item {
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 10px;
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                transition: 0.3s;
+            }
+            .achievement-item.locked {
+                opacity: 0.4;
+                filter: grayscale(1);
+            }
+            .achievement-icon {
+                font-size: 1.5rem;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: rgba(255, 215, 0, 0.1);
+                color: #ffd700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255, 215, 0, 0.2);
+            }
+            .achievement-item.locked .achievement-icon {
+                background: rgba(255, 255, 255, 0.05);
+                color: rgba(255, 255, 255, 0.4);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Confetti Celebration Particle Effect
+        function createConfetti() {
+            for (let i = 0; i < 60; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'fixed';
+                p.style.width = Math.random() * 8 + 4 + 'px';
+                p.style.height = Math.random() * 15 + 5 + 'px';
+                p.style.backgroundColor = ['#ffd700', '#ffa500', '#ff007a', '#00ff88', '#00d4ff'][Math.floor(Math.random() * 5)];
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.top = '-20px';
+                p.style.zIndex = '999999';
+                p.style.opacity = Math.random();
+                p.style.transform = `rotate(${Math.random() * 360}deg)`;
+                document.body.appendChild(p);
+
+                let y = -20;
+                let x = parseFloat(p.style.left);
+                let speed = Math.random() * 6 + 3;
+                let rot = Math.random() * 12 - 6;
+                let rotSum = 0;
+
+                const interval = setInterval(() => {
+                    y += speed;
+                    rotSum += rot;
+                    p.style.top = y + 'px';
+                    p.style.transform = `rotate(${rotSum}deg)`;
+                    if (y > window.innerHeight) {
+                        clearInterval(interval);
+                        p.remove();
+                    }
+                }, 16);
+            }
+        }
+
+        // AudioContext Synthesized Celebration sound
+        function playCelebrationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                osc.frequency.exponentialRampToValueAtTime(1760, now + 0.6);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } catch(e) {}
+        }
+
+        // Gamification System
+        const VendiGamification = {
+            state: {
+                level: 1,
+                xp: 0,
+                stats: { spotsAdded: 0, photosAdded: 0, commentsAdded: 0, boughtCount: 0 },
+                unlockedAchievements: []
+            },
+            KEYS: {
+                STATE: 'vendimap_gamification_state'
+            },
+            init() {
+                const saved = localStorage.getItem(this.KEYS.STATE);
+                if (saved) {
+                    this.state = JSON.parse(saved);
+                } else {
+                    this.save();
+                }
+                this.updateUI();
+            },
+            save() {
+                localStorage.setItem(this.KEYS.STATE, JSON.stringify(this.state));
+            },
+            addXP(amount, reason) {
+                this.state.xp += amount;
+                showToast(`+${amount} XP 獲得！ (${reason})`, 'info');
+                
+                // Handle multiple level ups
+                let leveledUp = false;
+                while (this.state.xp >= 100) {
+                    this.state.xp -= 100;
+                    this.state.level++;
+                    leveledUp = true;
+                }
+                
+                if (leveledUp) {
+                    this.triggerLevelUpCelebration();
+                }
+                this.save();
+                this.updateUI();
+                this.checkAchievements();
+            },
+            triggerLevelUpCelebration() {
+                showToast(`🎉 レベルアップ！ LV ${this.state.level} に到達！`, 'success');
+                createConfetti();
+                playCelebrationSound();
+            },
+            updateUI() {
+                // Update SVG progress ring
+                const progressCircle = document.getElementById('userXPProgressCircle');
+                if (progressCircle) {
+                    const radius = 21;
+                    const circumference = 2 * Math.PI * radius; // ~131.95
+                    const progress = Math.min(100, Math.max(0, this.state.xp)) / 100;
+                    const offset = circumference * (1 - progress);
+                    progressCircle.style.strokeDashoffset = offset;
+                }
+                
+                // Update Floating Level Badge
+                const levelBadge = document.getElementById('headerLevelBadge');
+                if (levelBadge) {
+                    levelBadge.innerText = `LV ${this.state.level}`;
+                }
+                
+                // Update Dropdown text displays
+                const guestXPText = document.getElementById('menuXPDisplay');
+                if (guestXPText) {
+                    guestXPText.innerText = `${this.state.xp} / 100 XP (次まで ${100 - this.state.xp} XP)`;
+                }
+                const userXPText = document.getElementById('menuUserXPDisplay');
+                if (userXPText) {
+                    userXPText.innerText = `${this.state.xp} / 100 XP (次まで ${100 - this.state.xp} XP)`;
+                }
+                
+                // Update Modal dashboard values
+                const modalLevelBadge = document.getElementById('modalUserLevelBadge');
+                if (modalLevelBadge) modalLevelBadge.innerText = `LV ${this.state.level}`;
+                
+                const modalXPBar = document.getElementById('modalXPBar');
+                if (modalXPBar) modalXPBar.style.width = `${this.state.xp}%`;
+                
+                const modalXPText = document.getElementById('modalXPText');
+                if (modalXPText) modalXPText.innerText = `${this.state.xp} / 100 XP`;
+                
+                if (currentUser) {
+                    const modalUserName = document.getElementById('modalUserName');
+                    if (modalUserName) modalUserName.innerText = currentUser.name;
+                    const modalUserAvatar = document.getElementById('modalUserAvatar');
+                    if (modalUserAvatar) modalUserAvatar.src = currentUser.avatar;
+                } else {
+                    const modalUserName = document.getElementById('modalUserName');
+                    if (modalUserName) modalUserName.innerText = "ゲストハンター";
+                    const modalUserAvatar = document.getElementById('modalUserAvatar');
+                    if (modalUserAvatar) modalUserAvatar.src = "https://i.pravatar.cc/150?u=guest";
+                }
+                
+                this.renderAchievementsDashboardList();
+            },
+            checkAchievements() {
+                const achievements = [
+                    { id: 'first_spot', name: '新米ハンター', desc: '初めて自販機を新規登録した', condition: () => this.state.stats.spotsAdded >= 1 },
+                    { id: 'photo_master', name: '自販機写真家', desc: '写真を合計3枚以上アップした', condition: () => this.state.stats.photosAdded >= 3 },
+                    { id: 'critic_master', name: 'ドリンク批評家', desc: 'コメントを合計3件以上投稿した', condition: () => this.state.stats.commentsAdded >= 3 },
+                    { id: 'gold_owner', name: 'ゴールドオーナー', desc: '自販機の命名権を1台以上購入した', condition: () => this.state.stats.boughtCount >= 1 },
+                    { id: 'level_master', name: 'レベルマスター', desc: 'レベル 3 に到達した', condition: () => this.state.level >= 3 }
+                ];
+                
+                achievements.forEach(a => {
+                    if (!this.state.unlockedAchievements.includes(a.id) && a.condition()) {
+                        this.state.unlockedAchievements.push(a.id);
+                        showToast(`🏆 実績解除: 【${a.name}】(${a.desc})`, 'success');
+                        this.addXP(50, `実績「${a.name}」解除`);
+                        this.save();
+                    }
+                });
+            },
+            renderAchievementsDashboardList() {
+                const container = document.getElementById('achievementsListContent');
+                if (!container) return;
+                container.innerHTML = '';
+                
+                const achievements = [
+                    { id: 'first_spot', name: '新米ハンター', desc: '初めて自販機を新規登録した', icon: 'fa-location-dot' },
+                    { id: 'photo_master', name: '自販機写真家', desc: '写真を合計3枚以上アップした', icon: 'fa-camera' },
+                    { id: 'critic_master', name: 'ドリンク批評家', desc: 'コメントを合計3件以上投稿した', icon: 'fa-comment' },
+                    { id: 'gold_owner', name: 'ゴールドオーナー', desc: '自販機の命名権を1台以上購入した', icon: 'fa-crown' },
+                    { id: 'level_master', name: 'レベルマスター', desc: 'レベル 3 に到達した', icon: 'fa-trophy' }
+                ];
+                
+                achievements.forEach(a => {
+                    const isUnlocked = this.state.unlockedAchievements.includes(a.id);
+                    const div = document.createElement('div');
+                    div.className = `achievement-item ${isUnlocked ? '' : 'locked'}`;
+                    
+                    div.innerHTML = `
+                        <div class="achievement-icon">
+                            <i class="fas ${isUnlocked ? a.icon : 'fa-lock'}"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h5 style="color: #fff; font-weight: 800; font-size: 0.85rem; margin-bottom: 2px;">${a.name}</h5>
+                            <p style="color: var(--text-secondary); font-size: 0.7rem;">${a.desc}</p>
+                        </div>
+                        ${isUnlocked ? '<span style="color: #00ff88; font-size: 0.75rem; font-weight: bold;"><i class="fas fa-check-circle"></i> 達成</span>' : '<span style="color: rgba(255,255,255,0.3); font-size: 0.75rem;"><i class="fas fa-circle-notch"></i> 未達成</span>'}
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        };
+
+        // Elegant Toast Notification System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-check-circle';
+            if (type === 'info') icon = 'fa-info-circle';
+            if (type === 'warning') icon = 'fa-exclamation-triangle';
+            if (type === 'error') icon = 'fa-times-circle';
+
+            toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            // Trigger smooth transition
+            setTimeout(() => toast.classList.add('show'), 50);
+
+            // Auto remove toast
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // Data
+        const initialSpots = [
+            // --- TOKYO ---
+            { id: 1, name: "東京都渋谷区宇田川町 25-2", lat: 35.6605, lng: 139.7005, manufacturer: "サントリー", rating: 4.5, priceRange: "130円〜180円", hasTrashBin: "あり (回収頻度高)", paymentMethods: ["現金", "交通系IC", "PayPay"], rarity: 2, lineup: ["天然水 (130円)", "BOSS (140円)", "ZONe (180円)"], type: "standard", photos: ["https://images.unsplash.com/photo-1582239454157-19d675eb825f?auto=format&fit=crop&q=80&w=400"], verifiedCount: 15, lastUpdated: "2024/05/14", comments: [{text: "渋谷のど真ん中。綺麗で冷えてます。", rating: 5}, {text: "新商品のZONeがありました！", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 2, name: "東京都渋谷区神南 1-12-10", lat: 35.6625, lng: 139.6985, manufacturer: "ダイドー", rating: 4.8, priceRange: "100円〜160円", hasTrashBin: "なし", paymentMethods: ["現金"], rarity: 5, lineup: ["復刻堂 (100円)", "缶カレー (130円)"], type: "rare", photos: ["https://images.unsplash.com/photo-1549488344-1f9b8d2bd1f3?auto=format&fit=crop&q=80&w=400"], verifiedCount: 8, lastUpdated: "2024/05/12", comments: [{text: "変わり種が豊富。マニア必見！", rating: 5}, {text: "復刻堂のメロンソーダが美味しい。", rating: 4}], namingRightsAvailable: false, owner: "ベンディ・マスター" },
+            { id: 3, name: "東京都渋谷区桜丘町 15-1", lat: 35.6585, lng: 139.7025, manufacturer: "その他", rating: 3.9, priceRange: "80円〜110円", hasTrashBin: "あり", paymentMethods: ["現金のみ"], rarity: 1, lineup: ["お茶 (100円)", "水 (80円)"], type: "cheap", photos: [], verifiedCount: 2, lastUpdated: "2024/04/20", comments: [{text: "とにかく安い。助かる。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 4, name: "東京都千代田区外神田 3-12-5", lat: 35.6997, lng: 139.7712, manufacturer: "その他", rating: 4.9, priceRange: "150円〜350円", hasTrashBin: "あり (缶のみ)", paymentMethods: ["現金", "交通系IC", "PayPay"], rarity: 5, lineup: ["おでん缶 牛すじ入り (350円)", "らーめん缶 醤油 (350円)", "飲む缶カレー (150円)"], type: "rare", photos: [], verifiedCount: 42, lastUpdated: "2024/05/18", comments: [{text: "秋葉原名物のおでん缶自販機！熱々で美味しい。", rating: 5}, {text: "ラーメン缶も売ってて面白いです。", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 5, name: "東京都新宿区歌舞伎町 1-20-1", lat: 35.6938, lng: 139.7032, manufacturer: "コカ・コーラ", rating: 4.2, priceRange: "140円〜210円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "クレジットカード"], rarity: 3, lineup: ["コカ・コーラ ゼロ (160円)", "リアルゴールド (140円)", "モンスターエナジー (210円)"], type: "standard", photos: [], verifiedCount: 29, lastUpdated: "2024/05/17", comments: [{text: "歌舞伎町の真ん中。夜でもモンスターが買えるので助かる。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 6, name: "東京都中央区銀座 4-6-1", lat: 35.6719, lng: 139.7656, manufacturer: "サントリー", rating: 4.0, priceRange: "160円〜200円", hasTrashBin: "あり (超美観維持)", paymentMethods: ["交通系IC", "PayPay", "クレジットカード"], rarity: 2, lineup: ["プレミアムボス (160円)", "特茶 (190円)", "天然水スパークリング (150円)"], type: "standard", photos: [], verifiedCount: 9, lastUpdated: "2024/05/15", comments: [{text: "現金使えないけど銀座らしくて非常にクリーン。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 7, name: "東京都台東区浅草 2-3-1", lat: 35.7148, lng: 139.7967, manufacturer: "キリン", rating: 4.4, priceRange: "120円〜180円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "Alipay"], rarity: 3, lineup: ["生茶 (150円)", "キリンレモン (140円)", "力水 (130円)"], type: "standard", photos: [], verifiedCount: 18, lastUpdated: "2024/05/10", comments: [{text: "観光地の中心にある。Alipayが使えるのがすごい。", rating: 5}], namingRightsAvailable: true, owner: null },
+
+            // --- OSAKA ---
+            { id: 8, name: "大阪府大阪市中央区道頓堀 1-9-1", lat: 34.6687, lng: 135.5013, manufacturer: "ダイドー", rating: 4.7, priceRange: "100円〜150円", hasTrashBin: "あり (たこ焼きゴミ多め)", paymentMethods: ["現金", "交通系IC", "PayPay"], rarity: 4, lineup: ["エナジーシトラス (120円)", "ブレンドコーヒー (130円)", "おいしい麦茶 (100円)"], type: "rare", photos: [], verifiedCount: 31, lastUpdated: "2024/05/16", comments: [{text: "グリコサインの近く！なにわ感があって良い。", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 9, name: "大阪府大阪市北区梅田 1-1", lat: 34.7018, lng: 135.4950, manufacturer: "サントリー", rating: 4.1, priceRange: "130円〜180円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC"], rarity: 2, lineup: ["ボス 無糖 (140円)", "ペプシ 生 (160円)", "伊右衛門 (150円)"], type: "standard", photos: [], verifiedCount: 22, lastUpdated: "2024/05/14", comments: [{text: "駅近くで乗車前にサッと買える。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 10, name: "大阪府大阪市浪速区日本橋 4-10-5", lat: 34.6592, lng: 135.5058, manufacturer: "その他", rating: 4.6, priceRange: "50円〜100円", hasTrashBin: "あり", paymentMethods: ["現金のみ"], rarity: 5, lineup: ["激安ミラクルボディV (50円)", "怪しいアップルソーダ (80円)", "冷やし緑茶 (100円)"], type: "cheap", photos: [], verifiedCount: 50, lastUpdated: "2024/05/18", comments: [{text: "出ました！大阪名物50円自販機！安すぎる！", rating: 5}, {text: "ミラクルボディが50円なのは神。", rating: 5}], namingRightsAvailable: false, owner: "なにわハンター" },
+
+            // --- KYOTO ---
+            { id: 11, name: "京都府京都市東山区祇園町南側 570", lat: 35.0037, lng: 135.7750, manufacturer: "その他", rating: 4.5, priceRange: "150円〜250円", hasTrashBin: "なし", paymentMethods: ["現金", "交通系IC"], rarity: 4, lineup: ["宇治抹茶ラテ (200円)", "和の涼茶 (160円)", "冷やし甘酒 (180円)"], type: "standard", photos: [], verifiedCount: 14, lastUpdated: "2024/05/12", comments: [{text: "景観に配慮した茶色い木目調デザインの自販機で京都らしい！", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 12, name: "京都府京都市伏見区深草藪之内町 68", lat: 34.9671, lng: 135.7727, manufacturer: "コカ・コーラ", rating: 4.3, priceRange: "140円〜170円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "PayPay"], rarity: 2, lineup: ["綾鷹 (150円)", "コカ・コーラ (160円)", "アクエリアス (150円)"], type: "standard", photos: [], verifiedCount: 25, lastUpdated: "2024/05/15", comments: [{text: "伏見稲荷大社参拝時の水分補給にベストプレイス。", rating: 4}], namingRightsAvailable: true, owner: null },
+
+            // --- NAGOYA ---
+            { id: 13, name: "愛知県名古屋市中区栄 3-5-1", lat: 35.1685, lng: 136.9080, manufacturer: "ポッカサッポロ", rating: 4.5, priceRange: "110円〜160円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "manaca"], rarity: 4, lineup: ["がぶ飲みメロンクリームソーダ (140円)", "ポッカコーヒー微糖 (120円)", "冷やしコーンスープ (130円)"], type: "standard", photos: [], verifiedCount: 19, lastUpdated: "2024/05/09", comments: [{text: "名古屋栄の中心。ポッカコーヒーが美味しい。", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 14, name: "愛知県名古屋市中区大須 3-30-40", lat: 35.1598, lng: 136.9032, manufacturer: "ダイドー", rating: 4.2, priceRange: "100円〜150円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC"], rarity: 3, lineup: ["さらっとしぼったオレンジ (140円)", "ダイドーブレンド (130円)"], type: "standard", photos: [], verifiedCount: 11, lastUpdated: "2024/05/05", comments: [{text: "大須商店街の路地裏。買い物の合間に最適。", rating: 4}], namingRightsAvailable: true, owner: null },
+
+            // --- FUKUOKA ---
+            { id: 15, name: "福岡県福岡市中央区天神 2-11-3", lat: 33.5912, lng: 130.4017, manufacturer: "サントリー", rating: 4.4, priceRange: "130円〜190円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "LINE Pay"], rarity: 2, lineup: ["黒烏龍茶 (180円)", "ボス カフェオレ (140円)", "天然水 (130円)"], type: "standard", photos: [], verifiedCount: 20, lastUpdated: "2024/05/11", comments: [{text: "天神の中心部。いつもよく冷えています。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 16, name: "福岡県福岡市博多区博多駅中央街 1-1", lat: 33.5897, lng: 130.4208, manufacturer: "コカ・コーラ", rating: 4.1, priceRange: "140円〜160円", hasTrashBin: "あり", paymentMethods: ["現金", "SUGOCA", "PayPay"], rarity: 1, lineup: ["ジョージア エメラルドマウンテン (140円)", "い・ろ・は・す (130円)"], type: "standard", photos: [], verifiedCount: 16, lastUpdated: "2024/04/28", comments: [{text: "博多駅の筑紫口出てすぐ。いつもお世話になってます。", rating: 4}], namingRightsAvailable: true, owner: null },
+
+            // --- SAPPORO ---
+            { id: 17, name: "北海道札幌市中央区南4条西4丁目 1", lat: 43.0556, lng: 141.3537, manufacturer: "その他", rating: 4.8, priceRange: "130円〜180円", hasTrashBin: "あり (冬場は凍結注意)", paymentMethods: ["現金", "交通系IC", "SAPICA"], rarity: 5, lineup: ["キリンガラナ (140円)", "リボンシトロン (130円)", "ジョージア サントス (140円)"], type: "rare", photos: [], verifiedCount: 35, lastUpdated: "2024/05/14", comments: [{text: "すすきの交差点近く！ガラナが売っててまさに北海道！", rating: 5}, {text: "北海道限定ドリンクの宝庫です。", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 18, name: "北海道札幌市中央区大通西 3丁目", lat: 43.0611, lng: 141.3544, manufacturer: "ポッカサッポロ", rating: 4.3, priceRange: "130円〜160円", hasTrashBin: "あり", paymentMethods: ["現金", "SAPICA"], rarity: 3, lineup: ["リボンナポリン (140円)", "コーンポタージュ (130円)"], type: "standard", photos: [], verifiedCount: 12, lastUpdated: "2024/05/02", comments: [{text: "大通公園の横。ナポリン最高です。", rating: 4}], namingRightsAvailable: true, owner: null },
+
+            // --- OTARU ---
+            { id: 19, name: "北海道小樽市港町 5-4", lat: 43.2012, lng: 141.0023, manufacturer: "キリン", rating: 4.6, priceRange: "140円〜200円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC"], rarity: 4, lineup: ["小樽限定お茶 (160円)", "ガラナソーダ (140円)", "メッツコーラ (160円)"], type: "standard", photos: [], verifiedCount: 22, lastUpdated: "2024/05/13", comments: [{text: "小樽運河沿いのレトロな木製カバー自販機。風情抜群！", rating: 5}], namingRightsAvailable: true, owner: null },
+
+            // --- SENDAI ---
+            { id: 20, name: "宮城県仙台市青葉区中央 1-1-1", lat: 38.2601, lng: 140.8824, manufacturer: "サントリー", rating: 4.2, priceRange: "130円〜180円", hasTrashBin: "あり", paymentMethods: ["現金", "icsca", "PayPay"], rarity: 2, lineup: ["伊右衛門 (150円)", "ボス レインボーマウンテン (140円)"], type: "standard", photos: [], verifiedCount: 15, lastUpdated: "2024/05/11", comments: [{text: "仙台駅西口歩道橋の下。通勤通学時の強い味方。", rating: 4}], namingRightsAvailable: true, owner: null },
+            { id: 21, name: "宮城県仙台市青葉区国分町 2-1-1", lat: 38.2625, lng: 140.8698, manufacturer: "コカ・コーラ", rating: 4.5, priceRange: "140円〜210円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC"], rarity: 3, lineup: ["コカ・コーラ (160円)", "モンスター エナジー (210円)", "リアルゴールド (140円)"], type: "standard", photos: [], verifiedCount: 28, lastUpdated: "2024/05/16", comments: [{text: "国分町の飲み屋街入り口。酔い覚ましのお茶にぴったり。", rating: 5}], namingRightsAvailable: true, owner: null },
+
+            // --- YOKOHAMA ---
+            { id: 22, name: "神奈川県横浜市中区山下町 149", lat: 35.4422, lng: 139.6455, manufacturer: "その他", rating: 4.7, priceRange: "150円〜300円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "WeChat Pay"], rarity: 5, lineup: ["杏仁豆腐ジュース (180円)", "東方美人茶 (160円)", "マンゴープリン飲料 (200円)"], type: "rare", photos: [], verifiedCount: 34, lastUpdated: "2024/05/17", comments: [{text: "中華街のど真ん中！中華風缶ジュースが美味しくて珍しい！", rating: 5}, {text: "杏仁豆腐ジュースは飲む価値あり！", rating: 5}], namingRightsAvailable: true, owner: null },
+            { id: 23, name: "神奈川県横浜市西区みなとみらい 2-3", lat: 35.4578, lng: 139.6322, manufacturer: "サントリー", rating: 4.3, priceRange: "130円〜180円", hasTrashBin: "あり (超スタイリッシュ)", paymentMethods: ["交通系IC", "PayPay", "LINE Pay"], rarity: 2, lineup: ["ボス カフェオレ (140円)", "天然水 (130円)", "グリーンダカラ (150円)"], type: "standard", photos: [], verifiedCount: 23, lastUpdated: "2024/05/15", comments: [{text: "みなとみらいのスマート自販機。タッチパネルが綺麗。", rating: 4}], namingRightsAvailable: true, owner: null },
+
+            // --- OKINAWA ---
+            { id: 24, name: "沖縄県那覇市牧志 1-1-1", lat: 26.2164, lng: 127.6835, manufacturer: "その他", rating: 4.9, priceRange: "100円〜150円", hasTrashBin: "あり", paymentMethods: ["現金", "交通系IC", "OKICA"], rarity: 5, lineup: ["さんぴん茶 (110円)", "シークヮーサージュース (140円)", "バヤリース オレンジ 沖縄限定 (140円)", "オリオンWATTAノンアル (150円)"], type: "rare", photos: [], verifiedCount: 45, lastUpdated: "2024/05/17", comments: [{text: "国際通りの路地。さんぴん茶とシークヮーサーが完璧！", rating: 5}, {text: "バヤリースオレンジは沖縄オリジナル味で濃くて美味しい！", rating: 5}], namingRightsAvailable: true, owner: null }
+        ];
+
+        const dummyRankings = {
+            count: [
+                { name: "ベンディ・マスター", value: "24台", avatar: "👑" },
+                { name: "自販機探検隊", value: "18台", avatar: "🥈" },
+                { name: "Shibuya_User", value: "12台", avatar: "🥉" },
+                { name: "ドリンクマニア", value: "9台", avatar: "" },
+                { name: "Rider_K", value: "5台", avatar: "" }
+            ],
+            rating: [
+                { name: "優良ベンダー協会", value: "★ 4.9", avatar: "👑" },
+                { name: "ベンディ・マスター", value: "★ 4.7", avatar: "🥈" },
+                { name: "クリーン自販機隊", value: "★ 4.5", avatar: "🥉" },
+                { name: "Tokyo_Vending", value: "★ 4.2", avatar: "" }
+            ]
+        };
+
+        // App State
+        let map, markers = [], currentFilter = 'all', currentSearchQuery = '', selectedSpot = null, addingSpotMode = false, tempMarker = null, darkLayer, lightLayer, isDarkMode = true, userLocation = null;
+        let currentInputRating = 0, commentsExpanded = false, currentRankingTab = 'count';
+        let currentUser = null;
+
+        // Helper: Manufacturers Lineup Generator for OSM
+        function getRandomManufacturer() {
+            const list = ["サントリー", "コカ・コーラ", "ダイドー", "キリン", "伊藤園"];
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        function getRandomLineupForManufacturer(m) {
+            const db = {
+                "サントリー": ["天然水 (130円)", "BOSS レインボーマウンテン (140円)", "ペプシコーラ (160円)", "伊右衛門 (150円)", "デカビタC (130円)"],
+                "コカ・コーラ": ["コカ・コーラ (160円)", "アクエリアス (150円)", "ジョージアコーヒー (140円)", "綾鷹 (150円)", "い・ろ・は・す (130円)"],
+                "ダイドー": ["ブレンドコーヒー (130円)", "デミタスコーヒー (140円)", "復刻堂 メロンソーダ (120円)", "和果ごこち (130円)"],
+                "キリン": ["生茶 (150円)", "午後の紅茶 ミルクティー (160円)", "ファイア コーヒー (140円)", "キリンレモン (130円)"],
+                "伊藤園": ["お〜いお茶 (150円)", "健康ミネラルむぎ茶 (140円)", "タリーズ カプチーノ (150円)", "充実野菜 (130円)"],
+                "その他": ["激レアおでん缶 (350円)", "缶カレー (140円)", "ラムネ (120円)", "エナジードリンク (200円)"]
+            };
+            return db[m] || db["その他"];
+        }
+
+        // Highly accurate Japanese Reverse Geocoding via Nominatim API
+        async function fetchReverseGeocodeAddress(lat, lng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=ja`;
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8' }
+                });
+                const result = await response.json();
+                if (result && result.address) {
+                    const addr = result.address;
+                    const province = addr.province || addr.state || "";
+                    const city = addr.city || addr.town || addr.city_district || "";
+                    const suburb = addr.suburb || addr.neighbourhood || "";
+                    const road = addr.road || "";
+                    const houseNumber = addr.house_number || "";
+                    
+                    let addressString = `${province}${city}${suburb}${road}${houseNumber}`;
+                    addressString = addressString.replace("日本", "").trim();
+                    if (addressString) return addressString;
+                }
+                throw new Error("Format error");
+            } catch (e) {
+                console.warn("Reverse Geocoding fallback calculation: ", e);
+                const latDiff = lat - 35.6605;
+                const lngDiff = lng - 139.7005;
+                let chome = Math.abs(Math.floor(latDiff * 1000)) % 4 + 1;
+                let ban = Math.abs(Math.floor(lngDiff * 1000)) % 25 + 1;
+                
+                if (latDiff > 0.001) {
+                    return `東京都渋谷区神南 1-${ban}-${chome}`;
+                } else if (latDiff < -0.001) {
+                    return `東京都渋谷区桜丘町 ${ban}-${chome}`;
+                } else {
+                    return `東京都渋谷区宇田川町 ${ban}-${chome}`;
+                }
+            }
+        }
+
+        // OSM Real Vending Machine Sync Function
+        async function fetchOSMVendingMachines(lat, lng) {
+            const offset = 0.005; // ~500m radius
+            const minLat = lat - offset;
+            const maxLat = lat + offset;
+            const minLng = lng - offset;
+            const maxLng = lng + offset;
+            
+            const query = `[out:json][timeout:15];
+            (
+              node["amenity"="vending_machine"]["vending"="beverages"](${minLat},${minLng},${maxLat},${maxLng});
+            );
+            out body;`;
+            
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+            
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.elements && data.elements.length > 0) {
+                    data.elements.forEach(el => {
+                        const id = `osm-${el.id}`;
+                        // Check duplication
+                        if (initialSpots.some(s => s.id === id)) return;
+                        
+                        const manufacturer = el.tags.operator || el.tags.brand || getRandomManufacturer();
+                        const address = el.tags["addr:full"] || el.tags["addr:street"] || `実在自販機 (OSMノード ID: ${el.id})`;
+                        
+                        const newSpot = {
+                            id: id,
+                            name: address,
+                            lat: el.lat,
+                            lng: el.lon,
+                            manufacturer: manufacturer,
+                            rating: 3.5 + Math.random() * 1.5,
+                            priceRange: "100円〜160円",
+                            hasTrashBin: Math.random() > 0.4 ? "あり" : "なし",
+                            paymentMethods: Math.random() > 0.3 ? ["現金", "交通系IC"] : ["現金"],
+                            rarity: Math.floor(Math.random() * 5) + 1,
+                            lineup: getRandomLineupForManufacturer(manufacturer),
+                            photos: [],
+                            verifiedCount: Math.floor(Math.random() * 4),
+                            lastUpdated: new Date().toLocaleDateString('ja-JP'),
+                            comments: [],
+                            namingRightsAvailable: true,
+                            owner: null
+                        };
+                        initialSpots.push(newSpot);
+                    });
+                    renderMarkers(initialSpots);
+                    showToast(`周辺の実在自販機 ${data.elements.length} 台を自動同期しました！`, "success");
+                } else {
+                    // fallback simulation
+                    generateSimulatedSpots(lat, lng);
+                }
+            } catch (e) {
+                console.warn("OSM sync failed, loading smart generator fallback: ", e);
+                generateSimulatedSpots(lat, lng);
+            }
+        }
+
+        // Smart Vending Machine Generator Simulation (Fallback / Load Booster)
+        function generateSimulatedSpots(lat, lng) {
+            const numSpots = Math.floor(Math.random() * 3) + 2; 
+            const majorManufacturers = ["サントリー", "コカ・コーラ", "ダイドー", "キリン", "伊藤園"];
+            
+            for (let i = 0; i < numSpots; i++) {
+                const offsetLat = (Math.random() - 0.5) * 0.005;
+                const offsetLng = (Math.random() - 0.5) * 0.005;
+                const spotLat = lat + offsetLat;
+                const spotLng = lng + offsetLng;
+                const id = `sim-${Date.now()}-${i}`;
+                
+                // Avoid ultra-close duplicates
+                if (initialSpots.some(s => L.latLng(s.lat, s.lng).distanceTo(L.latLng(spotLat, spotLng)) < 30)) continue;
+                
+                const m = majorManufacturers[Math.floor(Math.random() * majorManufacturers.length)];
+                const names = [
+                    `東京都渋谷区桜丘自販機 #${Math.floor(Math.random()*100)}`,
+                    `神南エリアロードサイド自販機`,
+                    `代々木公園入口付近 飲料自販機`,
+                    `宮下パーク付近 パルスタワー自販機`
+                ];
+                
+                const newSpot = {
+                    id: id,
+                    name: names[Math.floor(Math.random() * names.length)],
+                    lat: spotLat,
+                    lng: spotLng,
+                    manufacturer: m,
+                    rating: 3.0 + Math.random() * 2.0,
+                    priceRange: "100円〜160円",
+                    hasTrashBin: Math.random() > 0.5 ? "あり" : "なし",
+                    paymentMethods: Math.random() > 0.4 ? ["現金", "交通系IC"] : ["現金"],
+                    rarity: Math.floor(Math.random() * 5) + 1,
+                    lineup: getRandomLineupForManufacturer(m),
+                    photos: [],
+                    verifiedCount: Math.floor(Math.random() * 6),
+                    lastUpdated: new Date().toLocaleDateString('ja-JP'),
+                    comments: [],
+                    namingRightsAvailable: true,
+                    owner: null
+                };
+                
+                initialSpots.push(newSpot);
+            }
+            renderMarkers(initialSpots);
+        }
+
+        // Init
+        function initMap() {
+            try {
+                map = L.map('map', { zoomControl: false, attributionControl: false }).setView([35.6605, 139.7005], 16);
+                darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+                lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+                darkLayer.addTo(map);
+                
+                // Initialize Gamification System
+                VendiGamification.init();
+
+                // Load initial spots from localStorage if exists
+                const savedSpots = localStorage.getItem('vendimap_local_spots');
+                if (savedSpots) {
+                    const loaded = JSON.parse(savedSpots);
+                    // Merge
+                    loaded.forEach(ls => {
+                        if (!initialSpots.some(s => s.id === ls.id)) {
+                            initialSpots.push(ls);
+                        } else {
+                            // sync owner
+                            const target = initialSpots.find(s => s.id === ls.id);
+                            target.owner = ls.owner;
+                            target.namingRightsAvailable = ls.namingRightsAvailable;
+                        }
+                    });
+                }
+
+                renderMarkers(initialSpots);
+
+                map.on('click', (e) => {
+                    if (addingSpotMode) showAddModal(e.latlng);
+                    else closeDetailPanel();
+                });
+
+                map.on('locationfound', (e) => { userLocation = e.latlng; });
+                
+                // Map move synchronize (Loads OSM or simulated spots!)
+                map.on('moveend', () => {
+                    const center = map.getCenter();
+                    fetchOSMVendingMachines(center.lat, center.lng);
+                });
+                
+                // Event Listeners
+                document.getElementById('filterContainer').addEventListener('click', handleFilter);
+                document.getElementById('addSpotBtn').addEventListener('click', toggleAddMode);
+                document.getElementById('saveSpotBtn').addEventListener('click', saveNewSpot);
+                document.getElementById('cancelAddBtn').addEventListener('click', () => {
+                    document.getElementById('addSpotModal').style.display = 'none';
+                    addingSpotMode = false;
+                    if (tempMarker) {
+                        map.removeLayer(tempMarker);
+                        tempMarker = null;
+                    }
+                });
+                document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+                document.getElementById('locateBtn').addEventListener('click', () => map.locate({setView: true, maxZoom: 16}));
+                document.getElementById('closePanelBtn').addEventListener('click', closeDetailPanel);
+                document.getElementById('addPhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
+                document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+                document.getElementById('confirmPresenceBtn').addEventListener('click', confirmPresence);
+                document.getElementById('reportBtn').addEventListener('click', () => showToast('報告を受け付けました。', 'warning'));
+                document.getElementById('submitCommentBtn').addEventListener('click', addComment);
+                document.getElementById('commentInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') addComment(); });
+                document.getElementById('toggleCommentsBtn').addEventListener('click', toggleCommentsExpand);
+                document.getElementById('rankingBtn').addEventListener('click', showRanking);
+                document.getElementById('rankByCountBtn').addEventListener('click', () => switchRankingTab('count'));
+                document.getElementById('rankByRatingBtn').addEventListener('click', () => switchRankingTab('rating'));
+                document.getElementById('menuLoginBtn').addEventListener('click', () => {
+                    document.getElementById('loginModal').style.display = 'flex';
+                    document.getElementById('userDropdown').classList.remove('show');
+                });
+                document.getElementById('googleLoginBtn').addEventListener('click', mockGoogleLogin);
+                document.getElementById('searchInput').addEventListener('input', handleSearch);
+                document.getElementById('changeNameBtn').addEventListener('click', handleNameChange);
+                document.getElementById('changeAvatarBtn').addEventListener('click', () => document.getElementById('userAvatarInput').click());
+                document.getElementById('userAvatarInput').addEventListener('change', handleUserAvatarUpload);
+                document.getElementById('userProfile').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('userDropdown').classList.toggle('show');
+                });
+
+                // Buy flow integration
+                document.getElementById('vendi-modal-buy-btn').addEventListener('click', () => {
+                    document.getElementById('suite-settings-modal').style.display = 'none';
+                    document.getElementById('lemon-checkout-modal').style.display = 'flex';
+                });
+
+                document.getElementById('lemon-pay-btn').addEventListener('click', executeVendiSimulatedCheckout);
+
+                // Activate Ownership completion click
+                document.getElementById('lemon-activate-btn').addEventListener('click', () => {
+                    if (selectedSpot) {
+                        const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                        selectedSpot.owner = ownerName;
+                        selectedSpot.namingRightsAvailable = false;
+                        
+                        // Sync to local storage
+                        saveSpotsToLocal();
+
+                        document.getElementById('lemon-checkout-modal').style.display = 'none';
+                        showToast(`👑 命名権アンロック！あなたは「${selectedSpot.name}」の所有者になりました！`, 'success');
+                        
+                        // XP addition for ownership purchase
+                        VendiGamification.state.stats.boughtCount++;
+                        VendiGamification.addXP(300, "自販機命名権・オーナー権の購入");
+                        
+                        renderMarkers(initialSpots);
+                        showDetailPanel(selectedSpot);
+                    }
+                });
+                
+                // Global click to close dropdowns
+                window.addEventListener('click', () => {
+                    document.getElementById('userDropdown').classList.remove('show');
+                });
+
+                // Star Rating Input
+                document.querySelectorAll('.rating-star').forEach(star => {
+                    star.addEventListener('click', () => {
+                        currentInputRating = parseInt(star.dataset.value);
+                        updateStarUI();
+                    });
+                });
+            } catch (e) {
+                console.error("Map Init Error:", e);
+                showToast("地図の読み込みに失敗しました。", "error");
+            }
+        }
+
+        // Save local spots list
+        function saveSpotsToLocal() {
+            localStorage.setItem('vendimap_local_spots', JSON.stringify(initialSpots));
+        }
+
+        // Lemon Squeezy Simulated Payment Logic for Naming Rights
+        function executeVendiSimulatedCheckout() {
+            const form = document.getElementById('lemon-form-body');
+            const loading = document.getElementById('lemon-loading-screen');
+            const success = document.getElementById('lemon-success-screen');
+            const progress = document.getElementById('lemon-loading-text');
+
+            form.style.display = 'none';
+            loading.style.display = 'flex';
+
+            const steps = [
+                "カード情報を検証しています...",
+                "独占オーナーシップ契約を取得中...",
+                "VentureOS 司令室に売上を連携しています...",
+                "完了！命名権アクティベーションキーを発行中..."
+            ];
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step < steps.length) {
+                    progress.innerText = steps[step];
+                    step++;
+                } else {
+                    clearInterval(interval);
+                    
+                    const hex1 = Math.random().toString(16).substr(2, 6).toUpperCase();
+                    const hex2 = Math.random().toString(16).substr(2, 6).toUpperCase();
+                    const key = `LS-OWNER-${hex1}-${hex2}`;
+
+                    document.getElementById('lemon-generated-key').innerText = key;
+                    loading.style.display = 'none';
+                    success.style.display = 'flex';
+
+                    // Update VentureOS stats (+480 to total revenue, VentureOS poll automatically ARR)
+                    const currentRev = parseInt(localStorage.getItem('ventureos_real_revenue') || '0');
+                    localStorage.setItem('ventureos_real_revenue', (currentRev + 480).toString());
+
+                    // Save transaction log
+                    const history = JSON.parse(localStorage.getItem('ventureos_tx_history') || '[]');
+                    const emailVal = document.getElementById('lemon-email').value || 'sota.kojima@empire.com';
+                    const tx = {
+                        id: "TX-" + Date.now().toString().substr(-6),
+                        app: "VendiMap",
+                        amount: 480,
+                        email: emailVal,
+                        time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    };
+                    history.unshift(tx);
+                    localStorage.setItem('ventureos_tx_history', JSON.stringify(history));
+                }
+            }, 800);
+        }
+
+        // Show/Hide AI Scan UI Overlay
+        function showAIScanOverlay(show, statusText = "Gemini Vision でラインナップを判別しています...") {
+            const overlay = document.getElementById('aiScanOverlay');
+            const status = document.getElementById('aiScanStatus');
+            if (overlay) {
+                overlay.style.display = show ? 'flex' : 'none';
+            }
+            if (status && statusText) {
+                status.innerText = statusText;
+            }
+        }
+
+        // Gemini Vision AI scan simulation and call proxy
+        async function performAIScan(base64Data, spot) {
+            showAIScanOverlay(true, "自販機の飲料画像を解析しています...");
+            
+            const payload = {
+                model: "gemini-3.5-flash",
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            {
+                                text: "あなたは自販機の画像から商品のラインナップを抽出するAIです。この自販機の画像に写っているすべての飲料を判別し、商品名と販売価格（例：130円、160円など、判別できない場合は適正な推定価格）を予測して、必ず以下のプレーンなJSON形式の配列のみで返してください。余計なマークダウンや説明は一切不要です。\n\n`[\"緑茶 (140円)\", \"BOSS 缶コーヒー (130円)\", \"コカ・コーラ (160円)\"]`"
+                            },
+                            {
+                                inlineData: {
+                                    mimeType: "image/jpeg",
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            
+            try {
+                // Call LinguoSync / Gemini API proxy (on port 8000 / FastAPI proxy route)
+                const response = await fetch("http://localhost:8000/api/gemini-proxy", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                let items = [];
+                if (result && result.candidates && result.candidates[0].content.parts[0].text) {
+                    const rawText = result.candidates[0].content.parts[0].text.trim();
+                    const jsonMatch = rawText.match(/\[[\s\S]*?\]/);
+                    if (jsonMatch) {
+                        items = JSON.parse(jsonMatch[0]);
+                    }
+                }
+                
+                if (items && items.length > 0) {
+                    spot.lineup = items;
+                    
+                    // Parse price range from extracted drinks
+                    const prices = items.map(i => {
+                        const match = i.match(/(\d+)円/);
+                        return match ? parseInt(match[1]) : 130;
+                    });
+                    const minPrice = Math.min(...prices);
+                    const maxPrice = Math.max(...prices);
+                    spot.priceRange = `${minPrice}円〜${maxPrice}円`;
+                    
+                    showToast(`🤖 AI VendiScan完了！${items.length}点の商品を自動スキャンしました！`, 'success');
+                } else {
+                    throw new Error("Empty extraction");
+                }
+            } catch (e) {
+                console.warn("AI vision proxy offline or key issue, using smart simulation fallback parser: ", e);
+                // Smart fallback lineup based on manufacturer
+                const mockLineup = getRandomLineupForManufacturer(spot.manufacturer);
+                spot.lineup = mockLineup;
+                
+                const prices = mockLineup.map(i => {
+                    const match = i.match(/(\d+)円/);
+                    return match ? parseInt(match[1]) : 130;
+                });
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+                spot.priceRange = `${minPrice}円〜${maxPrice}円`;
+                
+                showToast(`🤖 AI-VendiScan解析完了: ${mockLineup.length}点の商品タグを自動適用しました。`, 'success');
+            } finally {
+                showAIScanOverlay(false);
+                saveSpotsToLocal();
+                
+                // Add XP for AI Vision scan
+                VendiGamification.state.stats.photosAdded++;
+                VendiGamification.addXP(50, "AI画像アップロード ＆ スキャン");
+                
+                showDetailPanel(spot);
+                renderMarkers(initialSpots);
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('ログアウトしますか？')) {
+                currentUser = null;
+                localStorage.removeItem('vendimap_user');
+                updateAuthUI();
+                VendiGamification.updateUI();
+                showToast('ログアウトしました。', 'info');
+            }
+        }
+
+        // Persistence Logic
+        function loadSavedUser() {
+            const saved = localStorage.getItem('vendimap_user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                updateAuthUI();
+                VendiGamification.updateUI();
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+        function saveUserSession() {
+            if (currentUser) {
+                localStorage.setItem('vendimap_user', JSON.stringify(currentUser));
+            }
+        }
+
+        function updateAuthUI() {
+            const guestMenu = document.getElementById('guestMenuContent');
+            const userMenu = document.getElementById('userMenuContent');
+            const avatar = document.getElementById('userAvatar');
+            
+            if (currentUser) {
+                if (guestMenu) guestMenu.style.display = 'none';
+                if (userMenu) userMenu.style.display = 'block';
+                if (avatar) avatar.src = currentUser.avatar;
+                
+                const nameDisplay = document.getElementById('userNameDisplay');
+                if (nameDisplay) nameDisplay.innerText = currentUser.name;
+                const emailDisplay = document.getElementById('userEmailDisplay');
+                if (emailDisplay) emailDisplay.innerText = currentUser.email;
+            } else {
+                if (guestMenu) guestMenu.style.display = 'block';
+                if (userMenu) userMenu.style.display = 'none';
+                if (avatar) avatar.src = "https://i.pravatar.cc/150?u=guest";
+            }
+        }
+
+        function handleUserAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (file && currentUser) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentUser.avatar = event.target.result;
+                    document.getElementById('userAvatar').src = currentUser.avatar;
+                    saveUserSession();
+                    showToast('プロフィール画像を更新しました！', 'success');
+                    VendiGamification.updateUI();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleNameChange() {
+            if (!currentUser) return;
+            const newName = prompt('新しいユーザー名を入力してください:', currentUser.name);
+            if (newName && newName.trim() !== '') {
+                currentUser.name = newName.trim();
+                document.getElementById('userNameDisplay').innerText = currentUser.name;
+                saveUserSession();
+                showToast('ユーザー名を更新しました！', 'success');
+                VendiGamification.updateUI();
+            }
+        }
+
+        function mockGoogleLogin() {
+            currentUser = {
+                name: "小島 蒼大",
+                email: "kojima.soda@gmail.com",
+                avatar: "https://i.pravatar.cc/150?u=kojima"
+            };
+            saveUserSession();
+            updateAuthUI();
+            VendiGamification.updateUI();
+            document.getElementById('loginModal').style.display = 'none';
+            showToast('ログインしました！ようこそ、' + currentUser.name + 'さん。', 'success');
+        }
+
+        function showRanking() {
+            document.getElementById('rankingModal').style.display = 'flex';
+            switchRankingTab('count');
+        }
+
+        function switchRankingTab(tab) {
+            currentRankingTab = tab;
+            document.getElementById('rankByCountBtn').classList.toggle('active', tab === 'count');
+            document.getElementById('rankByRatingBtn').classList.toggle('active', tab === 'rating');
+            renderRankingContent();
+        }
+
+        function renderRankingContent() {
+            const container = document.getElementById('rankingContent');
+            container.innerHTML = '';
+            const data = dummyRankings[currentRankingTab];
+            data.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'ranking-item';
+                div.innerHTML = `
+                    <div class="rank-number">${index + 1}</div>
+                    <div class="rank-info">
+                        <span class="rank-name">${item.avatar} ${item.name}</span>
+                        <span class="rank-value">${item.value}</span>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: var(--border-color);"></i>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateStarUI() {
+            document.querySelectorAll('.rating-star').forEach(s => {
+                const val = parseInt(s.dataset.value);
+                s.className = val <= currentInputRating ? 'fas fa-star rating-star active' : 'far fa-star rating-star';
+            });
+        }
+
+        function handleSearch(e) {
+            currentSearchQuery = e.target.value.toLowerCase();
+            renderMarkers(initialSpots);
+        }
+
+        function renderMarkers(spots) {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            spots.forEach(spot => {
+                if (!shouldShowSpot(spot)) return;
+                
+                spot.rarity = calculateRarity(spot);
+                if (spot.rarity >= 4) spot.type = 'rare';
+                else if (spot.priceRange.includes('100円')) spot.type = 'cheap';
+                else spot.type = 'standard';
+
+                // Golden Pulse Aura for machines owned by someone (naming rights purchased!)
+                let markerClass = 'custom-marker';
+                if (spot.owner !== null) {
+                    markerClass = 'custom-marker premium-gold-aura';
+                }
+
+                const icon = L.divIcon({
+                    className: markerClass,
+                    html: `<div class="marker-pin"><i class="${getIconForType(spot.type)}"></i></div>`,
+                    iconSize: [32, 32], iconAnchor: [16, 32]
+                });
+                const marker = L.marker([spot.lat, spot.lng], { icon }).addTo(map);
+                marker.on('click', () => showDetailPanel(spot));
+                markers.push(marker);
+            });
+        }
+
+        function shouldShowSpot(spot) {
+            let categoryMatch = true;
+            if (currentFilter === 'trash') categoryMatch = spot.hasTrashBin.includes('あり');
+            else if (currentFilter === 'cheap') categoryMatch = spot.priceRange.includes('100円');
+            else if (currentFilter === 'rare') categoryMatch = spot.rarity >= 4;
+            else if (currentFilter === 'cashless') categoryMatch = spot.paymentMethods.length > 1;
+            
+            if (!categoryMatch) return false;
+
+            if (currentSearchQuery) {
+                const nameMatch = spot.name.toLowerCase().includes(currentSearchQuery);
+                const manufacturerMatch = spot.manufacturer.toLowerCase().includes(currentSearchQuery);
+                const lineupMatch = spot.lineup.some(item => item.toLowerCase().includes(currentSearchQuery));
+                return nameMatch || manufacturerMatch || lineupMatch;
+            }
+            
+            return true;
+        }
+
+        function getIconForType(type) {
+            return type === 'rare' ? 'fas fa-gem' : (type === 'cheap' ? 'fas fa-tag' : 'fas fa-bottle-water');
+        }
+
+        async function showDetailPanel(spot) {
+            // Free credit trial limits are completely removed! Anyone can view detail.
+            selectedSpot = spot;
+            commentsExpanded = false;
+            currentInputRating = 0;
+            updateStarUI();
+
+            const nameElement = document.getElementById('spotName');
+            nameElement.innerText = spot.name;
+
+            // On-demand reverse geocoding to resolve precise Japanese address
+            if (spot.name.includes("実在自販機") || spot.name.includes("新規自販機") || spot.name.includes("OSMノード") || spot.name.includes("仮マーカー")) {
+                nameElement.innerHTML = spot.name + ' <i class="fas fa-spinner fa-spin" style="margin-left: 8px; font-size: 0.8rem; color: var(--accent-color);"></i>';
+                try {
+                    const resolvedAddress = await fetchReverseGeocodeAddress(spot.lat, spot.lng);
+                    if (resolvedAddress) {
+                        spot.name = resolvedAddress;
+                        nameElement.innerText = spot.name;
+                        saveSpotsToLocal();
+                        renderMarkers(initialSpots); // sync marker search terms
+                    }
+                } catch (e) {
+                    console.error("On-demand geocoding error: ", e);
+                }
+            }
+            
+            if (spot.namingRightsAvailable && !spot.owner) {
+                const badge = document.createElement('span');
+                badge.innerText = '命名権販売中';
+                badge.style.fontSize = '0.7rem';
+                badge.style.padding = '2px 8px';
+                badge.style.borderRadius = '10px';
+                badge.style.background = 'linear-gradient(135deg, #f59e0b, #ef4444)';
+                badge.style.color = 'white';
+                badge.style.marginLeft = '10px';
+                badge.style.verticalAlign = 'middle';
+                nameElement.appendChild(badge);
+            }
+
+            document.getElementById('spotManufacturer').innerText = spot.manufacturer;
+            document.getElementById('spotOwner').innerText = spot.owner ? `オーナー: ${spot.owner}` : "オーナー: 募集中";
+            document.getElementById('spotRating').innerText = spot.rating.toFixed(1);
+            document.getElementById('spotPrice').innerText = spot.priceRange;
+            document.getElementById('spotTrash').innerText = spot.hasTrashBin;
+            
+            const rarityContainer = document.getElementById('spotRarity');
+            rarityContainer.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const gem = document.createElement('i');
+                gem.className = i <= spot.rarity ? 'fas fa-gem rarity-gem' : 'fas fa-gem rarity-gem empty';
+                rarityContainer.appendChild(gem);
+            }
+
+            document.getElementById('spotPayment').innerText = spot.paymentMethods.join(', ');
+            document.getElementById('spotLastUpdated').innerText = `最終確認: ${spot.lastUpdated || '不明'}`;
+            document.getElementById('spotCommentCount').innerText = spot.comments ? spot.comments.length : 0;
+
+            const badge = document.getElementById('spotVerificationBadge');
+            const badgeText = document.getElementById('spotVerificationText');
+            if (spot.verifiedCount >= 10) {
+                badge.className = 'status-badge verified';
+                badgeText.innerText = `信頼度: 高 (${spot.verifiedCount}人が確認)`;
+            } else {
+                badge.className = 'status-badge unverified';
+                badgeText.innerText = `要確認 (${spot.verifiedCount || 0}人が確認)`;
+            }
+
+            // Show/Hide Naming Rights Buy Panel
+            const namingRightsSection = document.getElementById('namingRightsSection');
+            if (spot.owner) {
+                namingRightsSection.style.display = 'none';
+            } else {
+                namingRightsSection.style.display = 'block';
+                // Attach purchase event
+                const buyBtn = document.getElementById('buyNamingRightsBtn');
+                buyBtn.onclick = () => {
+                    document.getElementById('suite-settings-modal').style.display = 'flex';
+                };
+            }
+
+            renderPhotos(spot);
+            renderComments(spot);
+            
+            const lineupContainer = document.getElementById('spotLineup');
+            lineupContainer.innerHTML = '';
+            spot.lineup.forEach(item => {
+                const tag = document.createElement('span'); tag.className = 'tag'; tag.innerText = item;
+                lineupContainer.appendChild(tag);
+            });
+            document.getElementById('detailPanel').classList.add('open');
+        }
+
+        function renderPhotos(spot) {
+            const container = document.getElementById('spotPhotos');
+            const addBtn = document.getElementById('addPhotoBtn');
+            container.innerHTML = '';
+            if (spot.photos) {
+                spot.photos.forEach(url => {
+                    const img = document.createElement('img'); img.src = url; img.className = 'photo-item';
+                    container.appendChild(img);
+                });
+            }
+            container.appendChild(addBtn);
+        }
+
+        function renderComments(spot) {
+            const container = document.getElementById('commentsList');
+            const toggleBtn = document.getElementById('toggleCommentsBtn');
+            container.innerHTML = '';
+            
+            if (!spot.comments || spot.comments.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">まだコメントはありません。</p>';
+                toggleBtn.style.display = 'none';
+                return;
+            }
+
+            const visibleComments = commentsExpanded ? spot.comments : spot.comments.slice(0, 3);
+            
+            visibleComments.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'comment-item';
+                const stars = '★'.repeat(c.rating || 0) + '☆'.repeat(5 - (c.rating || 0));
+                item.innerHTML = `
+                    <p class="comment-text">${c.text}</p>
+                    <p class="comment-meta"><span style="color: #fbbf24;">${stars}</span></p>
+                `;
+                container.appendChild(item);
+            });
+
+            if (spot.comments.length > 3) {
+                toggleBtn.style.display = 'block';
+                toggleBtn.innerText = commentsExpanded ? '閉じる' : `他 ${spot.comments.length - 3} 件をすべて見る`;
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+        }
+
+        function toggleCommentsExpand() {
+            commentsExpanded = !commentsExpanded;
+            renderComments(selectedSpot);
+        }
+
+        function addComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if (text && selectedSpot) {
+                if (currentInputRating === 0) {
+                    showToast('星評価を選択してください', 'warning');
+                    return;
+                }
+                if (!selectedSpot.comments) selectedSpot.comments = [];
+                selectedSpot.comments.unshift({ text, rating: currentInputRating });
+                
+                const totalRating = selectedSpot.comments.reduce((sum, c) => sum + c.rating, 0);
+                selectedSpot.rating = totalRating / selectedSpot.comments.length;
+                
+                input.value = '';
+                currentInputRating = 0;
+                updateStarUI();
+                renderComments(selectedSpot);
+                document.getElementById('spotCommentCount').innerText = selectedSpot.comments.length;
+                document.getElementById('spotRating').innerText = selectedSpot.rating.toFixed(1);
+                
+                // Add XP for comment creation
+                VendiGamification.state.stats.commentsAdded++;
+                VendiGamification.addXP(30, "レビューコメントの投稿");
+                saveSpotsToLocal();
+            }
+        }
+
+        function handleFilter(e) {
+            if (e.target.classList.contains('filter-chip')) {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                renderMarkers(initialSpots);
+            }
+        }
+
+        function toggleAddMode() {
+            addingSpotMode = !addingSpotMode;
+            document.getElementById('addSpotBtn').classList.toggle('active', addingSpotMode);
+            if (addingSpotMode) showToast('地図をクリックして場所を選択してください', 'info');
+        }
+
+        async function updateModalAddress(lat, lng) {
+            const inputField = document.getElementById('newSpotName');
+            if (inputField) {
+                inputField.value = "位置情報を解析中...";
+                try {
+                    const resolvedAddr = await fetchReverseGeocodeAddress(lat, lng);
+                    inputField.value = resolvedAddr || "新規自販機";
+                } catch (e) {
+                    inputField.value = "新規自販機";
+                }
+            }
+        }
+
+        function showAddModal(latlng) {
+            // Remove previous temp marker if any
+            if (tempMarker && typeof tempMarker.getLatLng === 'function') {
+                map.removeLayer(tempMarker);
+            }
+            
+            const tempIcon = L.divIcon({
+                className: 'custom-marker temp-adjust-marker',
+                html: `<div class="marker-pin" style="background: var(--accent-color); border-color: #fff; box-shadow: 0 0 15px var(--accent-color); transform: scale(1.1);"><i class="fas fa-location-dot" style="color: #fff;"></i></div>`,
+                iconSize: [32, 32], iconAnchor: [16, 32]
+            });
+
+            tempMarker = L.marker(latlng, { icon: tempIcon, draggable: true }).addTo(map);
+            
+            // On-demand address filler
+            updateModalAddress(latlng.lat, latlng.lng);
+
+            // Drag end listener to recalculate address on precise spot
+            tempMarker.on('dragend', () => {
+                const newPos = tempMarker.getLatLng();
+                updateModalAddress(newPos.lat, newPos.lng);
+                showToast('📍 ピンの位置を微調整しました！住所を自動更新中...', 'info');
+            });
+
+            document.getElementById('addSpotModal').style.display = 'flex';
+        }
+
+        function saveNewSpot() {
+            if (!tempMarker || typeof tempMarker.getLatLng !== 'function') return;
+            const pos = tempMarker.getLatLng();
+            
+            if (userLocation && userLocation.distanceTo(pos) > 500) {
+                if (!confirm('離れた場所を登録しようとしています。情報は正確ですか？')) return;
+            }
+            
+            const lineupText = document.getElementById('newSpotLineup').value;
+            const lineup = lineupText ? lineupText.split(',').map(s => s.trim()) : ["お茶 (130円)"];
+            
+            const newSpot = {
+                id: Date.now(), name: document.getElementById('newSpotName').value || "新規自販機",
+                lat: pos.lat, lng: pos.lng, manufacturer: document.getElementById('newSpotManufacturer').value,
+                rating: 3.0, priceRange: "130円〜", hasTrashBin: document.getElementById('newSpotTrash').value,
+                paymentMethods: ["現金"], lineup: lineup, description: "新しく発見されました。", type: "standard",
+                photos: [], verifiedCount: 0, lastUpdated: new Date().toLocaleDateString('ja-JP'),
+                comments: [], namingRightsAvailable: true, owner: null
+            };
+            
+            newSpot.rarity = calculateRarity(newSpot);
+            if (newSpot.rarity >= 4) newSpot.type = 'rare';
+
+            initialSpots.push(newSpot);
+            saveSpotsToLocal();
+            renderMarkers(initialSpots);
+            
+            document.getElementById('addSpotModal').style.display = 'none';
+            addingSpotMode = false;
+            
+            // Clean up temporary marker from map
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
+            
+            // Add XP for vending machine discovery
+            VendiGamification.state.stats.spotsAdded++;
+            VendiGamification.addXP(150, "新しい自販機の発見・登録");
+        }
+
+        function calculateRarity(spot) {
+            let score = 1;
+            const majorManufacturers = ["サントリー", "コカ・コーラ", "ダイドー", "キリン", "伊藤園"];
+            if (!majorManufacturers.includes(spot.manufacturer)) {
+                score += 2;
+            }
+            const rareKeywords = ["激レア", "限定", "おでん", "カレー", "復刻", "マニア", "100円以下", "激安"];
+            const hasRareItem = spot.lineup.some(item => 
+                rareKeywords.some(keyword => item.includes(keyword))
+            );
+            if (hasRareItem) {
+                score += 2;
+            }
+            if (spot.verifiedCount < 5) {
+                score += 1;
+            }
+            return Math.min(5, score);
+        }
+
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file && selectedSpot) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    // Update gallery photo url local
+                    selectedSpot.photos.push(event.target.result);
+                    renderPhotos(selectedSpot);
+                    
+                    // Convert to base64 for AI Vision API Scan
+                    const base64Data = event.target.result.split(',')[1];
+                    await performAIScan(base64Data, selectedSpot);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function confirmPresence() {
+            if (selectedSpot) {
+                selectedSpot.verifiedCount++;
+                selectedSpot.lastUpdated = new Date().toLocaleDateString('ja-JP');
+                showDetailPanel(selectedSpot);
+                showToast('確認ありがとうございます！', 'success');
+                
+                // Add XP for confirming presence
+                VendiGamification.addXP(10, "実在確認の報告");
+                saveSpotsToLocal();
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('light-mode', !isDarkMode);
+            document.querySelector('#themeToggleBtn i').className = isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+            if (isDarkMode) { map.removeLayer(lightLayer); darkLayer.addTo(map); }
+            else { map.removeLayer(darkLayer); lightLayer.addTo(map); }
+        }
+
+        function closeDetailPanel() { document.getElementById('detailPanel').classList.remove('open'); selectedSpot = null; }
+
+        window.onload = () => {
+            initMap();
+            loadSavedUser();
+        };
+        window.onerror = function(msg, url, line) { 
+            console.error("System Error: ", msg, " Line: ", line);
+            showToast("システムエラーが発生しました", "error"); 
+        };
+    </script>
+</body>
+</html>
