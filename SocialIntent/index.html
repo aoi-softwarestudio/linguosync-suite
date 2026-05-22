@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialIntent AI - SNS Trend SEO & Intent Planner</title>
+    <meta name="description" content="Instagram, YouTube, X, TikTokの2026年リアルタイムトレンドをAIが横断分析。バズるSNS投稿コピーとSEOインテントを自動選定します。">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #05060b;
+            --bg-card: rgba(10, 12, 22, 0.7);
+            --primary: #ec4899;
+            --primary-glow: rgba(236, 72, 153, 0.35);
+            --accent: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.3);
+            --text-main: #f8fafc;
+            --text-dim: #64748b;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 5% 5%, rgba(236, 72, 153, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 95% 95%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 1.5rem; }
+        header.app-header {
+            height: 80px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border); margin-bottom: 2rem;
+        }
+        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo {
+            font-size: 1.4rem; font-weight: 900;
+            background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;
+        }
+        .chip {
+            background: var(--primary-glow); color: var(--primary);
+            font-size: 0.65rem; font-weight: 800; padding: 2px 8px;
+            border-radius: 20px; border: 1px solid var(--primary);
+        }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .btn-api-key {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            color: var(--text-dim); padding: 0.4rem 0.9rem; border-radius: 10px;
+            font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-api-key:hover { border-color: var(--accent); color: white; }
+        .btn-upgrade {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; padding: 0.5rem 1.2rem; border-radius: 12px; font-weight: 800;
+            border: none; cursor: pointer; font-size: 0.8rem;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.25); transition: var(--transition-smooth);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4); }
+        .hero { text-align: center; padding: 3rem 0 2rem; }
+        .hero h1 {
+            font-size: 3rem; font-weight: 900; margin-bottom: 1rem;
+            background: linear-gradient(to bottom, #fff 50%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: var(--text-dim); font-size: 1.1rem; margin-bottom: 2rem; max-width: 650px; margin-left: auto; margin-right: auto; }
+        .search-container {
+            max-width: 600px; margin: 0 auto; display: flex; gap: 10px;
+            background: var(--bg-card); border: 1px solid var(--glass-border);
+            padding: 8px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px); transition: 0.3s;
+        }
+        .search-container:focus-within { border-color: var(--primary); box-shadow: 0 10px 30px var(--primary-glow); }
+        .search-container input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 1rem; padding: 0 10px; }
+        .search-container button { background: var(--primary); color: white; border: none; padding: 0.8rem 1.8rem; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+        .search-container button:hover { background: #db2777; }
+        .demo-tags { display: flex; justify-content: center; gap: 10px; margin-top: 1.2rem; flex-wrap: wrap; }
+        .demo-tag-btn {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            color: var(--text-dim); font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 20px; cursor: pointer; transition: 0.2s;
+        }
+        .demo-tag-btn:hover { color: white; border-color: var(--primary); background: rgba(236,72,153,0.05); }
+        .dashboard {
+            display: none; grid-template-columns: 1fr 1.2fr; gap: 2rem; margin-top: 3rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .card {
+            background: var(--bg-card); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            border-radius: 24px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-bottom: 2rem;
+        }
+        .card-title {
+            font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; color: white;
+            border-bottom: 1px solid var(--glass-border); padding-bottom: 0.8rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1rem; text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+        .stat-lab { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+        .chart-wrapper { display: flex; justify-content: center; align-items: center; padding: 1rem 0; }
+        /* Copy items */
+        .copy-item {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+            border-left-width: 3px; padding: 1.2rem; border-radius: 16px; margin-bottom: 1rem;
+            position: relative; transition: var(--transition-smooth);
+        }
+        .copy-item:hover { transform: translateX(4px); }
+        .copy-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; margin-bottom: 6px; }
+        .copy-text { font-size: 0.9rem; color: white; font-weight: 600; line-height: 1.5; margin-bottom: 10px; }
+        .btn-copy {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white;
+            padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-copy:hover { background: var(--primary); border-color: var(--primary); }
+
+        /* PREMIUM LOCK */
+        .premium-locked { position: relative; }
+        .premium-locked .lock-overlay {
+            position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, rgba(5,6,11,0.92) 50%);
+            border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            padding-bottom: 1.5rem; z-index: 10;
+        }
+        .lock-badge {
+            background: linear-gradient(135deg, var(--primary), var(--accent)); color: white;
+            font-size: 0.75rem; font-weight: 800; padding: 6px 16px; border-radius: 20px;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; margin-top: 8px;
+            border: none; outline: none;
+        }
+        .lock-badge:hover { transform: scale(1.05); }
+
+        /* Premium Features Block styles */
+        .premium-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        @media(max-width:768px) { .premium-grid { grid-template-columns: 1fr; } }
+        .premium-block { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 18px; padding: 1.5rem; text-align: left; }
+        .premium-block-title { font-size: 0.95rem; font-weight: 800; color: #a78bfa; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+        .script-box { background: rgba(0,0,0,0.25); border-radius: 12px; padding: 1.2rem; border-left: 4px solid var(--primary); font-size: 0.85rem; line-height: 1.7; white-space: pre-wrap; font-family: 'Outfit', sans-serif; color: #cbd5e1; text-align: left; }
+        .differentiation-box { font-size: 0.88rem; line-height: 1.8; color: #cbd5e1; text-align: left; }
+
+        /* Detail Report */
+        .detail-report { margin-bottom: 3rem; animation: fadeIn 0.8s ease-out 0.2s both; display: none; }
+        .report-summary-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .report-kpi-box {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 0.9rem 1rem; text-align: center; transition: 0.3s;
+        }
+        .report-kpi-box:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .report-kpi-score { font-size: 1.6rem; font-weight: 900; }
+        .report-kpi-label { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
+        .report-platform-row {
+            display: grid; grid-template-columns: 160px 1fr 2fr; align-items: start;
+            gap: 1.4rem; padding: 1.4rem 0; border-bottom: 1px solid var(--glass-border);
+        }
+        .report-platform-row:last-child { border-bottom: none; }
+        .platform-badge { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.9rem; }
+        .platform-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .score-bar-wrap { background: rgba(255,255,255,0.04); border-radius: 20px; height: 8px; overflow: hidden; margin-top: 4px; }
+        .score-bar-fill { height: 100%; border-radius: 20px; transition: width 1.2s cubic-bezier(0.25,0.8,0.25,1); }
+        .score-label { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px; }
+        .report-insight { font-size: 0.85rem; color: #94a3b8; line-height: 1.8; }
+        .report-insight strong { color: white; }
+        .report-insight .tag-pill {
+            display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 20px; margin: 2px 2px 2px 0; opacity: 0.85;
+        }
+        .report-ai-loading { color: var(--text-dim); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        .dots-anim::after { content: ''; animation: dots 1.4s infinite; }
+        @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+
+        /* Premium-only extras */
+        .premium-section { position: relative; }
+        .premium-blur { filter: blur(6px); pointer-events: none; user-select: none; }
+        .premium-section .section-lock {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 10px; z-index: 5;
+        }
+        .section-lock-box {
+            background: rgba(10,12,22,0.9); backdrop-filter: blur(8px);
+            border: 1px solid var(--primary-glow); border-radius: 20px;
+            padding: 1.5rem 2rem; text-align: center; max-width: 320px;
+        }
+        .section-lock-box h4 { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
+        .section-lock-box p { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; }
+
+        /* Pricing */
+        .pricing-section { text-align: center; padding: 4rem 0; }
+        .pricing-card {
+            max-width: 480px; margin: 0 auto;
+            background: linear-gradient(135deg, rgba(236,72,153,0.05), rgba(139,92,246,0.05));
+            border: 1px solid var(--primary-glow);
+        }
+        .pricing-features { text-align: left; list-style: none; padding: 1.5rem 0; font-size: 0.9rem; border-bottom: 1px solid var(--glass-border); margin-bottom: 1.5rem; line-height: 2; }
+        .pricing-features li { display: flex; align-items: flex-start; gap: 10px; }
+        .pricing-features .free-feat { color: var(--text-dim); }
+        .pricing-features .pro-feat { color: white; }
+
+        /* API Key Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #0d0f1c; border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 2.5rem; max-width: 480px; width: 90%; animation: fadeIn 0.3s ease;
+        }
+        .modal-box h3 { font-size: 1.3rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .modal-box p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .modal-input {
+            width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+            color: white; padding: 0.8rem 1rem; border-radius: 12px; font-size: 0.9rem; outline: none;
+            transition: 0.2s; margin-bottom: 1rem;
+        }
+        .modal-input:focus { border-color: var(--primary); }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-save { flex: 1; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; border: none; padding: 0.75rem; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        .btn-modal-skip { background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); color: var(--text-dim); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; cursor: pointer; }
+
+        /* Loader */
+        .loader { display: none; text-align: center; padding: 3rem 0; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary); border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+        .loader-steps { display: flex; flex-direction: column; gap: 6px; color: var(--text-dim); font-size: 0.85rem; }
+        .loader-step.active { color: white; }
+        .loader-step.done { color: #10b981; }
+
+        /* Export button */
+        .btn-export {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+            color: white; padding: 6px 14px; border-radius: 10px; font-size: 0.78rem;
+            font-weight: 700; cursor: pointer; transition: 0.2s; margin-left: auto;
+        }
+        .btn-export:hover { border-color: var(--accent); background: rgba(139,92,246,0.1); }
+    </style>
+</head>
+<body data-app="socialintent">
+    <div class="container">
+        <header class="app-header">
+            <div class="logo-area" onclick="location.reload()">
+                <div class="logo">SOCIALINTENT AI</div>
+                <div class="chip">SNS TREND SEO</div>
+            </div>
+            <div class="header-right">
+                <button class="btn-api-key" id="apiKeyBtn" onclick="showApiModal()" style="display:none;">
+                    <i class="fas fa-key"></i> <span id="apiKeyStatus">APIキー設定</span>
+                </button>
+                <button class="btn-upgrade" id="customUpgradeBtn">
+                    <i class="fas fa-crown"></i> プレミアムへ ¥580
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="hero" id="heroSection">
+            <h1>SNSの検索意図から、<br>ミリオンバズの動機を逆算する。</h1>
+            <p>Instagram, YouTube, X, TikTok, Google Search Intentの2026年リアルタイムトレンドをAIが横断分析。バズるSNS投稿コピーとSEOインテントを自動生成します。</p>
+            <div class="search-container">
+                <input type="text" id="keywordInput" placeholder="シードキーワードを入力 (例: Micro SaaS, AI Coding, 暗号資産)..." onkeydown="if(event.key==='Enter')analyzeIntent()">
+                <button onclick="analyzeIntent()">分析する</button>
+            </div>
+            <div class="demo-tags">
+                <button class="demo-tag-btn" onclick="setKeyword('Micro SaaS')"># Micro SaaS</button>
+                <button class="demo-tag-btn" onclick="setKeyword('AI Coding Assistant')"># AI Coding</button>
+                <button class="demo-tag-btn" onclick="setKeyword('ソーシャルSEO 2026')"># ソーシャルSEO</button>
+                <button class="demo-tag-btn" onclick="setKeyword('不動産クラウドファンディング')"># 不動産クラファン</button>
+                <button class="demo-tag-btn" onclick="setKeyword('筋トレ ダイエット')"># 筋トレ</button>
+            </div>
+        </section>
+
+        <!-- Loader -->
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div class="loader-steps">
+                <div class="loader-step" id="step1"><i class="fas fa-circle-notch fa-spin"></i> 検索ボリューム・競合度を推定中...</div>
+                <div class="loader-step" id="step2"><i class="fas fa-circle"></i> Gemini AIがトレンドを解析中...</div>
+                <div class="loader-step" id="step3"><i class="fas fa-circle"></i> プラットフォーム別インサイトを生成中...</div>
+                <div class="loader-step" id="step4"><i class="fas fa-circle"></i> レポートを構築中...</div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <main class="dashboard" id="mainDashboard">
+            <!-- Left: Radar -->
+            <div class="dashboard-left">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-chart-pie" style="color:var(--primary)"></i>
+                        インテント概要: <span id="displayKeyword" style="color:var(--primary);margin-left:5px">キーワード</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-val" id="valVolume">0</div>
+                            <div class="stat-lab">月間推定検索ボリューム</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-val" id="valDifficulty">0</div>
+                            <div class="stat-lab">インテント競合度 (1-100)</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="radarChart" width="300" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: AI Hooks -->
+            <div class="dashboard-right">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-magic" style="color:var(--accent)"></i>
+                        AIバズ・フック ＆ ソーシャルコピー
+                    </div>
+                    <div id="copyContainer"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Detail Report (full width) -->
+        <div class="detail-report" id="detailReport">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-file-chart-line" style="color:var(--accent)"></i>
+                    プラットフォーム別 詳細分析レポート
+                    <span id="reportKeywordLabel" style="color:var(--primary);margin-left:6px;font-size:1rem;"></span>
+                    <button class="btn-export" id="exportBtn" onclick="exportReport()">
+                        <i class="fas fa-download"></i> エクスポート
+                    </button>
+                </div>
+                <div class="report-summary-bar" id="reportSummaryBar"></div>
+                <div id="detailReportContent"></div>
+            </div>
+        </div>
+
+        <!-- Premium content card (full width) -->
+        <div class="detail-report" id="premiumReport" style="display:none; margin-bottom:3rem;">
+            <div class="card premium-section" style="border:1px solid var(--primary-glow)">
+                <div class="card-title">
+                    <i class="fas fa-crown" style="color:var(--primary)"></i>
+                    AIバズ動画台本 ＆ 競合差別化戦略
+                    <span class="chip" style="background:var(--primary-glow); margin-left:6px">PREMIUM</span>
+                </div>
+                <div id="premiumContentWrap"></div>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <section class="pricing-section">
+            <div class="card pricing-card">
+                <span class="chip" style="background:var(--primary-glow);display:inline-block;margin-bottom:1rem;">PRICING PLAN</span>
+                <h3>SocialIntent AI プレミアム</h3>
+                <div style="font-size:2.2rem;font-weight:900;margin:1rem 0;color:var(--primary)">¥580 <span style="font-size:1rem;color:var(--text-dim)">/月</span></div>
+                <ul class="pricing-features">
+                    <li class="free-feat"><i class="fas fa-check" style="color:#4ade80;margin-top:3px;flex-shrink:0"></i><span>全5プラットフォームの本物AIトレンド分析（無料）</span></li>
+                    <li class="free-feat"><i class="fas fa-check" style="color:#4ade80;margin-top:3px;flex-shrink:0"></i><span>全5プラットフォームの本物AIバズ・フック生成（無料）</span></li>
+                    <li class="free-feat"><i class="fas fa-check" style="color:#4ade80;margin-top:3px;flex-shrink:0"></i><span>5軸インテントレーダーチャート概要</span></li>
+                    <li class="pro-feat"><i class="fas fa-crown" style="color:var(--primary);margin-top:3px;flex-shrink:0"></i><span><strong>AIバズ動画台本・スクリプト自動生成</strong>（フック/本編/CTA）</span></li>
+                    <li class="pro-feat"><i class="fas fa-crown" style="color:var(--primary);margin-top:3px;flex-shrink:0"></i><span><strong>競合コンテンツ差別化戦略・ポジショニング提案</strong></span></li>
+                    <li class="pro-feat"><i class="fas fa-crown" style="color:var(--primary);margin-top:3px;flex-shrink:0"></i><span><strong>クリック可能な関連キーワード提案</strong></span></li>
+                    <li class="pro-feat"><i class="fas fa-crown" style="color:var(--primary);margin-top:3px;flex-shrink:0"></i><span>レポートのMarkdownエクスポート機能</span></li>
+                </ul>
+                <button class="btn-upgrade" id="directUpgradeBtn" style="width:100%;justify-content:center;font-size:0.95rem;padding:0.75rem;">
+                    今すぐプレミアムを体験する
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- API Key Modal -->
+    <div class="modal-overlay" id="apiModal">
+        <div class="modal-box">
+            <h3><i class="fas fa-key" style="color:var(--accent);margin-right:8px"></i>Gemini APIキー設定</h3>
+            <p>本物のAIトレンド分析・インテント解析を実行するために、Google AI Studioで無料取得できるGemini APIキーを入力してください。<br><span style="color:#a78bfa">※キーはローカルブラウザ（localStorage）に安全に保存されます。</span></p>
+            <input class="modal-input" type="password" id="apiKeyInput" placeholder="AIzaSy...">
+            <div class="modal-actions">
+                <button class="btn-modal-save" onclick="saveApiKey()"><i class="fas fa-save"></i> 保存</button>
+                <button class="btn-modal-skip" onclick="closeApiModal()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Limit Modal -->
+    <div class="modal-overlay" id="limitModal">
+        <div class="modal-box" style="border: 1px solid var(--primary-glow); text-align: center;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--primary); margin-bottom: 1.5rem;"></i>
+            <h3>無料分析枠の上限に達しました</h3>
+            <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                無料プランでのキーワード分析は、1日3回までに制限されています。<br>
+                引き続きキーワードを分析するには、プレミアムプランへアップグレードしてください。
+            </p>
+            <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                <button class="btn-upgrade" id="limitModalUpgradeBtn" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 0.95rem;">
+                    <i class="fas fa-crown"></i> プレミアムへアップグレード ¥580
+                </button>
+                <button class="btn-modal-skip" onclick="closeLimitModal()" style="width: 100%;">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="suite-gatekeeper.js"></script>
+    <script>
+    let backendApiUrl = 'https://coastal-provision-hearings-installing.trycloudflare.com';
+
+    // ── State ─────────────────────────────────────────────
+    let currentKeyword = '';
+
+    let currentHash = 0;
+    let currentAIData = null;
+    let isPremium = false;
+
+    // ── API Key ───────────────────────────────────────────
+    function getApiKey() { return localStorage.getItem('si_gemini_key') || ''; }
+    function saveApiKey() {
+        const k = document.getElementById('apiKeyInput').value.trim();
+        if (k) { localStorage.setItem('si_gemini_key', k); updateApiKeyStatus(); }
+        closeApiModal();
+    }
+    function showApiModal() {
+        document.getElementById('apiKeyInput').value = getApiKey();
+        document.getElementById('apiModal').classList.add('show');
+    }
+    function closeApiModal() { document.getElementById('apiModal').classList.remove('show'); }
+    function updateApiKeyStatus() {
+        const btn = document.getElementById('apiKeyStatus');
+        if (getApiKey()) { btn.textContent = 'APIキー設定済み ✓'; }
+        else { btn.textContent = 'APIキー設定'; }
+    }
+
+    // ── Helpers ───────────────────────────────────────────
+    function setKeyword(val) { document.getElementById('keywordInput').value = val; analyzeIntent(); }
+    function hashStr(s) { return s.split('').reduce((a, c) => a + c.charCodeAt(0), 0); }
+
+    // ── Loader steps ──────────────────────────────────────
+    function setStep(n) {
+        for (let i = 1; i <= 4; i++) {
+            const el = document.getElementById('step' + i);
+            if (i < n) { el.className = 'loader-step done'; el.querySelector('i').className = 'fas fa-check-circle'; }
+            else if (i === n) { el.className = 'loader-step active'; el.querySelector('i').className = 'fas fa-circle-notch fa-spin'; }
+            else { el.className = 'loader-step'; el.querySelector('i').className = 'fas fa-circle'; }
+        }
+    }
+
+    // ── Gemini API call ───────────────────────────────────
+    async function callGemini(prompt) {
+        const key = getApiKey();
+        let res;
+        try {
+            if (key) {
+                res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 1800 } })
+                });
+            } else {
+                res = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        model: "gemini-3.5-flash"
+                    })
+                });
+            }
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (data.error) {
+                console.error("Gemini API proxy error:", data.error);
+                return null;
+            }
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            // Extract JSON
+            const match = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
+            if (match) return JSON.parse(match[1]);
+            return null;
+        } catch (e) {
+            console.error("Gemini API call failed:", e);
+            return null;
+        }
+    }
+
+    // ── Main analyze ──────────────────────────────────────
+    async function analyzeIntent() {
+        const keyword = document.getElementById('keywordInput').value.trim();
+        if (!keyword) return;
+        currentKeyword = keyword;
+        currentHash = hashStr(keyword);
+        const hash = currentHash;
+
+        // Check premium
+        isPremium = (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium());
+
+        // Check cache (sessionStorage) first to bypass daily limit
+        let aiData = null;
+        let cachedVal = sessionStorage.getItem(`si_cache_${keyword}_${isPremium}`);
+        if (!cachedVal && isPremium) {
+            cachedVal = sessionStorage.getItem(`si_cache_${keyword}_false`);
+        }
+        if (cachedVal) {
+            try {
+                aiData = JSON.parse(cachedVal);
+            } catch (e) {
+                console.error("Error parsing cached AI data:", e);
+            }
+        }
+
+        // Daily Limit check for Free users on cache miss
+        if (!aiData && !isPremium) {
+            const today = new Date().toLocaleDateString('ja-JP');
+            let dailyUsage = JSON.parse(localStorage.getItem('si_daily_usage') || '{}');
+            if (dailyUsage.date !== today) {
+                dailyUsage = { date: today, count: 0, keywords: [] };
+            }
+            if (dailyUsage.count >= 3 && !dailyUsage.keywords.includes(keyword)) {
+                showLimitModal();
+                return;
+            }
+        }
+
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('mainDashboard').style.display = 'none';
+        document.getElementById('detailReport').style.display = 'none';
+        document.getElementById('premiumReport').style.display = 'none';
+        setStep(1);
+
+        await new Promise(r => setTimeout(r, 700));
+        setStep(2);
+
+        if (!aiData) {
+            let prompt = "";
+            if (isPremium) {
+                prompt = `あなたはSNSマーケティングの専門家です。
+キーワード「${keyword}」について2026年現在の日本市場向け分析を行い、以下のJSON形式で回答してください。
+
+必ず実際のこのキーワードに特化した具体的な内容を書いてください（汎用的な回答は禁止）。
+
+{
+  "summary": "このキーワードの本質的な検索インテントを2文で（日本語）",
+  "volume": 月間想定検索ボリュームの数値（1000〜500000の間の整数数値。必ずこのキーワードに応じた現実的な推測値にすること）,
+  "difficulty": 検索競合難易度の数値（1〜100の間の整数数値。必ずこのキーワードに応じた現実的な推測値にすること）,
+  "platforms": {
+    "youtube": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "YouTubeでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）。必ずこのキーワード固有の内容にすること",
+      "hooks": ["このキーワード専用のYouTubeサムネイル文言またはタイトルフック", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "instagram": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "Instagram Reelsでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）",
+      "hooks": ["このキーワード専用のReels冒頭フック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "tiktok": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "TikTok/Shortsでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）",
+      "hooks": ["このキーワード専用のTikTokフック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "x": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "X/Twitterでこのキーワードを扱う場合の具体的な戦略・スレッド構成を3文で（日本語）",
+      "hooks": ["このキーワード専用 of Xポストフック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "seo": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "Google検索でこのキーワードを扱う場合の具体的なSEO戦略・インテントタイプを3文で（日本語）",
+      "hooks": ["このキーワード専用のメタタイトル案", "2つ目の案"],
+      "hashtags": ["#関連キーワード1", "#関連キーワード2", "#関連キーワード3"]
+    }
+  },
+  "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
+  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
+}
+
+JSONのみ返してください。`;
+            } else {
+                prompt = `あなたはSNSマーケティングの専門家です。
+キーワード「${keyword}」について2026年現在の日本市場向け分析を行い、以下のJSON形式で回答してください。
+
+必ず実際のこのキーワードに特化した具体的な内容を書いてください（汎用的な回答は禁止）。
+
+{
+  "summary": "このキーワードの本質的な検索インテントを2文で（日本語）",
+  "volume": 月間想定検索ボリュームの数値（1000〜500000の間の整数数値。必ずこのキーワードに応じた現実的な推測値にすること）,
+  "difficulty": 検索競合難易度の数値（1〜100の間の整数数値。必ずこのキーワードに応じた現実的な推測値にすること）,
+  "platforms": {
+    "youtube": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "YouTubeでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）。必ずこのキーワード固有の内容にすること",
+      "hooks": ["このキーワード専用のYouTubeサムネイル文言またはタイトルフック", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "instagram": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "Instagram Reelsでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）",
+      "hooks": ["このキーワード専用のReels冒頭フック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "tiktok": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "TikTok/Shortsでこのキーワードを扱う場合の具体的な戦略・注意点を3文で（日本語）",
+      "hooks": ["このキーワード専用のTikTokフック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "x": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "X/Twitterでこのキーワードを扱う場合の具体的な戦略・スレッド構成を3文で（日本語）",
+      "hooks": ["このキーワード専用 of Xポストフック文", "2つ目のフック"],
+      "hashtags": ["#タグ1", "#タグ2", "#タグ3"]
+    },
+    "seo": {
+      "score": 0-100の整数,
+      "trend": "現在のトレンド傾向を15字以内",
+      "insight": "Google検索でこのキーワードを扱う場合の具体的なSEO戦略・インテントタイプを3文で（日本語）",
+      "hooks": ["このキーワード専用のメタタイトル案", "2つ目の案"],
+      "hashtags": ["#関連キーワード1", "#関連キーワード2", "#関連キーワード3"]
+    }
+  }
+}
+
+JSONのみ返してください。`;
+            }
+
+            aiData = await callGemini(prompt);
+            if (!aiData) {
+                alert("Gemini AIからのデータ取得に失敗しました。APIキーが正しいか、またはインターネットの接続状況を確認し、再度お試しください。");
+                document.getElementById('loader').style.display = 'none';
+                return;
+            }
+            try {
+                sessionStorage.setItem(`si_cache_${keyword}_${isPremium}`, JSON.stringify(aiData));
+            } catch (e) {
+                console.error("Error saving AI data to cache:", e);
+            }
+
+            // Increment usage count for Free users on successful search
+            if (!isPremium) {
+                const today = new Date().toLocaleDateString('ja-JP');
+                let dailyUsage = JSON.parse(localStorage.getItem('si_daily_usage') || '{}');
+                if (dailyUsage.date !== today) {
+                    dailyUsage = { date: today, count: 0, keywords: [] };
+                }
+                if (!dailyUsage.keywords.includes(keyword)) {
+                    dailyUsage.keywords.push(keyword);
+                    dailyUsage.count = dailyUsage.keywords.length;
+                    localStorage.setItem('si_daily_usage', JSON.stringify(dailyUsage));
+                }
+            }
+        }
+
+        currentAIData = aiData;
+        setStep(3);
+        await new Promise(r => setTimeout(r, 400));
+        setStep(4);
+        await new Promise(r => setTimeout(r, 400));
+
+        const scores = {
+            youtube:   aiData.platforms?.youtube?.score   ?? 50,
+            instagram: aiData.platforms?.instagram?.score ?? 50,
+            tiktok:    aiData.platforms?.tiktok?.score    ?? 50,
+            x:         aiData.platforms?.x?.score         ?? 50,
+            seo:       aiData.platforms?.seo?.score       ?? 50,
+        };
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('mainDashboard').style.display = 'grid';
+
+        document.getElementById('displayKeyword').innerText = keyword;
+        
+        // Coerce volume and difficulty from AI response if available
+        let volumeVal = (12000 + (hash * 45) % 85000);
+        if (aiData.volume) {
+            const parsed = Number(aiData.volume.toString().replace(/[^0-9]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) volumeVal = parsed;
+        }
+        let difficultyVal = 25 + (hash % 65);
+        if (aiData.difficulty) {
+            const parsed = Number(aiData.difficulty.toString().replace(/[^0-9]/g, ''));
+            if (!isNaN(parsed) && parsed > 0 && parsed <= 100) difficultyVal = parsed;
+        }
+        
+        document.getElementById('valVolume').innerText = volumeVal.toLocaleString();
+        document.getElementById('valDifficulty').innerText = difficultyVal + '/100';
+
+        generateCopyHooks(keyword, aiData);
+        drawRadar(scores);
+        generateDetailReport(keyword, aiData);
+        generatePremiumReport(keyword, aiData);
+        trackVentureOSStats();
+    }
+
+    // ── Copy Hooks ────────────────────────────────────────
+    function generateCopyHooks(keyword, ai) {
+        const container = document.getElementById('copyContainer');
+        const platformColors = { x:'#1d9bf0', tiktok:'#ff0050', instagram:'#e1306c', youtube:'#ff0000', seo:'var(--accent)' };
+
+        const hookDefs = [
+            { platform:'x',         icon:'fab fa-x-twitter', tag:'💡 X / Twitter — スレッドフック',       aiKey:'x' },
+            { platform:'tiktok',    icon:'fab fa-tiktok',    tag:'🔥 TikTok / Shorts — ループフック',    aiKey:'tiktok' },
+            { platform:'instagram', icon:'fab fa-instagram', tag:'📸 Instagram Reels — 保存誘導フック',  aiKey:'instagram' },
+            { platform:'youtube',   icon:'fab fa-youtube',   tag:'🎥 YouTube — 視聴維持フック',          aiKey:'youtube' },
+            { platform:'seo',       icon:'fab fa-google',    tag:'📈 Google SEO — メタタイトル案',      aiKey:'seo' },
+        ];
+
+        const html = hookDefs.map(h => {
+            const platformData = ai.platforms?.[h.aiKey];
+            const text = platformData?.hooks?.[0] || '分析データがありません。';
+            return `
+            <div class="copy-item" style="border-left-color:${platformColors[h.platform]}">
+                <span class="copy-tag" style="color:${platformColors[h.platform]}">${h.tag}</span>
+                <div class="copy-text">${text}</div>
+                <button class="btn-copy" onclick="copyText(this,\`${text.replace(/`/g,"'")}\`)"><i class="fas fa-copy"></i> コピー</button>
+            </div>`;
+        }).join('');
+
+        container.innerHTML = html;
+    }
+
+    // ── Radar Chart ───────────────────────────────────────
+    function drawRadar(scores) {
+        const canvas = document.getElementById('radarChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2, cy = canvas.height / 2, radius = 100;
+
+        const metrics = [
+            { name: 'YouTube',   score: scores.youtube,   color: '#ff0000' },
+            { name: 'Instagram', score: scores.instagram, color: '#e1306c' },
+            { name: 'TikTok',    score: scores.tiktok,    color: '#ff0050' },
+            { name: 'X',         score: scores.x,         color: '#1d9bf0' },
+            { name: 'Google SEO',score: scores.seo,       color: '#8b5cf6' },
+        ];
+        const count = metrics.length;
+
+        // Web rings
+        for (let r = 0.2; r <= 1; r += 0.2) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < count; i++) {
+                const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+                const x = cx + radius * r * Math.cos(angle), y = cy + radius * r * Math.sin(angle);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath(); ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1;
+        for (let i = 0; i < count; i++) {
+            const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+            ctx.beginPath(); ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)); ctx.stroke();
+        }
+
+        // Score fill (gradient per point)
+        ctx.beginPath();
+        for (let i = 0; i < count; i++) {
+            const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+            const r = metrics[i].score / 100;
+            const x = cx + radius * r * Math.cos(angle), y = cy + radius * r * Math.sin(angle);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(236,72,153,0.2)'; ctx.fill();
+        ctx.strokeStyle = '#ec4899'; ctx.lineWidth = 2.5; ctx.stroke();
+
+        // Dots per axis
+        for (let i = 0; i < count; i++) {
+            const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+            const r = metrics[i].score / 100;
+            const x = cx + radius * r * Math.cos(angle), y = cy + radius * r * Math.sin(angle);
+            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = metrics[i].color; ctx.fill();
+        }
+
+        // Labels
+        ctx.font = 'bold 9px Outfit'; ctx.textAlign = 'center';
+        for (let i = 0; i < count; i++) {
+            const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+            const lx = cx + (radius + 22) * Math.cos(angle), ly = cy + (radius + 14) * Math.sin(angle);
+            ctx.fillStyle = metrics[i].color;
+            ctx.fillText(metrics[i].name, lx, ly);
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(metrics[i].score + '/100', lx, ly + 11);
+        }
+    }
+
+    // ── Detail Report ─────────────────────────────────────
+    function generateDetailReport(keyword, ai) {
+        const reportEl = document.getElementById('detailReport');
+        const summaryEl = document.getElementById('reportSummaryBar');
+        const contentEl = document.getElementById('detailReportContent');
+        document.getElementById('reportKeywordLabel').innerText = `「${keyword}」`;
+        document.getElementById('exportBtn').style.display = isPremium ? 'inline-flex' : 'none';
+
+        const platforms = [
+            { key:'youtube',   name:'YouTube',      icon:'fab fa-youtube',    color:'#ff0000' },
+            { key:'instagram', name:'Instagram',     icon:'fab fa-instagram',  color:'#e1306c' },
+            { key:'tiktok',    name:'TikTok/Shorts', icon:'fab fa-tiktok',     color:'#ff0050' },
+            { key:'x',         name:'X (Twitter)',   icon:'fab fa-x-twitter',  color:'#1d9bf0' },
+            { key:'seo',       name:'Google SEO',    icon:'fab fa-google',     color:'#8b5cf6' },
+        ];
+
+        // Summary KPI row
+        summaryEl.innerHTML = platforms.map(pl => {
+            const score = ai.platforms?.[pl.key]?.score ?? 0;
+            return `
+            <div class="report-kpi-box">
+                <div class="report-kpi-score" style="color:${pl.color}">${score}</div>
+                <div class="report-kpi-label"><i class="${pl.icon}"></i> ${pl.name}</div>
+            </div>`;
+        }).join('');
+
+        // AI summary banner
+        let summaryHtml = '';
+        if (ai?.summary) {
+            summaryHtml = `<div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.5rem;font-size:0.9rem;color:#c4b5fd;line-height:1.7"><span style="font-weight:800;color:#a78bfa">✨ AI分析サマリー</span><br>${ai.summary}</div>`;
+        }
+
+        // Build each row
+        const buildRow = (pl) => {
+            const aiPl = ai.platforms?.[pl.key];
+            const score = aiPl?.score ?? 0;
+            const insight = aiPl?.insight || '分析データがありません。';
+            const hashtags = aiPl?.hashtags || [];
+            const trend = aiPl?.trend || '安定';
+
+            const hashtagHtml = hashtags.length
+                ? '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">' + hashtags.map(t => `<span class="tag-pill" style="background:${pl.color}22;color:${pl.color}">${t}</span>`).join('') + '</div>'
+                : '';
+
+            return `
+                <div class="report-platform-row">
+                    <div>
+                        <div class="platform-badge">
+                            <span class="platform-dot" style="background:${pl.color}"></span>
+                            <i class="${pl.icon}" style="color:${pl.color}"></i>${pl.name}
+                        </div>
+                        <div style="margin-top:8px;font-size:0.7rem;background:${pl.color}22;color:${pl.color};padding:2px 8px;border-radius:8px;display:inline-block">${trend}</div>
+                    </div>
+                    <div>
+                        <div class="score-label">スコア ${score}/100</div>
+                        <div class="score-bar-wrap">
+                            <div class="score-bar-fill" id="bar-${pl.key}" style="width:0%;background:linear-gradient(90deg,${pl.color}66,${pl.color})"></div>
+                        </div>
+                    </div>
+                    <div class="report-insight">${insight}${hashtagHtml}</div>
+                </div>`;
+        };
+
+        contentEl.innerHTML = summaryHtml + platforms.map(pl => buildRow(pl)).join('');
+        reportEl.style.display = 'block';
+
+        requestAnimationFrame(() => {
+            platforms.forEach(pl => {
+                const bar = document.getElementById('bar-' + pl.key);
+                if (bar) bar.style.width = (ai.platforms?.[pl.key]?.score ?? 0) + '%';
+            });
+        });
+    }
+
+    // ── Premium Section ───────────────────────────────────
+    async function fetchPremiumDataOnly(keyword) {
+        const contentEl = document.getElementById('premiumContentWrap');
+        contentEl.innerHTML = `
+            <div style="text-align:center; padding:3rem 1rem; color:var(--text-dim);">
+                <i class="fas fa-spinner fa-spin" style="font-size:2.5rem; color:var(--primary); margin-bottom:15px; display:block;"></i>
+                <div style="font-weight:800; font-size:1.1rem; color:white; margin-bottom:8px;">プレミアム限定データを生成中...</div>
+                <div style="font-size:0.85rem;">キーワード「${keyword}」について、バズ動画台本、差別化戦略、関連KWを分析しています。</div>
+            </div>
+        `;
+        const prompt = `あなたはSNSマーケティングの専門家です。
+キーワード「${keyword}」について2026年現在の日本市場向け詳細なプレミアムレポートを生成し、以下のJSON形式のみで回答してください。
+
+必ず実際のこのキーワードに特化した具体的な内容を書いてください。
+
+{
+  "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
+  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
+}
+
+JSONのみ返してください。`;
+
+        const premiumData = await callGemini(prompt);
+        if (premiumData) {
+            currentAIData = {
+                ...currentAIData,
+                relatedKeywords: premiumData.relatedKeywords || [],
+                differentiation: premiumData.differentiation || "",
+                script: premiumData.script || ""
+            };
+            try {
+                sessionStorage.setItem(`si_cache_${keyword}_true`, JSON.stringify(currentAIData));
+            } catch (e) {
+                console.error("Error saving premium AI data to cache:", e);
+            }
+            generatePremiumReport(keyword, currentAIData);
+        } else {
+            alert("プレミアムデータの生成に失敗しました。再度お試しください。");
+            generatePremiumReport(keyword, currentAIData);
+        }
+    }
+
+    function generatePremiumReport(keyword, ai) {
+        const premiumEl = document.getElementById('premiumReport');
+        const contentEl = document.getElementById('premiumContentWrap');
+        
+        if (isPremium && (!ai.script && !ai.differentiation)) {
+            contentEl.innerHTML = `
+                <div style="text-align:center; padding: 2.5rem 1rem; background: rgba(139,92,246,0.05); border: 1px dashed rgba(139,92,246,0.3); border-radius: 18px; margin: 1.5rem 0;">
+                    <i class="fas fa-crown" style="font-size:2.5rem; color:#ffd700; margin-bottom:15px; display:block;"></i>
+                    <h4 style="margin: 0 0 8px 0; color: white; font-weight:800; font-size:1.1rem;">プレミアムプラン特典を生成できます</h4>
+                    <p style="margin: 0 auto 20px auto; color: var(--text-dim); font-size:0.85rem; max-width:400px; line-height:1.5;">
+                        このキーワードに対するバズ動画台本、競合差別化ポジショニング、関連キーワードサジェストをAIがその場で詳細に分析・生成します。
+                    </p>
+                    <button class="lock-badge" style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color:white; border:none; padding:10px 24px; border-radius:30px; font-weight:800; font-size:0.9rem; cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:8px;" onclick="fetchPremiumDataOnly('${keyword}')">
+                        <i class="fas fa-magic"></i> プレミアムAIレポートを生成する
+                    </button>
+                </div>
+            `;
+        } else if (isPremium || (ai.script && ai.differentiation)) {
+            // Render actual Premium features in full
+            const rkHtml = ai.relatedKeywords && ai.relatedKeywords.length
+                ? `<div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--glass-border)">
+                    <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:10px;font-weight:700"><i class="fas fa-search" style="margin-right:5px"></i>関連キーワードサジェスト</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">${ai.relatedKeywords.map(kw => `<span style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;padding:4px 12px;border-radius:20px;font-size:0.8rem;cursor:pointer;transition:0.2s" onmouseover="this.style.background='rgba(139,92,246,0.25)'" onmouseout="this.style.background='rgba(139,92,246,0.1)'" onclick="setKeyword('${kw}')">${kw} →</span>`).join('')}</div>
+                   </div>`
+                : '';
+
+            contentEl.innerHTML = `
+                <div class="premium-grid" style="padding: 1.5rem 0;">
+                    <div class="premium-block">
+                        <div class="premium-block-title"><i class="fas fa-scroll" style="color:var(--primary)"></i> AIバズ動画スクリプト台本案</div>
+                        <div class="script-box">${ai.script || '生成されていません'}</div>
+                    </div>
+                    <div class="premium-block">
+                        <div class="premium-block-title"><i class="fas fa-bullseye" style="color:var(--accent)"></i> 競合コンテンツ差別化戦略</div>
+                        <div class="differentiation-box">${ai.differentiation || '生成されていません'}</div>
+                    </div>
+                </div>
+                ${rkHtml}
+            `;
+            document.getElementById('exportBtn').style.display = 'inline-flex';
+        } else {
+            // Render locked teaser for free users
+            const creditUsed = localStorage.getItem('si_free_credit_used') === 'true';
+            let overlayHtml = '';
+            if (!creditUsed) {
+                overlayHtml = `
+                    <i class="fas fa-lock" style="font-size:2rem; color:var(--primary)"></i>
+                    <div style="font-weight:800; font-size:1.1rem; color:white;">プレミアムプラン限定機能</div>
+                    <div style="font-size:0.8rem; color:var(--text-dim); max-width:320px; margin-bottom:8px;">「AIバズ動画台本」「競合差別化ポジショニング」「関連キーワード提案」が利用可能になります。</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                        <button class="lock-badge" style="background: linear-gradient(135deg, #10b981, #059669); border:none;" onclick="useFreePremiumCredit('${keyword}')">
+                            <i class="fas fa-gift"></i> 無料クレジットでこのレポートを解放する (1回限り)
+                        </button>
+                        <button class="lock-badge" style="background: linear-gradient(135deg, var(--primary), var(--accent)); border:none;" onclick="document.getElementById('directUpgradeBtn').click()">
+                            <i class="fas fa-crown"></i> プレミアムへアップグレード ¥580
+                        </button>
+                    </div>
+                `;
+            } else {
+                overlayHtml = `
+                    <i class="fas fa-lock" style="font-size:2rem; color:var(--primary)"></i>
+                    <div style="font-weight:800; font-size:1.1rem; color:white;">プレミアムプラン限定機能</div>
+                    <div style="font-size:0.8rem; color:var(--text-dim); max-width:320px; margin-bottom:8px;">「AIバズ動画台本」「競合差別化ポジショニング」「関連キーワード提案」が利用可能になります。</div>
+                    <button class="lock-badge" onclick="document.getElementById('directUpgradeBtn').click()">
+                        <i class="fas fa-crown"></i> プレミアムプランで全機能を解放する
+                    </button>
+                `;
+            }
+
+            contentEl.innerHTML = `
+                <div class="premium-locked-area" style="position:relative; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 1.5rem 0;">
+                    <div class="premium-blur" style="filter:blur(5px); pointer-events:none; user-select:none; width:100%;">
+                        <div class="premium-grid">
+                            <div class="premium-block">
+                                <div class="premium-block-title"><i class="fas fa-scroll"></i> AIバズ動画スクリプト台本案</div>
+                                <div class="script-box" style="text-align: left;">【0〜3秒: 強烈なフック】\n「実は、多くの人が${keyword}で勘違いしていること…」\n【3〜20秒: 具体的な本編】\n${keyword}における競合が知らない3つの攻略ポイントを公開。\n【20〜30秒: CTA・アクション誘導】\nさらに詳しい${keyword}のノウハウはプロフのリンクへ！</div>
+                            </div>
+                            <div class="premium-block">
+                                <div class="premium-block-title"><i class="fas fa-bullseye"></i> 競合コンテンツ差別化戦略</div>
+                                <div class="differentiation-box" style="text-align: left;">「${keyword}」に関する一般的な解説動画が溢れる中、他者がアプローチしていない独自の視点とポジショニング案を自動提示します。</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lock-overlay" style="position:absolute; inset:0; background:rgba(5,6,11,0.7); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; border-radius:18px;">
+                        ${overlayHtml}
+                    </div>
+                </div>
+            `;
+            document.getElementById('exportBtn').style.display = 'none';
+        }
+        
+        premiumEl.style.display = 'block';
+    }
+
+    function showLimitModal() {
+        const modal = document.getElementById('limitModal');
+        if (modal) {
+            modal.classList.add('show');
+            const upgradeBtn = document.getElementById('limitModalUpgradeBtn');
+            if (upgradeBtn) {
+                upgradeBtn.onclick = () => {
+                    closeLimitModal();
+                    if (typeof SuiteGatekeeper !== 'undefined') {
+                        const kw = document.getElementById('keywordInput').value.trim();
+                        if (kw) sessionStorage.setItem('si_last_keyword', kw);
+                        SuiteGatekeeper.openCheckout();
+                    }
+                };
+            }
+        } else {
+            alert("本日の無料分析枠（3回）を超過しました。これ以上のキーワード分析を行うには、プレミアムプランへアップグレードしてください。");
+        }
+    }
+
+    function closeLimitModal() {
+        const modal = document.getElementById('limitModal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    async function useFreePremiumCredit(keyword) {
+        if (!confirm(`1回限りの無料お試しクレジットを使用して、「${keyword}」のプレミアムレポートをアンロックしますか？`)) {
+            return;
+        }
+
+        const contentEl = document.getElementById('premiumContentWrap');
+        contentEl.innerHTML = `
+            <div style="text-align:center; padding:3rem 1rem; color:var(--text-dim);">
+                <i class="fas fa-spinner fa-spin" style="font-size:2.5rem; color:var(--primary); margin-bottom:15px; display:block;"></i>
+                <div style="font-weight:800; font-size:1.1rem; color:white; margin-bottom:8px;">無料クレジットを使用してデータを生成中...</div>
+                <div style="font-size:0.85rem;">キーワード「${keyword}」について、バズ動画台本、差別化戦略、関連KWを分析しています。</div>
+            </div>
+        `;
+
+        const prompt = `あなたはSNSマーケティングの専門家です。
+キーワード「${keyword}」について2026年現在の日本市場向け詳細なプレミアムレポートを生成し、以下のJSON形式のみで回答してください。
+
+必ず実際のこのキーワードに特化した具体的な内容を書いてください。
+
+{
+  "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
+  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
+}
+
+JSONのみ返してください。`;
+
+        const premiumData = await callGemini(prompt);
+        if (premiumData) {
+            currentAIData = {
+                ...currentAIData,
+                relatedKeywords: premiumData.relatedKeywords || [],
+                differentiation: premiumData.differentiation || "",
+                script: premiumData.script || ""
+            };
+            
+            // Mark free credit as used
+            localStorage.setItem('si_free_credit_used', 'true');
+
+            // Save unlocked keyword details in localStorage
+            try {
+                const unlocked = JSON.parse(localStorage.getItem('si_unlocked_keywords') || '[]');
+                if (!unlocked.includes(keyword)) {
+                    unlocked.push(keyword);
+                    localStorage.setItem('si_unlocked_keywords', JSON.stringify(unlocked));
+                }
+                localStorage.setItem(`si_unlocked_data_${keyword}`, JSON.stringify(currentAIData));
+            } catch (e) {
+                console.error("Failed to save unlocked keyword to localStorage:", e);
+            }
+
+            // Save to sessionStorage caches
+            try {
+                sessionStorage.setItem(`si_cache_${keyword}_true`, JSON.stringify(currentAIData));
+                sessionStorage.setItem(`si_cache_${keyword}_false`, JSON.stringify(currentAIData));
+            } catch (e) {
+                console.error("Error saving premium AI data to cache:", e);
+            }
+            
+            generatePremiumReport(keyword, currentAIData);
+        } else {
+            alert("プレミアムデータの生成に失敗しました。再度お試しください。");
+            generatePremiumReport(keyword, currentAIData);
+        }
+    }
+
+    // ── Copy ──────────────────────────────────────────────
+    function copyText(btn, text) {
+        navigator.clipboard.writeText(text);
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-check"></i> コピー完了！`;
+        btn.style.background = '#10b981';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 1500);
+    }
+
+    // ── Export ────────────────────────────────────────────
+    function exportReport() {
+        if (!isPremium) { document.getElementById('directUpgradeBtn').click(); return; }
+        const kw = currentKeyword;
+        const ai = currentAIData;
+        let md = `# SocialIntent AI 分析レポート: ${kw}\n\n`;
+        if (ai?.summary) md += `> ${ai.summary}\n\n`;
+        const platforms = ['youtube','instagram','tiktok','x','seo'];
+        platforms.forEach(k => {
+            const p = ai?.platforms?.[k];
+            if (!p) return;
+            md += `## ${k.toUpperCase()}\n- スコア: ${p.score}/100\n- トレンド: ${p.trend}\n- インサイト: ${p.insight}\n- フック: ${(p.hooks||[]).join(' / ')}\n\n`;
+        });
+        if (ai?.differentiation) {
+            md += `## 競合コンテンツ差別化戦略\n${ai.differentiation}\n\n`;
+        }
+        if (ai?.script) {
+            md += `## AIバズ動画台本・構成スクリプト\n\`\`\`text\n${ai.script}\n\`\`\`\n\n`;
+        }
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `socialintent_${kw}_${new Date().toISOString().slice(0,10)}.md`;
+        a.click();
+    }
+
+    // ── Premium check ─────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        updateApiKeyStatus();
+
+        // Restore unlocked keywords cache from localStorage
+        try {
+            const unlocked = JSON.parse(localStorage.getItem('si_unlocked_keywords') || '[]');
+            unlocked.forEach(kw => {
+                const data = localStorage.getItem(`si_unlocked_data_${kw}`);
+                if (data) {
+                    sessionStorage.setItem(`si_cache_${kw}_true`, data);
+                    sessionStorage.setItem(`si_cache_${kw}_false`, data);
+                }
+            });
+        } catch (e) {
+            console.error("Failed to restore unlocked keywords cache:", e);
+        }
+        if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+            const apiBtn = document.getElementById('apiKeyBtn');
+            if (apiBtn) apiBtn.style.display = 'inline-flex';
+        }
+        const upgradeBtn = document.getElementById('customUpgradeBtn');
+        const directBtn  = document.getElementById('directUpgradeBtn');
+        function triggerCheckout() {
+            if (typeof SuiteGatekeeper !== 'undefined') {
+                if (SuiteGatekeeper.isPremium()) alert('プレミアムは有効化済みです！');
+                else {
+                    const kw = document.getElementById('keywordInput').value.trim();
+                    if (kw) {
+                        sessionStorage.setItem('si_last_keyword', kw);
+                    }
+                    SuiteGatekeeper.openCheckout();
+                }
+            }
+        }
+        if (upgradeBtn) upgradeBtn.onclick = triggerCheckout;
+        if (directBtn)  directBtn.onclick  = triggerCheckout;
+
+        // Auto-resume search if just upgraded
+        const savedKeyword = sessionStorage.getItem('si_last_keyword');
+        if (savedKeyword) {
+            document.getElementById('keywordInput').value = savedKeyword;
+            sessionStorage.removeItem('si_last_keyword');
+            setTimeout(() => {
+                analyzeIntent();
+            }, 500);
+        }
+
+        if (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium()) {
+            if (upgradeBtn) upgradeBtn.style.display = 'none';
+            
+            // Add clickable Premium badge/button in the header
+            const headerRight = document.querySelector('.header-right');
+            if (headerRight && !document.getElementById('si-premium-badge')) {
+                const badge = document.createElement('button');
+                badge.id = 'si-premium-badge';
+                badge.className = 'btn-upgrade'; // Reuse the styling class
+                badge.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))';
+                badge.style.border = '1px solid #ffd700';
+                badge.style.color = '#ffd700';
+                badge.style.cursor = 'pointer';
+                badge.style.textShadow = '0 0 4px rgba(255,215,0,0.2)';
+                badge.innerHTML = '<i class="fas fa-crown"></i> プレミアム有効';
+                badge.onclick = () => SuiteGatekeeper.openSettings();
+                headerRight.appendChild(badge);
+            }
+
+            const pricingSections = document.querySelectorAll('.pricing-section');
+            pricingSections.forEach(section => {
+                section.style.display = 'none';
+            });
+        }
+    });
+
+    function trackVentureOSStats() {
+        const s = JSON.parse(localStorage.getItem('socialintent_local_stats') || '{"searches":0}');
+        s.searches += 1;
+        localStorage.setItem('socialintent_local_stats', JSON.stringify(s));
+    }
+    </script>
+</body>
+</html>
