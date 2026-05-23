@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: socialintent-trends
+    env: static
+    publishPath: SocialIntent
