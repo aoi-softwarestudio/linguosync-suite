@@ -62,8 +62,11 @@ def is_checkout_rate_limited(ip, max_requests=5, window_seconds=60):
     return False
 
 # 1. API to create a Stripe Checkout Session
-@app.route("/api/checkout-session", methods=["POST"])
+@app.route("/api/checkout-session", methods=["POST", "OPTIONS"])
 def create_checkout():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+        
     # 1. Security Check: Client IP check and rate limiting to block Credit Master script attacks
     ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr or "127.0.0.1"
     if is_checkout_rate_limited(ip, max_requests=5, window_seconds=60):
@@ -173,8 +176,11 @@ def is_license_rate_limited(ip, max_requests=10, window_seconds=60):
     timestamps.append(now)
     return False
 
-@app.route("/api/validate-license", methods=["POST"])
+@app.route("/api/validate-license", methods=["POST", "OPTIONS"])
 def validate_license():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+        
     ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr or "127.0.0.1"
     if is_license_rate_limited(ip, max_requests=10, window_seconds=60):
         print(f"Security Shield: IP {ip} rate limited on license key validation.")
