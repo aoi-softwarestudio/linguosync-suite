@@ -1,5 +1,5 @@
 let currentChart = null;
-let backendApiUrl = 'https://meeting-reproduce-modems-highway.trycloudflare.com';
+let backendApiUrl = 'https://cholesterol-anniversary-opinions-perhaps.trycloudflare.com';
 
 async function reportActivity(venture, action) {
     try {
