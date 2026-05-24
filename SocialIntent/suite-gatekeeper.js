@@ -69,6 +69,12 @@ const SuiteGatekeeper = {
         this.bindEvents();
         this.updateUIStatus();
         this.handleCheckoutRedirects();
+        
+        // Background license verification on page load if key is stored
+        const storedKey = localStorage.getItem(this.KEYS.LICENSE_KEY);
+        if (storedKey) {
+            this.validateLicenseBackground(storedKey);
+        }
     },
 
     // Public method to open settings modal
@@ -724,6 +730,10 @@ const SuiteGatekeeper = {
                 if (progressState) progressState.style.display = 'none';
                 if (successState) successState.style.display = 'flex';
                 
+                // Immediately apply premium state to prevent loss if tab/modal is closed
+                localStorage.setItem(this.KEYS.LICENSE_STATUS, 'active');
+                localStorage.setItem(this.KEYS.LICENSE_KEY, data.license_key);
+                
                 // Add revenue to global localStorage (VentureOS reads this)
                 const price = this.appInfo.price;
                 const currentRevenue = parseInt(localStorage.getItem('ventureos_real_revenue') || '0');
@@ -801,6 +811,39 @@ const SuiteGatekeeper = {
             console.error('Error validating license:', err);
             localStorage.setItem(this.KEYS.LICENSE_STATUS, 'free');
             this.completeValidation(saveBtn, originalText, '検証エラーが発生しました', true);
+        }
+    },
+
+    // Quiet background validation of stored license key
+    async validateLicenseBackground(licenseKey) {
+        if (!licenseKey || !licenseKey.trim()) return;
+        const backendUrl = this.getBackendUrl();
+        try {
+            const res = await fetch(`${backendUrl}/api/validate-license`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ license_key: licenseKey.trim() })
+            });
+            const data = await res.json();
+            const currentStatus = localStorage.getItem(this.KEYS.LICENSE_STATUS);
+            if (data.valid) {
+                localStorage.setItem(this.KEYS.LICENSE_STATUS, 'active');
+                localStorage.setItem(this.KEYS.LICENSE_KEY, licenseKey.trim());
+                if (currentStatus !== 'active') {
+                    this.updateUIStatus();
+                    document.dispatchEvent(new CustomEvent('suite-license-activated'));
+                }
+            } else {
+                localStorage.setItem(this.KEYS.LICENSE_STATUS, 'free');
+                if (currentStatus === 'active') {
+                    this.updateUIStatus();
+                    document.dispatchEvent(new CustomEvent('suite-license-deactivated'));
+                }
+            }
+        } catch (err) {
+            console.error('Background license verification failed:', err);
         }
     },
 
