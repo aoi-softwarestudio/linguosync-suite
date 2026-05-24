@@ -766,6 +766,8 @@
         document.getElementById('mainDashboard').style.display = 'none';
         document.getElementById('detailReport').style.display = 'none';
         document.getElementById('premiumReport').style.display = 'none';
+        const banner = document.getElementById('recommendationBanner');
+        if (banner) banner.style.display = 'none';
         
         setStep(1);
         setTimeout(() => {
@@ -892,6 +894,8 @@
         document.getElementById('mainDashboard').style.display = 'none';
         document.getElementById('detailReport').style.display = 'none';
         document.getElementById('premiumReport').style.display = 'none';
+        const banner = document.getElementById('recommendationBanner');
+        if (banner) banner.style.display = 'none';
         setStep(1);
 
         await new Promise(r => setTimeout(r, 700));
