@@ -30,7 +30,7 @@ let tutorChatCount = 0; // Tracks consecutive tutor Q&As for achievements
 let geminiApiKey = (typeof SuiteGatekeeper !== 'undefined' && typeof SuiteGatekeeper.getGeminiKey === 'function' ? SuiteGatekeeper.getGeminiKey() : '') || localStorage.getItem('gemini_api_key') || '';
 let isGeminiEnabled = true;
 let geminiModel = localStorage.getItem('studyflow_gemini_model') || 'gemini-3.5-flash';
-let backendApiUrl = 'https://meeting-reproduce-modems-highway.trycloudflare.com'; // Dynamic local routing API Gateway fallback
+let backendApiUrl = 'https://cholesterol-anniversary-opinions-perhaps.trycloudflare.com'; // Dynamic local routing API Gateway fallback
 // Gamification State
 let userXp = parseInt(localStorage.getItem('studyflow_xp') || '50');
 let userStreak = parseInt(localStorage.getItem('studyflow_streak') || '3');
