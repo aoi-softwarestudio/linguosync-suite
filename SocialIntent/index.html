@@ -1687,6 +1687,44 @@ JSONのみ返してください。`;
     }
 
     // ── Premium check ─────────────────────────────────────
+    function syncPremiumUI() {
+        const isPrem = (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium());
+        const upgradeBtn = document.getElementById('customUpgradeBtn');
+        const headerRight = document.querySelector('.header-right');
+        const pricingSections = document.querySelectorAll('.pricing-section');
+        
+        if (isPrem) {
+            if (upgradeBtn) upgradeBtn.style.display = 'none';
+            
+            if (headerRight && !document.getElementById('si-premium-badge')) {
+                const badge = document.createElement('button');
+                badge.id = 'si-premium-badge';
+                badge.className = 'btn-upgrade'; // Reuse the styling class
+                badge.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))';
+                badge.style.border = '1px solid #ffd700';
+                badge.style.color = '#ffd700';
+                badge.style.cursor = 'pointer';
+                badge.style.textShadow = '0 0 4px rgba(255,215,0,0.2)';
+                badge.innerHTML = '<i class="fas fa-crown"></i> プレミアム有効';
+                badge.onclick = () => SuiteGatekeeper.openSettings();
+                headerRight.appendChild(badge);
+            }
+            
+            pricingSections.forEach(section => {
+                section.style.display = 'none';
+            });
+        } else {
+            if (upgradeBtn) upgradeBtn.style.display = 'inline-flex';
+            
+            const badge = document.getElementById('si-premium-badge');
+            if (badge) badge.remove();
+            
+            pricingSections.forEach(section => {
+                section.style.display = 'block';
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         renderHistorySidebar();
         setupRadarInteractions();
@@ -1735,30 +1773,15 @@ JSONのみ返してください。`;
             }, 500);
         }
 
-        if (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium()) {
-            if (upgradeBtn) upgradeBtn.style.display = 'none';
-            
-            // Add clickable Premium badge/button in the header
-            const headerRight = document.querySelector('.header-right');
-            if (headerRight && !document.getElementById('si-premium-badge')) {
-                const badge = document.createElement('button');
-                badge.id = 'si-premium-badge';
-                badge.className = 'btn-upgrade'; // Reuse the styling class
-                badge.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))';
-                badge.style.border = '1px solid #ffd700';
-                badge.style.color = '#ffd700';
-                badge.style.cursor = 'pointer';
-                badge.style.textShadow = '0 0 4px rgba(255,215,0,0.2)';
-                badge.innerHTML = '<i class="fas fa-crown"></i> プレミアム有効';
-                badge.onclick = () => SuiteGatekeeper.openSettings();
-                headerRight.appendChild(badge);
-            }
+        syncPremiumUI();
 
-            const pricingSections = document.querySelectorAll('.pricing-section');
-            pricingSections.forEach(section => {
-                section.style.display = 'none';
-            });
-        }
+        // Listen to premium activation/deactivation events from SuiteGatekeeper
+        document.addEventListener('suite-license-activated', () => {
+            syncPremiumUI();
+        });
+        document.addEventListener('suite-license-deactivated', () => {
+            syncPremiumUI();
+        });
     });
 
     function trackVentureOSStats() {
