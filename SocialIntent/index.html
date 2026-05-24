@@ -586,7 +586,12 @@
 
     <script src="suite-gatekeeper.js"></script>
     <script>
-    let backendApiUrl = 'https://socialintent-api.onrender.com';
+    let backendApiUrl = (window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' || 
+                         window.location.hostname === '' ||
+                         window.location.protocol === 'file:') 
+                         ? 'http://localhost:10000' 
+                         : 'https://socialintent-api.onrender.com';
 
     // ── State ─────────────────────────────────────────────
     let currentKeyword = '';
