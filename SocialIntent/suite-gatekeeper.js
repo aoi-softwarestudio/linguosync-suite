@@ -1,4 +1,4 @@
-// LinguoSync Suite - Unified Gatekeeper & Billing Integration
+// Aoi Software Studio Suite - Unified Gatekeeper & Billing Integration
 // This script provides global premium license validation and free trial credit capping.
 
 const SuiteGatekeeper = {
@@ -9,7 +9,7 @@ const SuiteGatekeeper = {
         CREDITS: 'linguosync_free_credits' // Remaining credits for free trial
     },
 
-    // Price Mapping for SaaS Empire
+    // Price Mapping for Aoi Software Studio Suite
     PRICES: {
         studyflow: { name: "StudyFlow AI - Lifetime Pro", price: 980, display: "¥980" },
         socialintent: { name: "SocialIntent AI - Viral Planner Premium", price: 580, display: "¥580" },
@@ -68,6 +68,7 @@ const SuiteGatekeeper = {
         this.injectCheckoutModal();
         this.bindEvents();
         this.updateUIStatus();
+        this.handleCheckoutRedirects();
     },
 
     // Public method to open settings modal
@@ -76,10 +77,21 @@ const SuiteGatekeeper = {
         if (modal) modal.style.display = 'flex';
     },
 
-    // Public method to open checkout modal
+    getBackendUrl() {
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1' || 
+            window.location.hostname === '' ||
+            window.location.protocol === 'file:') {
+            return 'http://localhost:10000';
+        }
+        return 'https://socialintent-api.onrender.com';
+    },
+
+    // Public method to open checkout modal (Redirects to Stripe Checkout)
     openCheckout() {
         const modal = document.getElementById('suite-settings-modal');
         if (modal) modal.style.display = 'none';
+        
         const lemonModal = document.getElementById('lemon-checkout-modal');
         if (lemonModal) {
             lemonModal.style.display = 'flex';
@@ -87,11 +99,38 @@ const SuiteGatekeeper = {
             const processingScreen = document.getElementById('lemon-processing-screen');
             const progressState = document.getElementById('lemon-processing-state');
             const successState = document.getElementById('lemon-success-state');
-            if (formBody) formBody.style.display = 'block';
-            if (processingScreen) processingScreen.style.display = 'none';
+            const progressText = document.getElementById('lemon-progress-text');
+            if (formBody) formBody.style.display = 'none';
+            if (processingScreen) processingScreen.style.display = 'flex';
             if (progressState) progressState.style.display = 'flex';
             if (successState) successState.style.display = 'none';
+            if (progressText) progressText.innerText = 'Stripe決済ページへ移動しています...';
         }
+        
+        const backendUrl = this.getBackendUrl();
+        fetch(`${backendUrl}/api/checkout-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                origin: window.location.origin
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('決済ページの作成に失敗しました: ' + (data.error || '不明なエラー'));
+                if (lemonModal) lemonModal.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error('Error starting checkout:', err);
+            alert('決済開始中に通信エラーが発生しました。');
+            if (lemonModal) lemonModal.style.display = 'none';
+        });
     },
 
     // Inject modern shared styles
@@ -640,42 +679,50 @@ const SuiteGatekeeper = {
         }
     },
 
-    // Execute beautiful Lemon Squeezy Simulated Payment Flow
-    executeSimulatedCheckout() {
-        const formBody = document.getElementById('lemon-checkout-form-body');
-        const processingScreen = document.getElementById('lemon-processing-screen');
-        const progressState = document.getElementById('lemon-processing-state');
-        const successState = document.getElementById('lemon-success-state');
-        const progressText = document.getElementById('lemon-progress-text');
-        
-        formBody.style.display = 'none';
-        processingScreen.style.display = 'flex';
-        progressState.style.display = 'flex';
-        successState.style.display = 'none';
-        
-        const steps = [
-            "カード情報の整合性を検証中...",
-            "SSLセキュアゲートウェイで暗号化中...",
-            "Lemon Squeezy 支払いトランザクションを実行中...",
-            "決済処理完了！ライセンスキーを生成しています..."
-        ];
-        
-        let stepIdx = 0;
-        const interval = setInterval(() => {
-            if (stepIdx < steps.length) {
-                progressText.innerText = steps[stepIdx];
-                stepIdx++;
-            } else {
-                clearInterval(interval);
+    // Handle checkout redirect parameter checks
+    handleCheckoutRedirects() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('checkout_success') === 'true' && params.get('session_id')) {
+            const sessionId = params.get('session_id');
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+            
+            const lemonModal = document.getElementById('lemon-checkout-modal');
+            if (lemonModal) {
+                lemonModal.style.display = 'flex';
+                const formBody = document.getElementById('lemon-checkout-form-body');
+                const processingScreen = document.getElementById('lemon-processing-screen');
+                const progressState = document.getElementById('lemon-processing-state');
+                const successState = document.getElementById('lemon-success-state');
+                const progressText = document.getElementById('lemon-progress-text');
                 
-                // Payment Success: Generate Lifetime Premium Key
-                const randomHex = Math.random().toString(16).substr(2, 6).toUpperCase();
-                const randomHex2 = Math.random().toString(16).substr(2, 6).toUpperCase();
-                const generatedKey = `LS-PREMIUM-${randomHex}-${randomHex2}`;
+                if (formBody) formBody.style.display = 'none';
+                if (processingScreen) processingScreen.style.display = 'flex';
+                if (progressState) progressState.style.display = 'flex';
+                if (successState) successState.style.display = 'none';
+                if (progressText) progressText.innerText = '決済を確認中。ライセンスキーを発行しています...';
                 
-                document.getElementById('lemon-generated-key').innerText = generatedKey;
-                progressState.style.display = 'none';
-                successState.style.display = 'flex';
+                const backendUrl = this.getBackendUrl();
+                this.pollCheckoutStatus(backendUrl, sessionId, 0);
+            }
+        } else if (params.get('checkout_cancel') === 'true') {
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+            alert('決済がキャンセルされました。');
+        }
+    },
+
+    pollCheckoutStatus(backendUrl, sessionId, attempt) {
+        fetch(`${backendUrl}/api/checkout-session-status?session_id=${sessionId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'paid' && data.license_key) {
+                const successState = document.getElementById('lemon-success-state');
+                const progressState = document.getElementById('lemon-processing-state');
+                
+                document.getElementById('lemon-generated-key').innerText = data.license_key;
+                if (progressState) progressState.style.display = 'none';
+                if (successState) successState.style.display = 'flex';
                 
                 // Add revenue to global localStorage (VentureOS reads this)
                 const price = this.appInfo.price;
@@ -684,21 +731,41 @@ const SuiteGatekeeper = {
                 
                 // Save Transaction History
                 const currentHistory = JSON.parse(localStorage.getItem('ventureos_tx_history') || '[]');
-                const emailVal = document.getElementById('lemon-email').value || 'sota.kojima@empire.com';
                 const tx = {
                     id: "TX-" + Date.now().toString().substr(-6),
                     app: this.appInfo.name.split(' - ')[0],
                     amount: price,
-                    email: emailVal,
+                    email: 'customer@stripe.com', // Stripe collected this
                     time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 };
-                currentHistory.unshift(tx); // Add to head
+                currentHistory.unshift(tx);
                 localStorage.setItem('ventureos_tx_history', JSON.stringify(currentHistory));
+            } else if (attempt < 10) {
+                // Retry after 1.5 seconds if webhook or processing is slow
+                setTimeout(() => {
+                    this.pollCheckoutStatus(backendUrl, sessionId, attempt + 1);
+                }, 1500);
+            } else {
+                alert('決済の確認に時間がかかっています。ライセンスキーが発行されたか確認するには、設定から認証を行ってください。');
+                const lemonModal = document.getElementById('lemon-checkout-modal');
+                if (lemonModal) lemonModal.style.display = 'none';
             }
-        }, 800);
+        })
+        .catch(err => {
+            console.error('Error checking status:', err);
+            if (attempt < 10) {
+                setTimeout(() => {
+                    this.pollCheckoutStatus(backendUrl, sessionId, attempt + 1);
+                }, 2000);
+            } else {
+                alert('決済の確認中にエラーが発生しました。');
+                const lemonModal = document.getElementById('lemon-checkout-modal');
+                if (lemonModal) lemonModal.style.display = 'none';
+            }
+        });
     },
 
-    // Validate Lemon Squeezy License Key
+    // Validate License Key Online
     async validateLicenseOnline(licenseKey) {
         const saveBtn = document.getElementById('suite-save-btn');
         const originalText = saveBtn.innerText;
@@ -711,17 +778,30 @@ const SuiteGatekeeper = {
             return;
         }
 
-        setTimeout(() => {
-            const isValid = licenseKey.toUpperCase().startsWith('LS-') && licenseKey.length >= 10;
+        const backendUrl = this.getBackendUrl();
+        try {
+            const res = await fetch(`${backendUrl}/api/validate-license`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ license_key: licenseKey })
+            });
+            const data = await res.json();
             
-            if (isValid) {
+            if (data.valid) {
                 localStorage.setItem(this.KEYS.LICENSE_STATUS, 'active');
+                localStorage.setItem(this.KEYS.LICENSE_KEY, licenseKey.trim());
                 this.completeValidation(saveBtn, originalText, '👑 プレミアム有効化！');
             } else {
                 localStorage.setItem(this.KEYS.LICENSE_STATUS, 'free');
                 this.completeValidation(saveBtn, originalText, '無効なライセンスキーです', true);
             }
-        }, 1000);
+        } catch (err) {
+            console.error('Error validating license:', err);
+            localStorage.setItem(this.KEYS.LICENSE_STATUS, 'free');
+            this.completeValidation(saveBtn, originalText, '検証エラーが発生しました', true);
+        }
     },
 
     completeValidation(btn, originalText, msg, isError = false) {
