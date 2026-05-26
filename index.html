@@ -287,7 +287,7 @@
                     <i class="fas fa-credit-card"></i> 💳 クレジットカードで購入する
                 </button>
                 
-                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; display: none;">
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; display: block;">
                     <div style="margin-bottom: 1.2rem;">
                         <label style="display: block; font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; text-transform: uppercase;">ライセンスキーをお持ちの方</label>
                         <input type="text" id="vendi-license-input" placeholder="LS-XXXX-XXXX-XXXX" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.8rem; outline: none;">
@@ -1015,33 +1015,67 @@
                     document.getElementById('userDropdown').classList.toggle('show');
                 });
 
-                // Buy flow integration
+                // Buy flow integration - redirect to real Lemon Squeezy link
                 document.getElementById('vendi-modal-buy-btn').addEventListener('click', () => {
-                    document.getElementById('suite-settings-modal').style.display = 'none';
-                    document.getElementById('lemon-checkout-modal').style.display = 'flex';
+                    window.open('https://kojimasota.lemonsqueezy.com/buy/vendimap-pro', '_blank');
+                    showToast('外部決済ページを開きました。購入後、届いたキーを入力してください。', 'info');
+                    
+                    const input = document.getElementById('vendi-license-input');
+                    if (input) {
+                        input.focus();
+                        input.style.borderColor = '#ffd700';
+                        input.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                    }
                 });
 
-                document.getElementById('lemon-pay-btn').addEventListener('click', executeVendiSimulatedCheckout);
-
-                // Activate Ownership completion click
-                document.getElementById('lemon-activate-btn').addEventListener('click', () => {
-                    if (selectedSpot) {
-                        const ownerName = currentUser ? currentUser.name : "小島 蒼大";
-                        selectedSpot.owner = ownerName;
-                        selectedSpot.namingRightsAvailable = false;
+                // Naming rights license verification
+                document.getElementById('vendi-license-activate-btn').addEventListener('click', () => {
+                    const licenseInput = document.getElementById('vendi-license-input');
+                    const licenseKey = licenseInput ? licenseInput.value.trim() : '';
+                    const statusMsg = document.getElementById('vendi-license-status');
+                    
+                    if (!licenseKey) {
+                        showToast('ライセンスキーを入力してください。', 'warning');
+                        return;
+                    }
+                    
+                    const isValid = licenseKey.toUpperCase().startsWith('LS-') && licenseKey.length >= 10;
+                    
+                    if (isValid) {
+                        if (statusMsg) {
+                            statusMsg.className = 'suite-key-status connected';
+                            statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> ライセンス認証完了！';
+                            statusMsg.style.color = '#00ff88';
+                        }
                         
-                        // Sync to local storage
-                        saveSpotsToLocal();
-
-                        document.getElementById('lemon-checkout-modal').style.display = 'none';
-                        showToast(`👑 命名権アンロック！あなたは「${selectedSpot.name}」の所有者になりました！`, 'success');
-                        
-                        // XP addition for ownership purchase
-                        VendiGamification.state.stats.boughtCount++;
-                        VendiGamification.addXP(300, "自販機命名権・オーナー権の購入");
-                        
-                        renderMarkers(initialSpots);
-                        showDetailPanel(selectedSpot);
+                        setTimeout(() => {
+                            if (selectedSpot) {
+                                const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                                selectedSpot.owner = ownerName;
+                                selectedSpot.namingRightsAvailable = false;
+                                
+                                saveSpotsToLocal();
+                                showToast(`👑 命名権アンロック！あなたは「${selectedSpot.name}」の所有者になりました！`, 'success');
+                                
+                                VendiGamification.state.stats.boughtCount++;
+                                VendiGamification.addXP(300, "自販機命名権・オーナー権の購入");
+                                
+                                renderMarkers(initialSpots);
+                                showDetailPanel(selectedSpot);
+                            }
+                            document.getElementById('suite-settings-modal').style.display = 'none';
+                            licenseInput.value = '';
+                            if (statusMsg) {
+                                statusMsg.innerHTML = '未有効化：フリープラン';
+                                statusMsg.style.color = '';
+                            }
+                        }, 1000);
+                    } else {
+                        if (statusMsg) {
+                            statusMsg.innerHTML = '<i class="fas fa-times-circle"></i> 無効なライセンスキーです。';
+                            statusMsg.style.color = '#ff4b2b';
+                        }
+                        showToast('無効なライセンスキーです。LS-で始まる正しいキーを入力してください。', 'error');
                     }
                 });
                 
