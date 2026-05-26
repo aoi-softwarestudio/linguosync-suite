@@ -9,13 +9,25 @@ const SuiteGatekeeper = {
         CREDITS: 'linguosync_free_credits' // Remaining credits for free trial
     },
 
+    // ===== LEMON SQUEEZY REAL CHECKOUT CONFIG =====
+    // Set your Lemon Squeezy store checkout URLs here.
+    // Replace XXXXXXXX with your actual variant IDs from your LS dashboard.
+    CHECKOUT_URLS: {
+        studyflow:    "https://kojimasota.lemonsqueezy.com/buy/studyflow-pro",    // 要設定
+        socialintent: "https://kojimasota.lemonsqueezy.com/buy/socialintent-pro", // 要設定
+        linguosync:   "https://kojimasota.lemonsqueezy.com/buy/linguosync-pro",   // 要設定
+        novacapital:  "https://kojimasota.lemonsqueezy.com/buy/novacapital-pro",  // 要設定
+        vendimap:     "https://kojimasota.lemonsqueezy.com/buy/vendimap-pro",     // 要設定
+    },
+    // ================================================
+
     // Price Mapping for SaaS Empire
     PRICES: {
-        studyflow: { name: "StudyFlow AI - Lifetime Pro", price: 980, display: "¥980" },
-        socialintent: { name: "SocialIntent AI - Viral Planner Premium", price: 580, display: "¥580" },
-        linguosync: { name: "LinguoSync Studio - Lifetime Premium", price: 3980, display: "¥3,980" },
-        novacapital: { name: "NovaCapital Wealth - Lifetime Enterprise Alpha", price: 9800, display: "¥9,800" },
-        vendimap: { name: "VendiMap Gold - Lifetime VIP Secret Map", price: 480, display: "¥480" }
+        studyflow: { name: "StudyFlow AI プレミアム", price: 980, display: "¥980/月" },
+        socialintent: { name: "SocialIntent AI プレミアム", price: 580, display: "¥580/月" },
+        linguosync: { name: "LinguoSync Studio プレミアム", price: 3980, display: "¥3,980" },
+        novacapital: { name: "NovaCapital Wealth プレミアム", price: 9800, display: "¥9,800" },
+        vendimap: { name: "VendiMap Gold VIP", price: 480, display: "¥480" }
     },
 
     // Check if premium is active
@@ -76,23 +88,79 @@ const SuiteGatekeeper = {
         if (modal) modal.style.display = 'flex';
     },
 
-    // Public method to open checkout modal
+    // Public method to open checkout - now redirects to real Lemon Squeezy
     openCheckout() {
-        const modal = document.getElementById('suite-settings-modal');
-        if (modal) modal.style.display = 'none';
-        const lemonModal = document.getElementById('lemon-checkout-modal');
-        if (lemonModal) {
-            lemonModal.style.display = 'flex';
-            const formBody = document.getElementById('lemon-checkout-form-body');
-            const processingScreen = document.getElementById('lemon-processing-screen');
-            const progressState = document.getElementById('lemon-processing-state');
-            const successState = document.getElementById('lemon-success-state');
-            if (formBody) formBody.style.display = 'block';
-            if (processingScreen) processingScreen.style.display = 'none';
-            if (progressState) progressState.style.display = 'flex';
-            if (successState) successState.style.display = 'none';
+        const checkoutUrl = this.CHECKOUT_URLS[this.currentApp];
+        
+        if (!checkoutUrl || checkoutUrl.includes('XXXXXXXX')) {
+            // Fallback: show license key entry if URL not configured
+            const modal = document.getElementById('suite-settings-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                // Scroll to license key input
+                const licenseInput = document.getElementById('suite-license-input');
+                if (licenseInput) {
+                    setTimeout(() => licenseInput.focus(), 300);
+                }
+            }
+            return;
         }
+        
+        // Show a "You're being redirected" bridge modal, then redirect
+        this._showRedirectBridge(checkoutUrl);
     },
+
+    // Show a premium bridge modal before redirecting to Lemon Squeezy
+    _showRedirectBridge(checkoutUrl) {
+        let bridge = document.getElementById('ls-redirect-bridge');
+        if (!bridge) {
+            bridge = document.createElement('div');
+            bridge.id = 'ls-redirect-bridge';
+            bridge.className = 'suite-modal-overlay';
+            bridge.innerHTML = `
+                <div class="suite-modal-card" style="max-width: 440px; text-align: center; border-color: rgba(254, 194, 60, 0.4);">
+                    <div class="suite-modal-body" style="padding: 2.5rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🍋</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem;">Lemon Squeezy で安全に決済</div>
+                        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; line-height: 1.6;">
+                            外部の安全な決済ページに移動します。<br>
+                            購入完了後、メールで届くライセンスキーを<br>
+                            「ライセンスを入力」欄に入力してください。
+                        </p>
+                        <div style="background: rgba(254,194,60,0.08); border: 1px solid rgba(254,194,60,0.3); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #fec23c; font-weight: 700;">
+                            ${this.appInfo.display} ・毎月払い・いつでもキャンセル可能
+                        </div>
+                        <button id="ls-go-btn" class="lemon-btn-pay" style="margin-bottom: 1rem;">
+                            <i class="fas fa-external-link-alt"></i> 決済ページへ進む
+                        </button>
+                        <button id="ls-bridge-close" style="background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.75rem; cursor: pointer; display: block; width: 100%;">
+                            あとで
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(bridge);
+            
+            document.getElementById('ls-go-btn').addEventListener('click', () => {
+                window.open(checkoutUrl, '_blank');
+                bridge.style.display = 'none';
+                // Show the license key entry modal after redirect
+                setTimeout(() => {
+                    const modal = document.getElementById('suite-settings-modal');
+                    if (modal) modal.style.display = 'flex';
+                }, 800);
+            });
+            
+            document.getElementById('ls-bridge-close').addEventListener('click', () => {
+                bridge.style.display = 'none';
+            });
+            bridge.addEventListener('click', (e) => {
+                if (e.target === bridge) bridge.style.display = 'none';
+            });
+        }
+        bridge.style.display = 'flex';
+    },
+
 
     // Inject modern shared styles
     injectStyles() {
@@ -471,101 +539,11 @@ const SuiteGatekeeper = {
         document.body.appendChild(overlay);
     },
 
-    // Inject Lemon Squeezy Checkout Simulator Modal
+    // Inject real Lemon Squeezy info panel (replaces fake checkout form)
     injectCheckoutModal() {
-        if (document.getElementById('lemon-checkout-modal')) return;
-
-        const overlay = document.createElement('div');
-        overlay.className = 'suite-modal-overlay';
-        overlay.id = 'lemon-checkout-modal';
-        
-        overlay.innerHTML = `
-            <div class="suite-modal-card" style="max-width: 400px; border-color: rgba(254, 194, 60, 0.3);">
-                <div class="suite-modal-header" style="background: #181824;">
-                    <div class="suite-modal-title" style="color: #fec23c;">
-                        <i class="fas fa-shopping-cart"></i> Lemon Squeezy Checkout
-                    </div>
-                    <button id="lemon-modal-close-btn" class="suite-modal-close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <!-- Main Checkout Form -->
-                <div class="suite-modal-body" id="lemon-checkout-form-body">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
-                            <span class="lemon-badge">SECURE CHECKOUT</span>
-                            <div style="font-size: 0.9rem; font-weight: 800; color: #fff;">${this.appInfo.name}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.1rem; font-weight: 900; color: #fec23c;">${this.appInfo.display}</div>
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">One-time payment</div>
-                        </div>
-                    </div>
-                    
-                    <div class="lemon-checkout-card">
-                        <div class="lemon-input-group">
-                            <label class="suite-form-label" style="color: rgba(254, 194, 60, 0.8);">メールアドレス</label>
-                            <input type="email" id="lemon-email" class="suite-form-input" placeholder="you@example.com" value="sota.kojima@empire.com">
-                        </div>
-                        
-                        <div class="lemon-input-group">
-                            <label class="suite-form-label" style="color: rgba(254, 194, 60, 0.8);">クレジットカード番号</label>
-                            <div style="position: relative;">
-                                <input type="text" id="lemon-card-num" class="suite-form-input" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
-                                <i class="fab fa-cc-visa" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.6); font-size: 1.2rem;"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="lemon-row">
-                            <div class="lemon-input-group" style="flex: 1;">
-                                <label class="suite-form-label" style="color: rgba(254, 194, 60, 0.8);">有効期限 (MM / YY)</label>
-                                <input type="text" id="lemon-card-expiry" class="suite-form-input" placeholder="12 / 29" value="12 / 29">
-                            </div>
-                            <div class="lemon-input-group" style="flex: 1;">
-                                <label class="suite-form-label" style="color: rgba(254, 194, 60, 0.8);">CVC (セキュリティコード)</label>
-                                <input type="text" id="lemon-card-cvc" class="suite-form-input" placeholder="123" value="123">
-                            </div>
-                        </div>
-                        
-                        <button id="lemon-pay-btn" class="lemon-btn-pay" style="margin-top: 1rem;">
-                            <i class="fas fa-lock"></i> ${this.appInfo.display} を安全に支払う
-                        </button>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 1rem; font-size: 0.6rem; color: rgba(255,255,255,0.3);">
-                        <i class="fas fa-shield-alt"></i> 100% 認証セキュア暗号化。Lemon Squeezy シミュレーション決済。
-                    </div>
-                </div>
-                
-                <!-- Loading / Success Screen -->
-                <div class="suite-modal-body" id="lemon-processing-screen" style="display: none;">
-                    <div class="lemon-processing-overlay" id="lemon-processing-state">
-                        <div class="lemon-spinner"></div>
-                        <div style="color: #fec23c; font-weight: 800; font-size: 0.9rem;" id="lemon-progress-text">決済を安全に処理しています...</div>
-                        <div style="color: rgba(255,255,255,0.4); font-size: 0.7rem; font-family: monospace;">Connecting to gateway...</div>
-                    </div>
-                    
-                    <div class="lemon-processing-overlay" id="lemon-success-state" style="display: none;">
-                        <i class="fas fa-check-circle" style="color: #00ff88; font-size: 3rem; filter: drop-shadow(0 0 10px rgba(0,255,136,0.3));"></i>
-                        <div style="color: #fff; font-weight: 900; font-size: 1.1rem;">決済が正常に完了しました！</div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; max-width: 300px; margin: 0 auto; line-height: 1.5;">
-                            ${this.appInfo.name} のライセンスが正常に発行されました。
-                        </div>
-                        
-                        <div style="background: rgba(0,255,136,0.05); border: 1px dashed rgba(0,255,136,0.3); border-radius: 8px; padding: 0.8rem; margin: 1rem 0; width: 100%;">
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">あなたのプレミアムライセンスキー</div>
-                            <div id="lemon-generated-key" style="font-size: 0.85rem; font-weight: 700; color: #00ff88; font-family: monospace; letter-spacing: 0.5px; margin-top: 0.3rem;">LS-XXXX-XXXX-XXXX</div>
-                        </div>
-                        
-                        <button id="lemon-activate-btn" class="suite-btn-submit" style="background: #00ff88; color: #000; font-weight: 900;">
-                            👑 ライセンスを自動適用してアンロック
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
+        // No longer needed - checkout is handled by _showRedirectBridge()
+        // This method is kept for backward compatibility but creates nothing.
+        return;
     },
 
     // Bind event listeners
@@ -576,45 +554,31 @@ const SuiteGatekeeper = {
         const saveBtn = document.getElementById('suite-save-btn');
         const buyBtn = document.getElementById('suite-buy-btn');
         
-        // Lemon Checkout Elements
+        // Bind lemon checkout button events (now just for legacy close bindings)
         const lemonModal = document.getElementById('lemon-checkout-modal');
         const lemonCloseBtn = document.getElementById('lemon-modal-close-btn');
         const lemonPayBtn = document.getElementById('lemon-pay-btn');
         const lemonActivateBtn = document.getElementById('lemon-activate-btn');
-        
+
+        // Settings trigger button
         if (trigger) {
-            trigger.addEventListener('click', () => {
-                this.openSettings();
-            });
+            trigger.addEventListener('click', () => { this.openSettings(); });
         }
-        
+        // Close settings modal
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
+            closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+        }
+        // Close settings modal on outside click
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
             });
         }
-        
-        // Close modal when clicking outside card
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.style.display = 'none';
-        });
-
+        // Buy button → real Lemon Squeezy redirect
         if (buyBtn) {
-            buyBtn.addEventListener('click', () => {
-                this.openCheckout();
-            });
+            buyBtn.addEventListener('click', () => { this.openCheckout(); });
         }
-        
-        if (lemonCloseBtn) {
-            lemonCloseBtn.addEventListener('click', () => {
-                lemonModal.style.display = 'none';
-            });
-        }
-
-        lemonModal.addEventListener('click', (e) => {
-            if (e.target === lemonModal) lemonModal.style.display = 'none';
-        });
-
+        // Save license key
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 const license = document.getElementById('suite-license-input').value;
@@ -623,79 +587,39 @@ const SuiteGatekeeper = {
             });
         }
 
-        if (lemonPayBtn) {
-            lemonPayBtn.addEventListener('click', () => {
-                this.executeSimulatedCheckout();
+        if (lemonCloseBtn) {
+            lemonCloseBtn.addEventListener('click', () => {
+                if (lemonModal) lemonModal.style.display = 'none';
             });
         }
-
+        if (lemonModal) {
+            lemonModal.addEventListener('click', (e) => {
+                if (e.target === lemonModal) lemonModal.style.display = 'none';
+            });
+        }
+        if (lemonPayBtn) {
+            lemonPayBtn.addEventListener('click', () => {
+                // This now opens the real checkout
+                this.openCheckout();
+            });
+        }
         if (lemonActivateBtn) {
             lemonActivateBtn.addEventListener('click', () => {
-                const generatedKey = document.getElementById('lemon-generated-key').innerText;
-                localStorage.setItem(this.KEYS.LICENSE_STATUS, 'active');
-                localStorage.setItem(this.KEYS.LICENSE_KEY, generatedKey);
-                lemonModal.style.display = 'none';
-                location.reload();
+                const generatedKey = document.getElementById('lemon-generated-key')?.innerText;
+                if (generatedKey) {
+                    localStorage.setItem(this.KEYS.LICENSE_STATUS, 'active');
+                    localStorage.setItem(this.KEYS.LICENSE_KEY, generatedKey);
+                    if (lemonModal) lemonModal.style.display = 'none';
+                    location.reload();
+                }
             });
         }
     },
 
-    // Execute beautiful Lemon Squeezy Simulated Payment Flow
+    // executeSimulatedCheckout is kept for backward compatibility but now unused.
+    // Real checkout redirects to Lemon Squeezy via openCheckout() -> _showRedirectBridge()
     executeSimulatedCheckout() {
-        const formBody = document.getElementById('lemon-checkout-form-body');
-        const processingScreen = document.getElementById('lemon-processing-screen');
-        const progressState = document.getElementById('lemon-processing-state');
-        const successState = document.getElementById('lemon-success-state');
-        const progressText = document.getElementById('lemon-progress-text');
-        
-        formBody.style.display = 'none';
-        processingScreen.style.display = 'flex';
-        progressState.style.display = 'flex';
-        successState.style.display = 'none';
-        
-        const steps = [
-            "カード情報の整合性を検証中...",
-            "SSLセキュアゲートウェイで暗号化中...",
-            "Lemon Squeezy 支払いトランザクションを実行中...",
-            "決済処理完了！ライセンスキーを生成しています..."
-        ];
-        
-        let stepIdx = 0;
-        const interval = setInterval(() => {
-            if (stepIdx < steps.length) {
-                progressText.innerText = steps[stepIdx];
-                stepIdx++;
-            } else {
-                clearInterval(interval);
-                
-                // Payment Success: Generate Lifetime Premium Key
-                const randomHex = Math.random().toString(16).substr(2, 6).toUpperCase();
-                const randomHex2 = Math.random().toString(16).substr(2, 6).toUpperCase();
-                const generatedKey = `LS-PREMIUM-${randomHex}-${randomHex2}`;
-                
-                document.getElementById('lemon-generated-key').innerText = generatedKey;
-                progressState.style.display = 'none';
-                successState.style.display = 'flex';
-                
-                // Add revenue to global localStorage (VentureOS reads this)
-                const price = this.appInfo.price;
-                const currentRevenue = parseInt(localStorage.getItem('ventureos_real_revenue') || '0');
-                localStorage.setItem('ventureos_real_revenue', (currentRevenue + price).toString());
-                
-                // Save Transaction History
-                const currentHistory = JSON.parse(localStorage.getItem('ventureos_tx_history') || '[]');
-                const emailVal = document.getElementById('lemon-email').value || 'sota.kojima@empire.com';
-                const tx = {
-                    id: "TX-" + Date.now().toString().substr(-6),
-                    app: this.appInfo.name.split(' - ')[0],
-                    amount: price,
-                    email: emailVal,
-                    time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                };
-                currentHistory.unshift(tx); // Add to head
-                localStorage.setItem('ventureos_tx_history', JSON.stringify(currentHistory));
-            }
-        }, 800);
+        this.openCheckout();
     },
 
     // Validate Lemon Squeezy License Key
