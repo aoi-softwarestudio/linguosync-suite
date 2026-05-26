@@ -60,6 +60,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const keyEl = document.getElementById('geminiKey');
     if (keyEl) keyEl.value = geminiApiKey;
     
+    // Restore study ambiance theme
+    const savedTheme = localStorage.getItem('studyflow_ambiance_theme') || 'cyber-amethyst';
+    document.body.classList.add(savedTheme);
+    const themeSelectEl = document.getElementById('studyThemeSelect');
+    if (themeSelectEl) themeSelectEl.value = savedTheme;
+    
     // Setup initial gamification states
     updateGamificationUI();
     renderSessionList();
@@ -2398,3 +2404,42 @@ window.executePasteImport = () => {
 };
 
 window.processNotebookImport = window.importNotebookTextDirect;
+
+// Theme Selection & Settings Persistence
+window.changeStudyTheme = (themeName) => {
+    document.body.classList.remove('cyber-amethyst', 'emerald-forest', 'crimson-dragon', 'arctic-crystal');
+    document.body.classList.add(themeName);
+    localStorage.setItem('studyflow_ambiance_theme', themeName);
+    const selectEl = document.getElementById('studyThemeSelect');
+    if (selectEl) selectEl.value = themeName;
+    showToast(`集中環境テーマ「${themeName}」を適用しました`, 'success');
+};
+
+window.saveSettings = () => {
+    const keyEl = document.getElementById('geminiKey');
+    const modelEl = document.getElementById('geminiModel');
+    const themeEl = document.getElementById('studyThemeSelect');
+    
+    if (keyEl) {
+        geminiApiKey = keyEl.value.trim();
+        localStorage.setItem('gemini_api_key', geminiApiKey);
+        if (typeof SuiteGatekeeper !== 'undefined' && typeof SuiteGatekeeper.setGeminiKey === 'function') {
+            SuiteGatekeeper.setGeminiKey(geminiApiKey);
+        }
+    }
+    
+    if (modelEl) {
+        geminiModel = modelEl.value;
+        localStorage.setItem('studyflow_gemini_model', geminiModel);
+    }
+    
+    if (themeEl) {
+        const theme = themeEl.value;
+        window.changeStudyTheme(theme);
+    }
+    
+    const modal = document.getElementById('settingsModal');
+    if (modal) modal.style.display = 'none';
+    
+    showToast('設定を保存しました', 'success');
+};
