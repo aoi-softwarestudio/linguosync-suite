@@ -53,6 +53,19 @@
                         <div class="video-label" data-i18n="label-original">ORIGINAL</div>
                         <div class="scan-line" id="scanLine"></div>
                         <img id="sourceImage" src="" style="width: 100%; height: 100%; object-fit: contain;">
+                        <!-- Audio Visualizer Wave Overlay -->
+                        <div class="audio-visualizer-overlay" id="originalVisualizer" style="position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; align-items: flex-end; height: 30px; z-index: 10; pointer-events: none;">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
                     </div>
                     
                     <div class="video-wrapper" id="dubbedVideo">
@@ -64,6 +77,19 @@
                         </div>
                         <div class="scan-line" id="dubScanLine"></div>
                         <img id="targetImage" src="" style="width: 100%; height: 100%; object-fit: contain;">
+                        <!-- Audio Visualizer Wave Overlay -->
+                        <div class="audio-visualizer-overlay" id="dubbedVisualizer" style="position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; align-items: flex-end; height: 30px; z-index: 10; pointer-events: none;">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
                         <div id="lipSyncStatus" data-i18n="label-lip-sync" style="position: absolute; bottom: 1rem; right: 1rem; background: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800;">
                             LIP-SYNC: ACTIVE
                         </div>
