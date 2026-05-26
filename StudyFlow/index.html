@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyFlow AI | 自動試験対策プラットフォーム</title>
+    <title>StudyFlow AI | NotebookLM × AI学習コーチ — 試験対策をゲーム感覚で制御</title>
+    <meta name="description" content="Google NotebookLMの要約を流し込むだけで、AIが実力就けのフラッシュカード・模擬試験・ソクラテス対話コーチを生成。ゲーミフィケーションで毎日のXPがたまり、学習が習慣になる。行学・資格試験の受験生へ。">
+    <meta name="keywords" content="NotebookLM, AI学習, 試験対策, フラッシュカード, 模擬試験, AI家庭教師, 学習アプリ, StudyFlow">
+    <meta name="author" content="KOJIMA SOTA">
+    <!-- Open Graph / SNSシェア用 -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="StudyFlow AI | NotebookLMの要約をゲーム感覚の特訓に変える">
+    <meta property="og:description" content="要約を貼るだけでAIがフラッシュカード・模擬試験・対話コーチを自動生成。ゲーミフィケーションで学習が続く。">
+    <meta property="og:image" content="https://studyflow-ai.netlify.app/og_image.png">
+    <meta property="og:url" content="https://studyflow-ai.netlify.app/">
+    <meta property="og:site_name" content="StudyFlow AI">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="StudyFlow AI | NotebookLM×AI学習コーチ">
+    <meta name="twitter:description" content="要約を貼るだけで学習コンテンツを自動生成。AIコーチ・フラッシュカード・模擬試験・ゲーミフィケーション。">
+    <meta name="twitter:image" content="https://studyflow-ai.netlify.app/og_image.png">
+    <!-- 標準リンク -->
+    <link rel="canonical" href="https://studyflow-ai.netlify.app/">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,7 +281,7 @@
             <h2>StudyFlow Premium</h2>
             <p style="margin: 1rem 0;">無制限のアップロード、詳細な解説、そしてAI家庭教師機能を開放しましょう。</p>
             <div style="font-size: 2rem; font-weight: 900; margin: 1.5rem 0;">¥980 <span style="font-size: 1rem; color: var(--text-dim);">/ 月</span></div>
-            <button class="btn-premium" style="width: 100%; padding: 1rem;" onclick="alert('決済システムへの接続準備中です。')">今すぐアップグレード</button>
+            <button class="btn-premium" style="width: 100%; padding: 1rem;" onclick="if(typeof SuiteGatekeeper !== 'undefined') SuiteGatekeeper.openCheckout(); else alert('プレミアムページへ移動中...')">今すぐアップグレード</button>
             <button style="background:transparent; border:none; color:var(--text-dim); margin-top:1rem; cursor:pointer;" onclick="document.getElementById('upgradeModal').style.display='none'">あとで</button>
         </div>
     </div>
