@@ -40,6 +40,42 @@ def init_db():
     )
     """)
     
+    # 3. Create X replied posts tracking table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS x_replied_posts (
+        tweet_id TEXT PRIMARY KEY,
+        author_id TEXT,
+        keyword TEXT,
+        replied_at TEXT NOT NULL
+    )
+    """)
+    
+    # 4. Create X DM sent logs tracking table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS x_dm_sent_logs (
+        user_id TEXT PRIMARY KEY,
+        last_sent_at TEXT NOT NULL
+    )
+    """)
+    
+    # 5. Create X posted threads tracking table to map tweet IDs to keywords
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS x_posted_threads (
+        tweet_id TEXT PRIMARY KEY,
+        keyword TEXT NOT NULL,
+        posted_at TEXT NOT NULL
+    )
+    """)
+    
+    # 6. Create cached trends table for programmatic SEO
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS cached_trends (
+        keyword TEXT PRIMARY KEY,
+        analysis_json TEXT NOT NULL,
+        cached_at TEXT NOT NULL
+    )
+    """)
+    
     conn.commit()
     conn.close()
     print("Database initialized successfully at:", DB_PATH)
@@ -141,6 +177,123 @@ def record_transaction(transaction_id, email, amount, status):
         conn.commit()
         return True
     except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def record_x_reply(tweet_id, author_id, keyword):
+    """Record that we have replied to a specific tweet to avoid double replying."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    replied_at = datetime.datetime.now().isoformat()
+    try:
+        cursor.execute(
+            "INSERT INTO x_replied_posts (tweet_id, author_id, keyword, replied_at) VALUES (?, ?, ?, ?)",
+            (tweet_id, author_id, keyword, replied_at)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def is_x_replied(tweet_id):
+    """Check if we have already replied to this tweet."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    row = cursor.execute(
+        "SELECT 1 FROM x_replied_posts WHERE tweet_id = ?",
+        (tweet_id,)
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+def record_x_dm_sent(user_id):
+    """Record/Update when we last sent a DM to a user to avoid spamming."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    last_sent_at = datetime.datetime.now().isoformat()
+    try:
+        cursor.execute(
+            "INSERT INTO x_dm_sent_logs (user_id, last_sent_at) VALUES (?, ?) "
+            "ON CONFLICT(user_id) DO UPDATE SET last_sent_at = excluded.last_sent_at",
+            (user_id, last_sent_at)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Failed to record X DM sent log: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_last_x_dm_time(user_id):
+    """Get the timestamp when we last sent a DM to this user."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    row = cursor.execute(
+        "SELECT last_sent_at FROM x_dm_sent_logs WHERE user_id = ?",
+        (user_id,)
+    ).fetchone()
+    conn.close()
+    return row["last_sent_at"] if row else None
+
+def record_x_posted_thread(tweet_id, keyword):
+    """Record a posted tweet ID mapped to its analyzed keyword."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    posted_at = datetime.datetime.now().isoformat()
+    try:
+        cursor.execute(
+            "INSERT INTO x_posted_threads (tweet_id, keyword, posted_at) VALUES (?, ?, ?)",
+            (tweet_id, keyword, posted_at)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def get_x_posted_thread_keyword(tweet_id):
+    """Get the keyword mapped to a posted tweet ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    row = cursor.execute(
+        "SELECT keyword FROM x_posted_threads WHERE tweet_id = ?",
+        (tweet_id,)
+    ).fetchone()
+    conn.close()
+    return row["keyword"] if row else None
+
+def get_cached_trend(keyword):
+    """Retrieve cached trend analysis JSON for programmatic SEO."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    row = cursor.execute(
+        "SELECT analysis_json FROM cached_trends WHERE keyword = ?",
+        (keyword,)
+    ).fetchone()
+    conn.close()
+    return row["analysis_json"] if row else None
+
+def cache_trend(keyword, analysis_json):
+    """Insert or update trend analysis JSON in cache."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cached_at = datetime.datetime.now().isoformat()
+    try:
+        cursor.execute(
+            "INSERT INTO cached_trends (keyword, analysis_json, cached_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(keyword) DO UPDATE SET analysis_json = excluded.analysis_json, cached_at = excluded.cached_at",
+            (keyword, analysis_json, cached_at)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Database: Failed to cache trend for keyword '{keyword}': {e}")
         return False
     finally:
         conn.close()
