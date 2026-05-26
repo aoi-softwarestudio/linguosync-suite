@@ -2,8 +2,10 @@
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file if it exists
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import os
+import json
+import urllib.parse
 import datetime
 import random
 import string
@@ -16,6 +18,10 @@ app = Flask(__name__)
 
 # Initialize the database on startup
 database.init_db()
+
+# Initialize background X automation scheduler
+from x_automation.scheduler import init_scheduler
+init_scheduler()
 
 # In-memory rate limiter: date_str -> ip -> count
 proxy_usage = {}
@@ -233,17 +239,26 @@ def gemini_proxy():
     # 2. Client IP
     ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr or "127.0.0.1"
 
-    # 3. Rate limit (3 req/day for free tier)
+    # 3. Rate limit (2 req/day for free tier)
     if not is_premium:
-        today = datetime.date.today().isoformat()
-        for d in list(proxy_usage.keys()):
-            if d != today:
-                proxy_usage.pop(d, None)
-        proxy_usage.setdefault(today, {})
-        count = proxy_usage[today].get(ip, 0)
-        if count >= 3:
-            return jsonify({"error": "Rate limit exceeded"}), 429
-        proxy_usage[today][ip] = count + 1
+        is_hero = False
+        hero_keywords = ["Micro SaaS", "AI Coding Assistant", "ソーシャルSEO 2026", "不動産クラウドファンディング", "筋トレ ダイエット"]
+        req_text = json.dumps(data.get("contents", []))
+        if any(hk in req_text for hk in hero_keywords):
+            is_hero = True
+
+        if not is_hero:
+            is_share_unlocked = request.headers.get("X-Share-Unlocked", "").lower() == "true"
+            limit = 3 if is_share_unlocked else 2
+            today = datetime.date.today().isoformat()
+            for d in list(proxy_usage.keys()):
+                if d != today:
+                    proxy_usage.pop(d, None)
+            proxy_usage.setdefault(today, {})
+            count = proxy_usage[today].get(ip, 0)
+            if count >= limit:
+                return jsonify({"error": "Rate limit exceeded"}), 429
+            proxy_usage[today][ip] = count + 1
 
     # 4. Forward to Gemini
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -263,6 +278,59 @@ def gemini_proxy():
         return jsonify(res.json()), res.status_code
     except Exception as e:
         return jsonify({"error": str(e)}), 502
+
+@app.route("/trends/<keyword>")
+def trend_page(keyword):
+    # Retrieve from SQLite cache if possible to avoid Gemini API quota exhaust
+    cached_json = database.get_cached_trend(keyword)
+    if cached_json:
+        try:
+            analysis = json.loads(cached_json)
+        except Exception:
+            analysis = None
+    else:
+        analysis = None
+        
+    if not analysis:
+        # Import and run Gemini analysis dynamically
+        from x_automation.scheduler import analyze_keyword_via_gemini
+        analysis = analyze_keyword_via_gemini(keyword)
+        # Save to cache
+        database.cache_trend(keyword, json.dumps(analysis, ensure_ascii=False))
+        
+    encoded_keyword = urllib.parse.quote(keyword)
+    
+    # Safely extract scores and trends
+    platforms = analysis.get("platforms", {})
+    
+    def get_score_and_trend(platform_key, default_name):
+        plat = platforms.get(platform_key, {})
+        return plat.get("score", 50), plat.get("trend", "分析結果の要約")
+
+    yt_score, yt_trend = get_score_and_trend("youtube", "YouTube")
+    ig_score, ig_trend = get_score_and_trend("instagram", "Instagram")
+    tk_score, tk_trend = get_score_and_trend("tiktok", "TikTok")
+    x_score, x_trend = get_score_and_trend("x", "X")
+    seo_score, seo_trend = get_score_and_trend("seo", "Google SEO")
+
+    return render_template(
+        "seo_trend.html",
+        keyword=keyword,
+        encoded_keyword=encoded_keyword,
+        summary=analysis.get("summary", ""),
+        youtube_score=yt_score,
+        youtube_trend=yt_trend,
+        instagram_score=ig_score,
+        instagram_trend=ig_trend,
+        tiktok_score=tk_score,
+        tiktok_trend=tk_trend,
+        x_score=x_score,
+        x_trend=x_trend,
+        seo_score=seo_score,
+        seo_trend=seo_trend,
+        hooks=analysis.get("hooks", []),
+        hashtags=analysis.get("hashtags", [])
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
