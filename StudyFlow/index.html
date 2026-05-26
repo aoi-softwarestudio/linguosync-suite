@@ -93,6 +93,13 @@
             <h1 data-i18n="hero-title">NotebookLMの要約を<br>「ゲーム感覚の特訓」に変える。</h1>
             <p data-i18n="hero-desc">Google NotebookLM で生成した講義ノートや要約エクスポートをそのまま流し込むだけで、AIがあなたを合格へ導く「アバターAI対話コーチ」「暗記カード」「模擬試験」「勲章クエスト」を瞬時にコンバート生成します。</p>
             
+            <div class="notebook-sync-status-console" style="margin: -1rem auto 2rem; max-width: 600px; padding: 8px 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; justify-content: center;">
+                <span class="pulse-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; display: inline-block;"></span>
+                <span style="color: #10b981; font-weight: 800; font-family: monospace; letter-spacing: 0.5px;">NotebookLM Smart Link Channel: Active</span>
+                <span style="color: var(--text-dim);">|</span>
+                <span style="color: var(--text-dim); font-size: 0.75rem;">Workspace: personal-notes</span>
+            </div>
+
             <div class="upload-section" style="max-width: 800px; margin: 0 auto;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left;">
                     <!-- Left: Paste Area -->
@@ -202,14 +209,12 @@
                         <i class="fas fa-brain"></i> 学習メニュー
                     </div>
 
-                    <div class="sidebar-item active" data-view="summary">
-                        <i class="fas fa-book-open"></i> <span>要約 ＆ キーワード</span>
-                    </div>
-                    <div class="sidebar-item" data-view="flashcards">
-                        <i class="fas fa-clone"></i> <span>単語帳カード</span>
+                    <!-- Removed redundant summary tab to focus on active recall tools -->
+                    <div class="sidebar-item active" data-view="flashcards">
+                        <i class="fas fa-clone"></i> <span>重要語句暗記カード</span>
                     </div>
                     <div class="sidebar-item" data-view="exam">
-                        <i class="fas fa-file-signature"></i> <span>模擬試験</span>
+                        <i class="fas fa-shield-halved"></i> <span>試験ボスバトル</span>
                     </div>
                     <div class="sidebar-item" data-view="tutor">
                         <i class="fas fa-robot"></i> <span>AI Coach (対話学習)</span>
