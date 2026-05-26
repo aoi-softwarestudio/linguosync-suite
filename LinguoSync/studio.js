@@ -282,6 +282,16 @@ function handleFile(file) {
                     updateTimeline(time);
                 }
             });
+
+            newMedia.addEventListener('ended', () => {
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                playBtn.classList.remove('playing');
+                const statusText = document.getElementById('playbackStatus');
+                if (statusText) statusText.innerText = translations[currentLang]["playback-paused"] || 'PREVIEW PAUSED';
+                document.querySelectorAll('.audio-visualizer-overlay').forEach(v => v.classList.remove('active'));
+                window.speechSynthesis.cancel();
+            });
         }
     });
     
@@ -547,6 +557,19 @@ function checkDubbing(currentTime) {
                 utterance.voice = bestVoice;
             }
             
+            utterance.onstart = () => {
+                const dubbedVis = document.getElementById('dubbedVisualizer');
+                if (dubbedVis && isPlaying) dubbedVis.classList.add('active');
+            };
+            utterance.onend = () => {
+                const dubbedVis = document.getElementById('dubbedVisualizer');
+                if (dubbedVis) dubbedVis.classList.remove('active');
+            };
+            utterance.onerror = () => {
+                const dubbedVis = document.getElementById('dubbedVisualizer');
+                if (dubbedVis) dubbedVis.classList.remove('active');
+            };
+            
             window.speechSynthesis.speak(utterance);
             lastSpokenIndex = index;
         }
@@ -602,6 +625,7 @@ if (mainTimelineTrack) {
 playBtn.addEventListener('click', () => {
     isPlaying = !isPlaying;
     const statusText = document.getElementById('playbackStatus');
+    const visualizers = document.querySelectorAll('.audio-visualizer-overlay');
     
     if (currentVideoElement) {
         document.querySelectorAll('.video-wrapper video').forEach(v => {
@@ -618,12 +642,19 @@ playBtn.addEventListener('click', () => {
         
         // Reset dubbing state if starting from the beginning
         if (time < 1) lastSpokenIndex = -1;
+        
+        // Activate original visualizer on play
+        const originalVis = document.getElementById('originalVisualizer');
+        if (originalVis) originalVis.classList.add('active');
     } else {
         playBtn.innerHTML = '<i class="fas fa-play"></i>';
         playBtn.classList.remove('playing');
         if (statusText) statusText.innerText = translations[currentLang]["playback-paused"] || 'PREVIEW PAUSED';
         showToast('PREVIEW_MODE: PAUSED');
         window.speechSynthesis.cancel(); // Stop speech on pause
+        
+        // Deactivate all visualizers on pause
+        visualizers.forEach(v => v.classList.remove('active'));
     }
 });
 
