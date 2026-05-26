@@ -19,7 +19,7 @@ const levelProgressFill = document.getElementById('levelProgressFill');
 // State Variables
 let sourceFiles = []; // Array of { name: string, text: string, enabled: boolean }
 let currentData = null;
-let activeView = 'summary';
+let activeView = 'flashcards';
 let examInterval = null;
 let fullDocumentText = "";
 let currentSpeakUtterance = null; // TTS tracker
@@ -342,6 +342,8 @@ function saveActiveSession() {
     localStorage.setItem('studyflow_active_project_id', activeId);
     
     const existingIdx = sessions.findIndex(s => s.id === activeId);
+    const existingProj = existingIdx >= 0 ? sessions[existingIdx] : null;
+    const wasBossDefeated = existingProj ? (existingProj.bossDefeated || false) : false;
     
     const projectData = {
         id: activeId,
@@ -350,7 +352,8 @@ function saveActiveSession() {
         sourceFiles: sourceFiles,
         currentData: currentData,
         date: new Date().toLocaleDateString('ja-JP'),
-        updated: Date.now()
+        updated: Date.now(),
+        bossDefeated: wasBossDefeated
     };
     
     if (existingIdx >= 0) {
@@ -411,22 +414,51 @@ function renderSessionList() {
     
     const sessions = getSessions();
     if (sessions.length === 0) {
-        container.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--text-dim); font-size: 0.75rem;">履歴はありません</div>`;
+        container.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--text-dim); font-size: 0.75rem;">挑戦可能なダンジョンはありません</div>`;
         return;
     }
     
     const activeId = localStorage.getItem('studyflow_active_project_id');
     
-    container.innerHTML = sessions.map(s => `
-        <div class="session-item ${s.id === activeId ? 'active' : ''}" onclick="loadSession('${s.id}')">
-            <span class="session-title" title="${s.title}">
-                <i class="fas fa-file-invoice"></i> ${s.title}
-            </span>
-            <button class="delete-project-btn" onclick="deleteSession('${s.id}', event)" title="削除" style="border: none; padding: 2px 6px; font-size: 0.7rem;">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    `).join('');
+    container.innerHTML = sessions.map(s => {
+        // Calculate progress of card mastery
+        let masteredCount = 0;
+        let totalCards = 0;
+        if (s.currentData && s.currentData.flashcards) {
+            totalCards = s.currentData.flashcards.length;
+            const masteredKeys = JSON.parse(localStorage.getItem('studyflow_mastered_cards') || '[]');
+            masteredCount = s.currentData.flashcards.filter(c => masteredKeys.includes(c.front)).length;
+        }
+        
+        const cardProgress = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
+        const isBossDefeated = s.bossDefeated || false;
+        
+        let statusText = "未踏破";
+        let statusClass = "unexplored";
+        let icon = "🛡️";
+        if (cardProgress === 100 && isBossDefeated) {
+            statusText = "完全制覇";
+            statusClass = "conquered";
+            icon = "🏆";
+        } else if (cardProgress > 0 || isBossDefeated) {
+            statusText = "攻略中";
+            statusClass = "in-progress";
+            icon = "⚔️";
+        }
+        
+        return `
+            <div class="session-item ${s.id === activeId ? 'active' : ''}" onclick="loadSession('${s.id}')">
+                <span class="session-title" title="${s.title}">
+                    <span class="dungeon-icon">${icon}</span>
+                    <span class="dungeon-title-text">${s.title}</span>
+                </span>
+                <div class="dungeon-status-badge ${statusClass}">${statusText} (${cardProgress}%)</div>
+                <button class="delete-project-btn" onclick="deleteSession('${s.id}', event)" title="削除" style="border: none; padding: 2px 6px; font-size: 0.7rem;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
 }
 
 // --- MAIN CONTROLLER & UPLOAD FINALIZATION ---
@@ -998,27 +1030,15 @@ function renderView() {
     const viewTitleEl = document.getElementById('viewTitle');
     const container = document.getElementById('viewContent');
     
-    viewTitleEl.innerText = currentData.title;
-    
-    if (activeView === 'summary') {
-        container.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-layer-group"></i> 総合マスター要約・ポイント
-                </h3>
-                <button class="audio-tts-btn" onclick="playTts(currentData.summary)" title="要約を音声で聴く">
-                    <i class="fas fa-volume-up"></i> 音声を再生
-                </button>
-            </div>
-            <div class="summary-grid" style="font-size: 0.95rem; line-height: 1.6;">
-                ${parseCitations(currentData.summary)}
-            </div>
-        `;
-    } else if (activeView === 'flashcards') {
+    // Premium Game Titles
+    if (activeView === 'flashcards') {
+        viewTitleEl.innerHTML = `<i class="fas fa-clone"></i> 重要語句暗記カード: ${currentData.title}`;
         renderFlashcardsView(container);
     } else if (activeView === 'exam') {
+        viewTitleEl.innerHTML = `<i class="fas fa-shield-halved"></i> 試験ボスバトル・アリーナ: ${currentData.title}`;
         renderExamView(container);
     } else if (activeView === 'tutor') {
+        viewTitleEl.innerHTML = `<i class="fas fa-robot"></i> Socratic AI 家庭教師: ${currentData.title}`;
         renderTutorView(container);
     }
 }
@@ -1076,122 +1096,214 @@ function toggleCardMastery(term, event) {
 
 // Timed Exam assessment logic
 function renderExamView(container) {
-    let score = 0;
-    let answeredCount = 0;
-    let selectedAnswers = new Array(currentData.exam.length).fill(null);
-    let secondsLeft = currentData.exam.length * 60; // 1 min per question
+    // Battle State variables
+    let playerHp = 100;
+    let bossHp = 100;
+    let currentQIdx = 0;
+    const totalQs = currentData.exam.length;
+    const damagePerCorrect = Math.ceil(100 / totalQs);
+    const damagePerIncorrect = 25; // 4 mistakes = death
     
-    container.innerHTML = `
-        <div class="score-header">
-            <div class="exam-status">
-                <span class="timer" id="examTimer"><i class="fas fa-clock"></i> 制限時間: --:--</span>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="examProgress" style="width: 0%;"></div>
-                </div>
-                <button class="btn-premium" onclick="submitExam()" style="padding: 0.4rem 1rem; font-size: 0.8rem;">提出する</button>
-            </div>
-        </div>
-        <div id="examQuestions" style="flex: 1; padding: 10px 0;">
-            ${currentData.exam.map((q, qi) => `
-                <div class="question-item" id="q_box_${qi}">
-                    <h4>Q${qi + 1}. ${q.question}</h4>
-                    <div>
-                        ${q.options.map((opt, oi) => `
-                            <div class="option" id="opt_${qi}_${oi}" onclick="selectAnswer(${qi}, ${oi})">
-                                [${String.fromCharCode(65 + oi)}] ${opt}
+    // Calculate dynamic Boss Name from title
+    let docTitle = currentData.title || "無題の資料";
+    let cleanTitle = docTitle.replace(/Google NotebookLM 提携特訓プロジェクト:\s*/, '').replace(/統合ローカル解析セット:\s*/, '').substring(0, 15);
+    let bossName = `「${cleanTitle}」の守護獣`;
+    
+    // Reset any running interval/timers
+    if (examInterval) clearInterval(examInterval);
+    
+    function drawBattleArena() {
+        // HP bar classes
+        let playerHpClass = playerHp > 50 ? '' : (playerHp > 20 ? 'warning' : 'danger');
+        let bossHpClass = bossHp > 50 ? 'boss-hp' : (bossHp > 20 ? 'boss-hp warning' : 'boss-hp danger');
+        
+        container.innerHTML = `
+            <div class="battle-arena" id="battleArenaCard">
+                <!-- Battle Header: VS Status -->
+                <div class="battle-header">
+                    <!-- Player Stats -->
+                    <div class="fighter-card player">
+                        <div class="fighter-avatar">🛡️</div>
+                        <div class="fighter-stats">
+                            <div class="fighter-name">勇者（あなた）</div>
+                            <div class="hp-container">
+                                <div class="hp-bar-fill ${playerHpClass}" style="width: ${playerHp}%;"></div>
                             </div>
-                        `).join('')}
+                            <div class="hp-text">HP: ${playerHp} / 100</div>
+                        </div>
+                    </div>
+                    
+                    <div class="battle-vs">VS</div>
+                    
+                    <!-- Boss Stats -->
+                    <div class="fighter-card boss">
+                        <div class="fighter-avatar">👹</div>
+                        <div class="fighter-stats">
+                            <div class="fighter-name" title="${bossName}">${bossName}</div>
+                            <div class="hp-container">
+                                <div class="hp-bar-fill ${bossHpClass}" style="width: ${bossHp}%;"></div>
+                            </div>
+                            <div class="hp-text">HP: ${bossHp} / 100</div>
+                        </div>
                     </div>
                 </div>
-            `).join('')}
-        </div>
-    `;
-    
-    // Trigger exam clock countdown
-    function updateClock() {
-        const mins = Math.floor(secondsLeft / 60);
-        const secs = secondsLeft % 60;
-        const timerEl = document.getElementById('examTimer');
-        if (timerEl) {
-            timerEl.innerHTML = `<i class="fas fa-clock"></i> 制限時間: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
+                
+                <!-- Battle Combat Log -->
+                <div class="battle-log-card" id="battleLog">
+                    バトル開始！「${bossName}」が現れた！問題に正解して攻撃を叩き込め！
+                </div>
+                
+                <!-- Battle Arena Body: Question Box -->
+                <div class="battle-arena-body" id="battleQuestionArea">
+                    <!-- Inject Question here -->
+                </div>
+            </div>
+        `;
         
-        if (secondsLeft <= 0) {
-            clearInterval(examInterval);
-            submitExam();
-        }
-        secondsLeft--;
+        renderBattleQuestion();
     }
     
-    updateClock();
-    examInterval = setInterval(updateClock, 1000);
-    
-    // Closure-based select helper
-    window.selectAnswer = (qi, oi) => {
-        // Deselect previous
-        for (let i = 0; i < 4; i++) {
-            const optEl = document.getElementById(`opt_${qi}_${i}`);
-            if (optEl) optEl.classList.remove('selected');
+    function renderBattleQuestion() {
+        const questionArea = document.getElementById('battleQuestionArea');
+        if (!questionArea) return;
+        
+        if (playerHp <= 0) {
+            showBattleDefeat();
+            return;
         }
         
-        const selectedEl = document.getElementById(`opt_${qi}_${oi}`);
-        if (selectedEl) selectedEl.classList.add('selected');
+        if (bossHp <= 0 || currentQIdx >= totalQs) {
+            showBattleVictory();
+            return;
+        }
         
-        selectedAnswers[qi] = oi;
+        const q = currentData.exam[currentQIdx];
         
-        // Progress bar updates
-        answeredCount = selectedAnswers.filter(a => a !== null).length;
-        const percent = (answeredCount / currentData.exam.length) * 100;
-        const progressEl = document.getElementById('examProgress');
-        if (progressEl) progressEl.style.width = `${percent}%`;
+        questionArea.innerHTML = `
+            <div class="question-item" style="margin: 0; background: rgba(255,255,255,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-size: 0.78rem; color: var(--text-dim);">
+                    <span>ターン ${currentQIdx + 1} / ${totalQs}</span>
+                    <span>属性: 学術</span>
+                </div>
+                <h4 style="font-size: 1rem; line-height: 1.5; color: white;">${q.question}</h4>
+                <div style="margin-top: 1rem;">
+                    ${q.options.map((opt, oi) => `
+                        <div class="option" onclick="submitBattleAnswer(${oi})" style="padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 800; color: var(--primary); font-family: monospace; background: rgba(99,102,241,0.15); width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 0.75rem;">${String.fromCharCode(65 + oi)}</span>
+                            <span>${opt}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    window.submitBattleAnswer = (optionIdx) => {
+        const q = currentData.exam[currentQIdx];
+        const logEl = document.getElementById('battleLog');
+        const arenaEl = document.getElementById('battleArenaCard');
+        const options = document.querySelectorAll('.option');
+        
+        // Disable clicks during animation
+        options.forEach(o => o.style.pointerEvents = 'none');
+        
+        const isCorrect = (optionIdx === q.answer);
+        
+        if (isCorrect) {
+            // Player attacks!
+            bossHp = Math.max(0, bossHp - damagePerCorrect);
+            
+            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight: 800;"><i class="fas fa-sword"></i> クリティカルヒット！ 正解！</span><br>ボス「${bossName}」に ${damagePerCorrect} ダメージを与えた！`;
+            if (arenaEl) {
+                arenaEl.classList.add('flash-green-effect');
+                setTimeout(() => arenaEl.classList.remove('flash-green-effect'), 500);
+            }
+        } else {
+            // Boss attacks!
+            playerHp = Math.max(0, playerHp - damagePerIncorrect);
+            
+            if (logEl) logEl.innerHTML = `<span style="color: #f43f5e; font-weight: 800;"><i class="fas fa-bolt"></i> 手痛い反撃！ 不正解...（正解は ${String.fromCharCode(65 + q.answer)}）</span><br>「${bossName}」の攻撃！あなたは ${damagePerIncorrect} ダメージを受けた！`;
+            if (arenaEl) {
+                arenaEl.classList.add('shake-effect', 'flash-red-effect');
+                setTimeout(() => arenaEl.classList.remove('shake-effect', 'flash-red-effect'), 500);
+            }
+        }
+        
+        // Advance
+        currentQIdx++;
+        
+        // Redraw stats after animation
+        setTimeout(() => {
+            drawBattleArena();
+        }, 1600);
     };
     
-    window.submitExam = () => {
-        clearInterval(examInterval);
+    function showBattleVictory() {
+        container.innerHTML = `
+            <div class="battle-result-card">
+                <div class="battle-result-icon win">🏆</div>
+                <div class="battle-result-title" style="color: #fbbf24;">VICTORY!</div>
+                <div class="battle-result-desc">
+                    あなたは「${bossName}」を見事に撃破し、このダンジョンを攻略した！
+                    <br><strong style="color: #10b981;">完全制覇報酬: +100 XP ＆ ダンジョン踏破バッジを獲得！</strong>
+                </div>
+                <div style="display: flex; gap: 1rem; width: 100%; justify-content: center; margin-top: 1rem;">
+                    <button class="btn-premium" onclick="activeView='flashcards'; renderView();" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                        <i class="fas fa-arrow-left"></i> ダンジョンに戻る
+                    </button>
+                    <button class="btn-demo" onclick="activeView='exam'; renderView();" style="border-color: var(--accent); color: var(--accent);">
+                        <i class="fas fa-rotate"></i> 再戦する
+                    </button>
+                </div>
+            </div>
+        `;
         
-        // Calculate results
-        score = 0;
-        const incorrectIndices = [];
+        // Mark project as conquered
+        const sessions = getSessions();
+        const activeId = localStorage.getItem('studyflow_active_project_id');
+        const idx = sessions.findIndex(s => s.id === activeId);
+        if (idx >= 0) {
+            sessions[idx].bossDefeated = true;
+            saveSessions(sessions);
+            renderSessionList();
+        }
         
-        currentData.exam.forEach((q, qi) => {
-            if (selectedAnswers[qi] === q.answer) {
-                score++;
-                const box = document.getElementById(`q_box_${qi}`);
-                if (box) box.style.borderColor = "#10b981"; // Green for correct
-            } else {
-                incorrectIndices.push(qi);
-                const box = document.getElementById(`q_box_${qi}`);
-                if (box) box.style.borderColor = "#f43f5e"; // Red for incorrect
-            }
-        });
+        // Award large XP and unlock achievements
+        addXp(100);
+        triggerQuestConfetti();
+        unlockAchievement('trophy_exam_ace');
+        updateQuestProgress('studyflow_quest_submit_exam');
+    }
+    
+    function showBattleDefeat() {
+        container.innerHTML = `
+            <div class="battle-result-card">
+                <div class="battle-result-icon lose">💀</div>
+                <div class="battle-result-title" style="color: #f43f5e;">DEFEAT</div>
+                <div class="battle-result-desc">
+                    あなたは「${bossName}」の猛攻に力尽きた...。
+                    <br><span style="color: var(--text-dim);">理解が浅い用語があるようです。「重要語句暗記カード」で復習し、記憶力を高めてから再挑戦しましょう！</span>
+                </div>
+                <div style="display: flex; gap: 1rem; width: 100%; justify-content: center; margin-top: 1rem;">
+                    <button class="btn-premium" onclick="activeView='flashcards'; renderView();">
+                        <i class="fas fa-clone"></i> 暗記カードで復習する
+                    </button>
+                    <button class="btn-demo" onclick="activeView='exam'; renderView();">
+                        <i class="fas fa-rotate"></i> リベンジする
+                    </button>
+                </div>
+            </div>
+        `;
         
-        const finalScorePercent = Math.round((score / currentData.exam.length) * 100);
-        addXp(50); // XP bonus for completing
-        
-        showToast(`模擬試験が提出されました！ 正答率: ${finalScorePercent}%`, 'success');
-        
-        // Update Daily Quest progress
+        // Update daily quest for play count even if lost
         updateQuestProgress('studyflow_quest_submit_exam');
         
-        // Dynamic Weakness Diagnosis from incorrect questions
-        logWeaknessFromExam(incorrectIndices);
-        
-        // Trigger trophies
-        if (finalScorePercent >= 85) {
-            unlockAchievement('trophy_exam_ace');
-        }
-        
-        // Show result header inside view
-        const header = document.querySelector('.score-header');
-        if (header) {
-            header.innerHTML = `
-                <div class="score-display">
-                    📝 試験結果: <span id="currentScore">${score}</span> / ${currentData.exam.length} 問正解 (${finalScorePercent}%)
-                    <span style="font-size: 0.75rem; display: block; color: var(--text-dim); margin-top: 5px;">復習用に誤答箇所が赤くマークされています。左サイドバーに弱点診断カルテが生成されました。</span>
-                </div>
-            `;
-        }
-    };
+        // Add standard fail XP
+        addXp(10);
+    }
+    
+    // Start Battle
+    drawBattleArena();
 }
 
 // AI Personal Tutor chat panel rendering
