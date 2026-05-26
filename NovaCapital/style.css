@@ -543,3 +543,23 @@ body {
 .add-asset-btn:active {
     transform: translateY(1px);
 }
+
+/* Premium Asset Analysis slide-up transition */
+.analysis-panel {
+    padding: 1.5rem;
+}
+
+.analysis-slide-up {
+    animation: analysisSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes analysisSlideUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
