@@ -3,8 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SocialIntent AI - SNS トレンドリサーチ & インテント分析</title>
-    <meta name="description" content="Instagram, YouTube, X, TikTok, Google SEOの2026年リアルタイムトレンドをAIが横断分析。キーワードのバズ可能性・インテント強度・プラットフォーム別勝ち筋を即座に可視化。">
+    <title>SocialIntent AI - 無料のSNSトレンド分析・キーワードバズ調査ツール</title>
+    <meta name="description" content="Instagram, YouTube, X, TikTok, Google SEOのトレンドをAIが横断分析。バズるキーワードの調査、ハッシュタグ選定、動画フックコピーの生成ができる無料のSEO・SNSマーケティングツール。">
+    <meta name="keywords" content="SNSトレンド分析, キーワードバズ, ハッシュタグ検索, ソーシャルSEO, 動画フック生成, 無料ツール, マーケティングAI">
+    
+    <!-- OGP (Open Graph Protocol) -->
+    <meta property="og:title" content="SocialIntent AI - 無料のSNSトレンド分析・キーワードバズ調査ツール">
+    <meta property="og:description" content="Instagram, YouTube, X, TikTok, GoogleのトレンドをAIが横断分析。バズ可能性やインテントを可視化します。">
+    <meta property="og:image" content="https://socialintent-trends.onrender.com/socialintent_x_ad_banner_real.png">
+    <meta property="og:url" content="https://socialintent-trends.onrender.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SocialIntent AI">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SocialIntent AI - 無料のSNSトレンド分析・キーワードバズ調査ツール">
+    <meta name="twitter:description" content="Instagram, YouTube, X, TikTok, GoogleのトレンドをAIが横断分析。">
+    <meta name="twitter:image" content="https://socialintent-trends.onrender.com/socialintent_x_ad_banner_real.png">
+    
+    <!-- JSON-LD 構造化データ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "SocialIntent AI",
+      "operatingSystem": "All",
+      "applicationCategory": "BusinessApplication",
+      "description": "Instagram, YouTube, X, TikTok, Googleのトレンドや検索意図をAIが横断的に分析・可視化するSEO・SNSマーケティングツール。",
+      "offers": {
+        "@type": "Offer",
+        "price": "580",
+        "priceCurrency": "JPY"
+      }
+    }
+    </script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -21,6 +54,7 @@
             --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+h1, h2, h3 { margin: 0; padding: 0; }
         body {
             background-color: var(--bg-deep);
             color: var(--text-main);
@@ -63,7 +97,7 @@
         }
         .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4); }
         .hero { text-align: center; padding: 3rem 0 2rem; }
-        .hero h1 {
+        .hero h2 {
             font-size: 3rem; font-weight: 900; margin-bottom: 1rem;
             background: linear-gradient(to bottom, #fff 50%, #94a3b8 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -235,9 +269,42 @@
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
             color: white; padding: 6px 14px; border-radius: 10px; font-size: 0.78rem;
-            font-weight: 700; cursor: pointer; transition: 0.2s; margin-left: auto;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
         }
         .btn-export:hover { border-color: var(--accent); background: rgba(139,92,246,0.1); }
+
+        /* Share buttons */
+        .share-container {
+            display: inline-flex; align-items: center; gap: 8px; margin-left: auto;
+        }
+        .share-label {
+            font-size: 0.72rem; color: var(--text-dim); margin-right: 4px;
+        }
+        .btn-share {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            color: var(--text-dim); padding: 5px 10px; border-radius: 8px; font-size: 0.72rem;
+            font-weight: 700; cursor: pointer; transition: 0.2s; text-decoration: none;
+        }
+        .btn-share:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+        }
+        .btn-share.x:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .btn-share.line {
+            color: #06c755;
+            border-color: rgba(6, 199, 85, 0.15);
+            background: rgba(6, 199, 85, 0.05);
+        }
+        .btn-share.line:hover {
+            color: white;
+            background: #06c755;
+            border-color: #06c755;
+        }
 
         /* Sidebar Drawer */
         .history-sidebar {
@@ -358,7 +425,7 @@
     <div class="container">
         <header class="app-header">
             <div class="logo-area" onclick="location.reload()">
-                <div class="logo">SOCIALINTENT AI</div>
+                <h1 class="logo">SOCIALINTENT AI</h1>
                 <div class="chip">SNS TREND SEO</div>
             </div>
             <div class="header-right">
@@ -376,7 +443,7 @@
 
         <!-- Hero -->
         <section class="hero" id="heroSection">
-            <h1>SNSトレンドを<br>5軸で即リサーチ。</h1>
+            <h2>SNSトレンドを<br>5軸で即リサーチ。</h2>
             <p>Instagram / YouTube / X / TikTok / Google SEO ― 気になるキーワードのトレンド強度・検索インテント・ハッシュタグ戦略をAIが横断分析。プラットフォームごとの「今刺さるフック」を瞬時に可視化します。</p>
             <div class="search-container">
                 <input type="text" id="keywordInput" placeholder="シードキーワードを入力 (例: Micro SaaS, AI Coding, 暗号資産)..." onkeydown="if(event.key==='Enter')analyzeIntent()">
@@ -423,10 +490,10 @@
             <!-- Left: Radar -->
             <div class="dashboard-left">
                 <div class="card">
-                    <div class="card-title">
+                    <h2 class="card-title">
                         <i class="fas fa-chart-pie" style="color:var(--primary)"></i>
                         インテント概要: <span id="displayKeyword" style="color:var(--primary);margin-left:5px">キーワード</span>
-                    </div>
+                    </h2>
                     <div class="stats-grid">
                         <div class="stat-box">
                             <div class="stat-val" id="valVolume">0</div>
@@ -446,10 +513,10 @@
             <!-- Right: AI Hooks -->
             <div class="dashboard-right">
                 <div class="card">
-                    <div class="card-title">
+                    <h2 class="card-title">
                         <i class="fas fa-magic" style="color:var(--accent)"></i>
                         AIバズ・フック ＆ ソーシャルコピー
-                    </div>
+                    </h2>
                     <div id="copyContainer"></div>
                 </div>
             </div>
@@ -458,14 +525,20 @@
         <!-- Detail Report (full width) -->
         <div class="detail-report" id="detailReport">
             <div class="card">
-                <div class="card-title">
+                <h2 class="card-title">
                     <i class="fas fa-file-chart-line" style="color:var(--accent)"></i>
                     プラットフォーム別 詳細分析レポート
                     <span id="reportKeywordLabel" style="color:var(--primary);margin-left:6px;font-size:1rem;"></span>
+                    <span class="share-container" id="shareContainer" style="display: none; margin-left: auto; margin-right: 12px;">
+                        <span class="share-label">レポートを共有:</span>
+                        <a href="javascript:void(0)" onclick="shareReport('x')" class="btn-share x" title="X (Twitter)で共有"><i class="fab fa-x-twitter"></i> X</a>
+                        <a href="javascript:void(0)" onclick="shareReport('line')" class="btn-share line" title="LINEで共有"><i class="fab fa-line"></i> LINE</a>
+                        <a href="javascript:void(0)" onclick="shareReport('link')" class="btn-share link" title="リンクをコピー"><i class="fas fa-link"></i> リンク</a>
+                    </span>
                     <button class="btn-export" id="exportBtn" onclick="exportReport()">
                         <i class="fas fa-download"></i> エクスポート
                     </button>
-                </div>
+                </h2>
                 <div class="report-summary-bar" id="reportSummaryBar"></div>
                 <div id="detailReportContent"></div>
             </div>
@@ -474,11 +547,11 @@
         <!-- Premium content card (full width) -->
         <div class="detail-report" id="premiumReport" style="display:none; margin-bottom:3rem;">
             <div class="card premium-section" style="border:1px solid var(--primary-glow)">
-                <div class="card-title">
+                <h2 class="card-title">
                     <i class="fas fa-crown" style="color:var(--primary)"></i>
                     ディープ・トレンドリサーチ
                     <span class="chip" style="background:var(--primary-glow); margin-left:6px">PREMIUM</span>
-                </div>
+                </h2>
                 <div id="premiumContentWrap"></div>
             </div>
         </div>
@@ -487,8 +560,11 @@
         <section class="pricing-section">
             <div class="card pricing-card">
                 <span class="chip" style="background:var(--primary-glow);display:inline-block;margin-bottom:1rem;">PRICING PLAN</span>
-                <h3>SocialIntent AI プレミアム</h3>
+                <h2>SocialIntent AI プレミアム</h2>
                 <div style="font-size:2.2rem;font-weight:900;margin:1rem 0;color:var(--primary)">¥580 <span style="font-size:1rem;color:var(--text-dim)">/ 買い切り (永久アクセス)</span></div>
+                <div style="font-size: 0.8rem; color: #10b981; margin: -0.5rem 0 1rem 0; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <i class="fas fa-shield-alt"></i> <span>24時間以内なら無条件で全額返金いたします</span>
+                </div>
                 <ul class="pricing-features">
                     <li class="free-feat"><i class="fas fa-check" style="color:#4ade80;margin-top:3px;flex-shrink:0"></i><span>全5プラットフォームのAIトレンドスコア分析（無料）</span></li>
                     <li class="free-feat"><i class="fas fa-check" style="color:#4ade80;margin-top:3px;flex-shrink:0"></i><span>プラットフォーム別バズ・フックコピー生成（無料）</span></li>
@@ -502,8 +578,28 @@
                 <button class="btn-upgrade" id="directUpgradeBtn" style="width:100%;justify-content:center;font-size:0.95rem;padding:0.75rem;">
                     今すぐプレミアムを体験する
                 </button>
+                <div class="checkout-trust-badges" style="margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div style="display: flex; justify-content: center; gap: 12px; font-size: 1.2rem; color: var(--text-dim);">
+                        <i class="fab fa-cc-visa"></i>
+                        <i class="fab fa-cc-mastercard"></i>
+                        <i class="fab fa-cc-jcb"></i>
+                        <i class="fab fa-cc-amex"></i>
+                    </div>
+                    <div style="font-size: 0.65rem; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                        <span><i class="fas fa-lock" style="color: #10b981;"></i> Stripe安全決済 • SCA (強力な顧客認証) 対応</span>
+                        <span>3-Dセキュア 2.0 準拠 • 24時間返金保証</span>
+                    </div>
+                </div>
             </div>
         </section>
+
+        <footer class="app-footer" style="text-align: center; padding: 2rem 0 1rem; color: var(--text-dim); font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.03); margin-top: 3rem; width: 100%;">
+            <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 0.8rem;">
+                <a href="javascript:void(0)" onclick="showPrivacyModal()" style="color: var(--text-dim); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'">プライバシーポリシー</a>
+                <a href="javascript:void(0)" onclick="showTermsModal()" style="color: var(--text-dim); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-dim)'">利用規約</a>
+            </div>
+            <div>&copy; 2026 Aoi Software Studio. All Rights Reserved.</div>
+        </footer>
     </div>
 
     <!-- Settings Modal -->
@@ -521,7 +617,7 @@
                         <i class="fas fa-key" style="color:var(--accent)"></i> Gemini APIキー (カスタム)
                     </div>
                     <p style="color: var(--text-dim); font-size: 0.75rem; margin-bottom: 0.8rem; line-height: 1.5;">
-                        独自のGemini APIキーを設定すると、無料プランの1日3回制限を完全にスキップできます。キーはローカルブラウザ（localStorage）にのみ保存されます。
+                        独自のGemini APIキーを設定すると、無料プランの1日2回制限を完全にスキップできます。キーはローカルブラウザ（localStorage）にのみ保存されます。
                     </p>
                     <input class="modal-input" type="password" id="customApiKeyInput" placeholder="AIzaSy..." style="margin-bottom:0.3rem;">
                     <div style="font-size:0.7rem; color:var(--text-dim); display:flex; justify-content:space-between;">
@@ -573,16 +669,76 @@
             <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--primary); margin-bottom: 1.5rem;"></i>
             <h3>無料分析枠の上限に達しました</h3>
             <p style="margin-bottom: 1.5rem; line-height: 1.6;">
-                無料プランでのキーワード分析は、1日3回までに制限されています。<br>
+                無料プランでのキーワード分析は、1日2回までに制限されています。<br>
                 引き続きキーワードを分析するには、プレミアムプランへアップグレードしてください。
             </p>
             <div class="modal-actions" style="flex-direction: column; gap: 10px;">
                 <button class="btn-upgrade" id="limitModalUpgradeBtn" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 0.95rem;">
                     <i class="fas fa-crown"></i> プレミアムへアップグレード ¥580 (買い切り・無制限)
                 </button>
+                <div style="font-size: 0.6rem; color: var(--text-dim); margin-top: 4px; display: flex; justify-content: center; gap: 10px;">
+                    <span><i class="fas fa-lock" style="color: #10b981;"></i> Stripe安全決済</span>
+                    <span>SCA対応 / 3DS2準拠</span>
+                    <span>24h返金保証</span>
+                </div>
+                <button class="btn-share x" id="shareToRestoreBtn" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 0.95rem; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                    <i class="fab fa-x-twitter"></i> Xでシェアして分析枠を+1増やす
+                </button>
                 <button class="btn-modal-skip" onclick="closeLimitModal()" style="width: 100%;">閉じる</button>
             </div>
         </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal-overlay" id="privacyModal">
+    <div class="modal-box" style="max-width: 600px; text-align: left; background: #0b0d19; border: 1px solid var(--glass-border);">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <h3 style="margin:0; font-size:1.2rem; color:white;"><i class="fas fa-shield-alt" style="color:var(--primary); margin-right:8px;"></i>プライバシーポリシー</h3>
+            <button class="btn-close-sidebar" onclick="closePrivacyModal()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1.1rem;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="max-height: 400px; overflow-y: auto; font-size: 0.8rem; line-height: 1.6; color: var(--text-dim); padding-right: 10px;">
+            <h4 style="color:white; margin: 1rem 0 0.5rem 0;">1. 個人情報の収集と利用目的</h4>
+            <p>当サービス（SocialIntent AI）は、Stripe決済時に入力されたメールアドレスおよび決済トランザクションIDのみを収集・保持します。これらのデータは、プレミアム機能解放用のライセンスキー（LS-PREMIUM-XXXX-XXXX）の発行、認証、および不正利用防止の目的にのみ使用されます。クレジットカード情報や暗号化キー等は外部決済代行会社（Stripe）が直接管理し、当サーバーには一切保存されません。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">2. 第三者提供の禁止</h4>
+            <p>収集したメールアドレスや認証用データは、法令に基づく開示請求等の場合を除き、事前の同意なく第三者に提供・販売・開示されることはありません。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">3. X (Twitter) APIデータおよび利用規約の遵守</h4>
+            <p>当サービスの自動運営ボットは、X Developer規約およびプライバシーポリシーに従って動作します。X上のユーザーからの明示的なアクション（リプライ等）を契機とした自動レポート配信のためにのみXのアカウントデータ（ユーザーID、リプライ内容）を一時的に利用・チェックし、スパム行為や不必要なDMの送信は行いません。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">4. データの安全管理と削除請求</h4>
+            <p>取得したデータは適切なアクセス制御のもと安全にSQLiteデータベースに保管されます。保有個人データの削除または照会を希望される場合は、サポート窓口（sota.kojima@empire.com）までご連絡いただければ、速やかに削除等の対応を行います。</p>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.5rem; justify-content: flex-end;">
+            <button class="btn-modal-skip" onclick="closePrivacyModal()">閉じる</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal-overlay" id="termsModal">
+    <div class="modal-box" style="max-width: 600px; text-align: left; background: #0b0d19; border: 1px solid var(--glass-border);">
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <h3 style="margin:0; font-size:1.2rem; color:white;"><i class="fas fa-file-contract" style="color:var(--primary); margin-right:8px;"></i>利用規約</h3>
+            <button class="btn-close-sidebar" onclick="closeTermsModal()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1.1rem;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="max-height: 400px; overflow-y: auto; font-size: 0.8rem; line-height: 1.6; color: var(--text-dim); padding-right: 10px;">
+            <h4 style="color:white; margin: 1rem 0 0.5rem 0;">1. 規約の適用範囲</h4>
+            <p>本利用規約は、Aoi Software Studioが提供する「SocialIntent AI」（以下「当サービス」）のすべての利用者に適用されます。利用者は、当サービスを利用することにより、本規約に同意したものとみなされます。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">2. プレミアムプランとライセンス</h4>
+            <p>プレミアムプランは、一括払い（¥580・買い切り）で永久ライセンスキーが付与されます。ライセンスキーは本人のみが使用可能であり、複数人での共有や転売は禁止します。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">3. 禁止事項</h4>
+            <p>利用者は、当サービスの脆弱性を探る行為、APIサーバーに対するDoS攻撃等の不正なリクエスト送信行為、および生成されたレポートデータを商業目的で競合他社に転売する行為を行ってはなりません。</p>
+            
+            <h4 style="color:white; margin: 1.2rem 0 0.5rem 0;">4. 免責事項</h4>
+            <p>当サービスで提供されるトレンド分析結果、バズ・フックコピー、および競合差別化戦略は、AI（Gemini 3.5 Flash）によって推測生成されたものであり、将来のバズや成果を100%保証するものではありません。当サービスの利用によって生じた損害や損失について、運営者はお客様に対して一切の責任を負いかねます。</p>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.5rem; justify-content: flex-end;">
+            <button class="btn-modal-skip" onclick="closeTermsModal()">閉じる</button>
+        </div>
+    </div>
     </div>
 
     <script src="suite-gatekeeper.js"></script>
@@ -602,6 +758,12 @@
     let isPremium = false;
 
     // ── Settings (API Key & License) ──────────────────────
+    // Helpers
+    function showPrivacyModal() { document.getElementById('privacyModal').style.display = 'flex'; }
+    function closePrivacyModal() { document.getElementById('privacyModal').style.display = 'none'; }
+    function showTermsModal() { document.getElementById('termsModal').style.display = 'flex'; }
+    function closeTermsModal() { document.getElementById('termsModal').style.display = 'none'; }
+
     function getApiKey() { return localStorage.getItem('si_gemini_key') || ''; }
     function getLicenseKey() { return localStorage.getItem('socialintent_license_key') || ''; }
     
@@ -818,13 +980,18 @@
                 });
             } else {
                 const licenseKey = localStorage.getItem('socialintent_license_key') || '';
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'X-License-Key': licenseKey,
+                    'X-App-Id': 'socialintent'
+                };
+                const today = new Date().toLocaleDateString('ja-JP');
+                if (localStorage.getItem('si_share_unlocked_today') === today) {
+                    headers['X-Share-Unlocked'] = 'true';
+                }
                 res = await fetch(`${backendApiUrl}/api/gemini-proxy`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-License-Key': licenseKey,
-                        'X-App-Id': 'socialintent'
-                    },
+                    headers: headers,
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
                         model: "gemini-3.5-flash"
@@ -833,7 +1000,7 @@
             }
             
             if (res.status === 429) {
-                alert("無料プランのAPI利用上限（1日3回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
+                alert("無料プランのAPI利用上限（1日2回）に達しました。悪用防止のため、サーバー側で制限を行っています。プレミアムライセンスキーを入力するか、しばらく時間をおいてから再度お試しください。");
                 return null;
             }
             
@@ -861,8 +1028,10 @@
         currentKeyword = keyword;
         currentHash = hashStr(keyword);
 
-        // Check premium
-        isPremium = (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium());
+        // Check premium & demo keyword bypass
+        const demoKeywords = ['Micro SaaS', 'AI Coding Assistant', 'ソーシャルSEO 2026', '不動産クラウドファンディング', '筋トレ ダイエット'];
+        const isDemoBypass = demoKeywords.includes(keyword);
+        isPremium = (typeof SuiteGatekeeper !== 'undefined' && SuiteGatekeeper.isPremium()) || isDemoBypass;
 
         // Check cache (sessionStorage) first to bypass daily limit
         let aiData = null;
@@ -885,7 +1054,7 @@
             if (dailyUsage.date !== today) {
                 dailyUsage = { date: today, count: 0, keywords: [] };
             }
-            if (dailyUsage.count >= 3 && !dailyUsage.keywords.includes(keyword)) {
+            if (dailyUsage.count >= 2 && !dailyUsage.keywords.includes(keyword)) {
                 showLimitModal();
                 return;
             }
@@ -952,7 +1121,15 @@
     }
   },
   "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
-  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "differentiation": {
+    "competitor_status": "競合の現状分析と強み（120文字以内）",
+    "unmet_needs": "競合が満たせていない視聴者の潜在的な不満・ニーズ（120文字以内）",
+    "positioning_strategy": "推奨する独自のブルーオーシャン・ポジショニング（120文字以内）",
+    "tactical_angles": [
+      {"title": "差別化の切り口案①（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"},
+      {"title": "差別化の切り口案②（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"}
+    ]
+  },
   "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
 }
 
@@ -1362,6 +1539,7 @@ JSONのみ返してください。`;
         const contentEl = document.getElementById('detailReportContent');
         document.getElementById('reportKeywordLabel').innerText = `「${keyword}」`;
         document.getElementById('exportBtn').style.display = isPremium ? 'inline-flex' : 'none';
+        document.getElementById('shareContainer').style.display = 'inline-flex';
 
         const platforms = [
             { key:'youtube',   name:'YouTube',      icon:'fab fa-youtube',    color:'#ff0000' },
@@ -1446,7 +1624,15 @@ JSONのみ返してください。`;
 
 {
   "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
-  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "differentiation": {
+    "competitor_status": "競合の現状分析と強み（120文字以内）",
+    "unmet_needs": "競合が満たせていない視聴者の潜在的な不満・ニーズ（120文字以内）",
+    "positioning_strategy": "推奨する独自のブルーオーシャン・ポジショニング（120文字以内）",
+    "tactical_angles": [
+      {"title": "差別化の切り口案①（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"},
+      {"title": "差別化の切り口案②（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"}
+    ]
+  },
   "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
 }
 
@@ -1498,11 +1684,65 @@ JSONのみ返してください。`;
                    </div>`
                 : '';
 
+            // Handle structured differentiation
+            let diffHtml = '';
+            if (ai.differentiation && typeof ai.differentiation === 'object') {
+                const diff = ai.differentiation;
+                diffHtml = `
+                    <div class="competitor-analysis-container" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                            <!-- 1. 競合の現状 -->
+                            <div class="analysis-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--text-dim);">
+                                <div style="font-weight: 800; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-users-slash"></i> 競合の現状分析と強み
+                                </div>
+                                <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;">${diff.competitor_status || 'データがありません。'}</div>
+                            </div>
+                            <!-- 2. 満たされていないニーズ -->
+                            <div class="analysis-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--primary);">
+                                <div style="font-weight: 800; font-size: 0.8rem; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-heart-broken"></i> 満たされていない視聴者ニーズ
+                                </div>
+                                <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;">${diff.unmet_needs || 'データがありません。'}</div>
+                            </div>
+                            <!-- 3. ポジショニング戦略 -->
+                            <div class="analysis-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--accent);">
+                                <div style="font-weight: 800; font-size: 0.8rem; color: var(--accent); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-map-marked-alt"></i> 推奨ブルーオーシャン戦略
+                                </div>
+                                <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5;">${diff.positioning_strategy || 'データがありません。'}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 4. 具体的な切り口 -->
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.85rem; color: white; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-compass" style="color: var(--primary);"></i> 推奨する差別化の切り口
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 0.8rem;">
+                                ${(diff.tactical_angles || []).map((angle, idx) => `
+                                    <div class="tactical-angle-card" style="background: linear-gradient(135deg, rgba(236,72,153,0.03), rgba(139,92,246,0.03)); border: 1px solid var(--primary-glow); padding: 1rem; border-radius: 12px; position: relative; overflow: hidden;">
+                                        <div style="position: absolute; right: -5px; top: -5px; font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.015); line-height: 1; user-select: none;">${idx+1}</div>
+                                        <div style="font-weight: 800; font-size: 0.85rem; color: white; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; position: relative; z-index: 2;">
+                                            <span style="background: var(--primary-glow); color: var(--primary); font-size: 0.65rem; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${idx+1}</span>
+                                            ${angle.title || '切り口案'}
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.5; position: relative; z-index: 2;">${angle.description || '詳細データがありません。'}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                diffHtml = `<div class="differentiation-box" style="font-size: 0.88rem; line-height: 1.8; color: #cbd5e1;">${ai.differentiation || '生成されていません'}</div>`;
+            }
+
             contentEl.innerHTML = `
                 <div class="premium-grid" style="padding: 1.5rem 0;">
                     <div class="premium-block">
                         <div class="premium-block-title"><i class="fas fa-bullseye" style="color:var(--accent)"></i> 競合ポジショニング分析</div>
-                        <div class="differentiation-box">${ai.differentiation || '生成されていません'}</div>
+                        ${diffHtml}
                     </div>
                     <div class="premium-block">
                         <div class="premium-block-title"><i class="fas fa-scroll" style="color:var(--text-dim); opacity:0.7"></i> <span style="opacity:0.7">フック台本案（参考）</span></div>
@@ -1582,7 +1822,7 @@ JSONのみ返してください。`;
                 };
             }
         } else {
-            alert("本日の無料分析枠（3回）を超過しました。これ以上のキーワード分析を行うには、プレミアムプランへアップグレードしてください。");
+            alert("本日の無料分析枠（2回）を超過しました。これ以上のキーワード分析を行うには、プレミアムプランへアップグレードしてください。");
         }
     }
 
@@ -1612,7 +1852,15 @@ JSONのみ返してください。`;
 
 {
   "relatedKeywords": ["関連KW1", "関連KW2", "関連KW3", "関連KW4", "関連KW5"],
-  "differentiation": "競合動画や競合サイトに勝つための具体的なポジショニング・切り口（日本語で詳細に、200字〜300字程度）",
+  "differentiation": {
+    "competitor_status": "競合の現状分析と強み（120文字以内）",
+    "unmet_needs": "競合が満たせていない視聴者の潜在的な不満・ニーズ（120文字以内）",
+    "positioning_strategy": "推奨する独自のブルーオーシャン・ポジショニング（120文字以内）",
+    "tactical_angles": [
+      {"title": "差別化の切り口案①（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"},
+      {"title": "差別化の切り口案②（キャッチーなタイトル）", "description": "具体的な配信アプローチや工夫点（100文字程度）"}
+    ]
+  },
   "script": "このキーワードで最もバズるショート動画（TikTok/Shorts/Reels）の台本案（日本語）。構成：【0〜3秒: 強烈なフック】【3〜20秒: 具体的な本編】【20〜30秒: CTA・アクション誘導】のように、ト書きやナレーションセリフを含んだリアルで実用的な台本。300字以上"
 }
 
@@ -1680,7 +1928,19 @@ JSONのみ返してください。`;
             md += `## ${k.toUpperCase()}\n- スコア: ${p.score}/100\n- トレンド: ${p.trend}\n- インサイト: ${p.insight}\n- フック: ${(p.hooks||[]).join(' / ')}\n\n`;
         });
         if (ai?.differentiation) {
-            md += `## 競合コンテンツ差別化戦略\n${ai.differentiation}\n\n`;
+            md += `## 競合コンテンツ差別化戦略\n`;
+            if (typeof ai.differentiation === 'object') {
+                const diff = ai.differentiation;
+                md += `### 1. 競合の現状分析と強み\n${diff.competitor_status || 'データなし'}\n\n`;
+                md += `### 2. 満たされていない視聴者ニーズ\n${diff.unmet_needs || 'データなし'}\n\n`;
+                md += `### 3. 推奨ブルーオーシャン戦略\n${diff.positioning_strategy || 'データなし'}\n\n`;
+                md += `### 4. 推奨する差別化の切り口\n`;
+                (diff.tactical_angles || []).forEach((angle, idx) => {
+                    md += `#### 切り口案${idx + 1}: ${angle.title || '案'}\n${angle.description || '詳細なし'}\n\n`;
+                });
+            } else {
+                md += `${ai.differentiation}\n\n`;
+            }
         }
         if (ai?.script) {
             md += `## AIバズ動画台本・構成スクリプト\n\`\`\`text\n${ai.script}\n\`\`\`\n\n`;
@@ -1689,6 +1949,39 @@ JSONのみ返してください。`;
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = `socialintent_${kw}_${new Date().toISOString().slice(0,10)}.md`;
         a.click();
+    }
+
+    // ── Share Report ──────────────────────────────────────
+    function shareReport(platform) {
+        const kw = currentKeyword;
+        if (!kw) {
+            alert("分析結果が存在しません。キーワードを検索してください。");
+            return;
+        }
+        
+        const encodedKw = encodeURIComponent(kw);
+        // The URL of the programmatic SEO page served by the Flask backend
+        const backendUrl = typeof SuiteGatekeeper !== 'undefined' ? SuiteGatekeeper.getBackendUrl() : 'https://socialintent-api.onrender.com';
+        const shareUrl = `${backendUrl}/trends/${encodedKw}`;
+        
+        const text = `【AI分析レポート】「${kw}」の主要SNSトレンドと攻略相性を可視化しました📊 #SocialIntentAI #SNSマーケティング`;
+        
+        if (platform === 'x') {
+            const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+            window.open(xUrl, '_blank', 'width=550,height=420');
+        } else if (platform === 'line') {
+            const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
+            window.open(lineUrl, '_blank', 'width=500,height=500');
+        } else if (platform === 'link') {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => {
+                    alert("レポートの共有用URLをクリップボードにコピーしました！🔗");
+                })
+                .catch(err => {
+                    console.error('Failed to copy text:', err);
+                    alert("共有用URL: " + shareUrl);
+                });
+        }
     }
 
     // ── Premium check ─────────────────────────────────────
@@ -1779,6 +2072,36 @@ JSONのみ返してください。`;
         }
 
         syncPremiumUI();
+
+        const shareToRestoreBtn = document.getElementById('shareToRestoreBtn');
+        if (shareToRestoreBtn) {
+            shareToRestoreBtn.onclick = () => {
+                const shareText = "SNSトレンド分析ツール「SocialIntent AI」が凄すぎる！5つのプラットフォームのトレンドを一瞬で可視化してくれます📊 無料枠あり！\n#SocialIntentAI #個人開発";
+                const shareUrl = "https://socialintent-trends.onrender.com/";
+                const xIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+                
+                window.open(xIntentUrl, '_blank', 'width=550,height=420');
+                
+                const restoreCreditOnFocus = () => {
+                    window.removeEventListener('focus', restoreCreditOnFocus);
+                    const today = new Date().toLocaleDateString('ja-JP');
+                    let dailyUsage = JSON.parse(localStorage.getItem('si_daily_usage') || '{}');
+                    if (dailyUsage.date === today) {
+                        if (dailyUsage.count > 0) {
+                            dailyUsage.count -= 1;
+                            localStorage.setItem('si_daily_usage', JSON.stringify(dailyUsage));
+                            localStorage.setItem('si_share_unlocked_today', today);
+                            alert('シェアありがとうございます！無料分析枠が1回分復元されました🎉');
+                            closeLimitModal();
+                        }
+                    }
+                };
+                
+                setTimeout(() => {
+                    window.addEventListener('focus', restoreCreditOnFocus);
+                }, 1000);
+            };
+        }
 
         // Listen to premium activation/deactivation events from SuiteGatekeeper
         document.addEventListener('suite-license-activated', () => {
