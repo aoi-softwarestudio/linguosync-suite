@@ -93,7 +93,7 @@
             <h1 data-i18n="hero-title">NotebookLMの要約を<br>「ゲーム感覚の特訓」に変える。</h1>
             <p data-i18n="hero-desc">Google NotebookLM で生成した講義ノートや要約エクスポートをそのまま流し込むだけで、AIがあなたを合格へ導く「アバターAI対話コーチ」「暗記カード」「模擬試験」「勲章クエスト」を瞬時にコンバート生成します。</p>
             
-            <div class="notebook-sync-status-console" style="margin: -1rem auto 2rem; max-width: 600px; padding: 8px 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; justify-content: center;">
+            <div class="notebook-sync-status-console" id="notebookImportBtn" style="cursor: pointer; margin: -1rem auto 2rem; max-width: 600px; padding: 8px 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 20px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; justify-content: center;">
                 <span class="pulse-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; display: inline-block;"></span>
                 <span style="color: #10b981; font-weight: 800; font-family: monospace; letter-spacing: 0.5px;">NotebookLM Smart Link Channel: Active</span>
                 <span style="color: var(--text-dim);">|</span>
@@ -132,6 +132,9 @@
                 <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
                     <button class="btn-demo" id="demoBtn">
                         <i class="fas fa-vial"></i> 💡 NotebookLM デモデータで即時体験
+                    </button>
+                    <button class="btn-demo" onclick="document.getElementById('importModal').style.display='flex'; if(typeof setupModalDropZone === 'function') setupModalDropZone();" style="background: rgba(66, 133, 244, 0.15); border: 1px solid rgba(66, 133, 244, 0.3); color: #fff; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s; border-radius: 12px; font-weight: 700; height: 38px; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        <i class="fab fa-google" style="color: #4285f4;"></i> NotebookLM 読込ウィザード
                     </button>
                     <button class="btn-demo" id="heroDashboardBtn" onclick="jumpToActiveProject()" style="display: none; background: rgba(99, 102, 241, 0.15); border: 1px solid var(--primary); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25); color: white; align-items: center; gap: 6px; cursor: pointer; transition: 0.3s;">
                         <i class="fas fa-columns"></i> <span data-i18n="btn-dashboard">プロジェクト画面へ</span>
