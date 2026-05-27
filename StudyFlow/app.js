@@ -27,6 +27,7 @@ let isSocraticMode = true; // Socratic Active Recall questioning mode active
 let tutorChatCount = 0; // Tracks consecutive tutor Q&As for achievements
 
 // API Configuration
+let modalDropZoneBound = false;
 let geminiApiKey = (typeof SuiteGatekeeper !== 'undefined' && typeof SuiteGatekeeper.getGeminiKey === 'function' ? SuiteGatekeeper.getGeminiKey() : '') || localStorage.getItem('gemini_api_key') || '';
 let isGeminiEnabled = true;
 let geminiModel = localStorage.getItem('studyflow_gemini_model') || 'gemini-3.5-flash';
@@ -86,6 +87,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('studyflow_auth_token')) {
         syncUserDataFromServer();
     }
+    
+    // Bind modal elements
+    setupModalDropZone();
 });
 // Toast Notification
 function showToast(msg, type = 'info') {
@@ -1219,7 +1223,7 @@ function renderExamView(container) {
             // Player attacks!
             bossHp = Math.max(0, bossHp - damagePerCorrect);
             
-            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight: 800;"><i class="fas fa-sword"></i> クリティカルヒット！ 正解！</span><br>ボス「${bossName}」に ${damagePerCorrect} ダメージを与えた！`;
+            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight: 800;"><i class="fas fa-magic"></i> ⚔️ クリティカルヒット！ 正解！</span><br>ボス「${bossName}」に ${damagePerCorrect} ダメージを与えた！`;
             if (arenaEl) {
                 arenaEl.classList.add('flash-green-effect');
                 setTimeout(() => arenaEl.classList.remove('flash-green-effect'), 500);
@@ -2103,7 +2107,7 @@ function renderWeaknessDiagnosis() {
     widget.className = 'weakness-card';
     widget.innerHTML = `
         <div class="weakness-title">
-            <i class="fas fa-heart-beat"></i> 弱点診断パーソナルカルテ
+            <i class="fas fa-heartbeat"></i> 弱点診断パーソナルカルテ
         </div>
         <ul class="weakness-list">
             ${weaknesses.map(w => `
@@ -2382,19 +2386,19 @@ window.importNotebookTextDirect = () => {
     handleUpload(mockFile);
 };
 
-window.executePasteImport = () => {
-    const modalPasteArea = document.getElementById('pasteTextArea');
+window.processNotebookImport = () => {
+    const modalPasteArea = document.getElementById('modalNotebookPasteArea');
     let text = "";
     if (modalPasteArea && modalPasteArea.value.trim()) {
         text = modalPasteArea.value.trim();
         modalPasteArea.value = "";
     }
     if (!text) {
-        showToast('ペーストエリアにテキストを入力してください。', 'warning');
+        showToast('NotebookLMの要約テキストをペーストしてください。', 'warning');
         return;
     }
     const mockFile = {
-        name: "NotebookLM_Paste_Import.md",
+        name: "NotebookLM_Summary_Import.md",
         isDemo: true,
         text: text
     };
@@ -2403,7 +2407,15 @@ window.executePasteImport = () => {
     handleUpload(mockFile);
 };
 
-window.processNotebookImport = window.importNotebookTextDirect;
+window.switchImportTab = (tabId) => {
+    document.querySelectorAll('.wizard-tab').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    document.querySelectorAll('.wizard-tab-content').forEach(content => content.style.display = 'none');
+    const activeContent = document.getElementById(`wizard-content-${tabId}`);
+    if (activeContent) activeContent.style.display = 'block';
+};
 
 // Theme Selection & Settings Persistence
 window.changeStudyTheme = (themeName) => {
