@@ -33,6 +33,8 @@ let isGeminiEnabled = true;
 let geminiModel = localStorage.getItem('studyflow_gemini_model') || 'gemini-3.5-flash';
 let backendApiUrl = 'https://cholesterol-anniversary-opinions-perhaps.trycloudflare.com'; // Dynamic local routing API Gateway fallback
 // Gamification State
+let userGold = parseInt(localStorage.getItem('studyflow_gold') || '100');
+let userInventory = JSON.parse(localStorage.getItem('studyflow_inventory') || '{"hp_potion":1,"scroll_insight":0,"shield_scroll":0,"double_strike":0}');
 let userXp = parseInt(localStorage.getItem('studyflow_xp') || '50');
 let userStreak = parseInt(localStorage.getItem('studyflow_streak') || '3');
 // Ranks Mapping
@@ -103,20 +105,106 @@ function showToast(msg, type = 'info') {
         setTimeout(() => toast.remove(), 500);
     }, 3000);
 }
-// --- GAMIFICATION SYSTEM ---
+// --- GAMIFICATION SYSTEM & SOUND SYNTH ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playRetroSound(type) {
+    try {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        
+        if (type === 'hit') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (type === 'hurt') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(250, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.25);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'item') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.06);
+            osc.frequency.setValueAtTime(783.99, now + 0.12);
+            osc.frequency.setValueAtTime(1046.50, now + 0.18);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'victory') {
+            osc.type = 'square';
+            const notes = [523.25, 523.25, 523.25, 523.25, 659.25, 587.33, 659.25, 783.99, 1046.50];
+            const durations = [0.06, 0.06, 0.06, 0.12, 0.12, 0.06, 0.06, 0.06, 0.3];
+            let time = now;
+            gain.gain.setValueAtTime(0.1, now);
+            notes.forEach((freq, idx) => {
+                osc.frequency.setValueAtTime(freq, time);
+                time += durations[idx];
+            });
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, time);
+            osc.start(now);
+            osc.stop(time);
+        } else if (type === 'gameover') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(196.00, now);
+            osc.frequency.linearRampToValueAtTime(130.81, now + 0.25);
+            osc.frequency.linearRampToValueAtTime(98.00, now + 0.55);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        } else if (type === 'shield') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.15);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
+    } catch (e) {
+        console.warn("AudioContext error:", e);
+    }
+}
+
+function addGold(amount) {
+    userGold += amount;
+    localStorage.setItem('studyflow_gold', userGold.toString());
+    updateGamificationUI();
+}
+
 function addXp(amount) {
     userXp += amount;
     localStorage.setItem('studyflow_xp', userXp.toString());
+    
+    // Automatically grant gold alongside XP
+    addGold(amount);
     
     // Level calculator
     const oldLevel = Math.floor((userXp - amount) / 200) + 1;
     const newLevel = Math.floor(userXp / 200) + 1;
     
     updateGamificationUI();
-    showToast(`+${amount} XP 獲得しました！`, 'success');
+    showToast(`+${amount} XP ＆ ゴールド 獲得！`, 'success');
     
     if (newLevel > oldLevel) {
         showToast(`🎉 レベルアップ！ レベル ${newLevel} に到達しました！`, 'success');
+        playRetroSound('victory');
         triggerConfettiEffect();
     }
     if (localStorage.getItem('studyflow_auth_token')) {
@@ -138,6 +226,9 @@ function updateGamificationUI() {
     if (userLevelText) userLevelText.innerText = rankText;
     if (levelProgressFill) levelProgressFill.style.width = `${progressPercent}%`;
     if (streakCountSpan) streakCountSpan.innerText = userStreak;
+    
+    const goldCountSpan = document.getElementById('goldCount');
+    if (goldCountSpan) goldCountSpan.innerText = userGold;
 }
 
 function triggerConfettiEffect() {
@@ -1050,8 +1141,81 @@ function renderView() {
     } else if (activeView === 'tutor') {
         viewTitleEl.innerHTML = `<i class="fas fa-robot"></i> Socratic AI 家庭教師: ${currentData.title}`;
         renderTutorView(container);
+    } else if (activeView === 'shop') {
+        viewTitleEl.innerHTML = `<i class="fas fa-shopping-bag"></i> よろず屋 (Item Shop): ゴールドを活用`;
+        renderShopView(container);
     }
 }
+
+function renderShopView(container) {
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="color: #fbbf24; font-size: 1.1rem;"><i class="fas fa-shopping-bag"></i> アイテムよろず屋</h3>
+            <span style="font-size: 0.8rem; color: var(--text-dim);">所持金: <strong style="color:#fbbf24;">${userGold} G</strong></span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1.5rem;">獲得したゴールドを消費して、試験ボスバトルを有利に進めるアイテムを購入できます。</p>
+        
+        <div class="shop-grid">
+            <div class="shop-card">
+                <div class="shop-card-icon">🧪</div>
+                <div class="shop-card-title">HPポーション</div>
+                <div class="shop-card-desc">試験ボスバトル中に使用すると、プレイヤーのHPを30回復します（上限100）。</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                    <div class="shop-card-price">🪙 50 G</div>
+                    <button class="shop-buy-btn" onclick="buyShopItem('hp_potion', 50)">購入する (所持: ${userInventory.hp_potion})</button>
+                </div>
+            </div>
+            
+            <div class="shop-card">
+                <div class="shop-card-icon">📜</div>
+                <div class="shop-card-title">賢者のスクロール</div>
+                <div class="shop-card-desc">試験ボスバトル中に使用すると、現在解いている4択クイズから誤答を2つ消去します（50%削り）。</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                    <div class="shop-card-price">🪙 80 G</div>
+                    <button class="shop-buy-btn" onclick="buyShopItem('scroll_insight', 80)">購入する (所持: ${userInventory.scroll_insight})</button>
+                </div>
+            </div>
+            
+            <div class="shop-card">
+                <div class="shop-card-icon">🛡️</div>
+                <div class="shop-card-title">防護の巻物</div>
+                <div class="shop-card-desc">試験ボスバトル中に使用すると、次に不正解した際のボスからの被ダメージを1回だけ完全に無効化します。</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                    <div class="shop-card-price">🪙 60 G</div>
+                    <button class="shop-buy-btn" onclick="buyShopItem('shield_scroll', 60)">購入する (所持: ${userInventory.shield_scroll})</button>
+                </div>
+            </div>
+            
+            <div class="shop-card">
+                <div class="shop-card-icon">💥</div>
+                <div class="shop-card-title">二連撃の巻物</div>
+                <div class="shop-card-desc">試験ボスバトル中に使用すると、次に正解した際、ボスに与える攻撃ダメージを2倍にします。</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                    <div class="shop-card-price">🪙 100 G</div>
+                    <button class="shop-buy-btn" onclick="buyShopItem('double_strike', 100)">購入する (所持: ${userInventory.double_strike})</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+window.buyShopItem = (itemId, cost) => {
+    if (userGold < cost) {
+        showToast('ゴールドが不足しています！', 'error');
+        return;
+    }
+    
+    userGold -= cost;
+    userInventory[itemId] = (userInventory[itemId] || 0) + 1;
+    
+    localStorage.setItem('studyflow_gold', userGold.toString());
+    localStorage.setItem('studyflow_inventory', JSON.stringify(userInventory));
+    
+    playRetroSound('item');
+    updateGamificationUI();
+    renderView(); // re-render shop list
+    showToast('アイテムを購入しました！', 'success');
+};
 
 // Flashcard Renderer with Mastered status toggling
 function renderFlashcardsView(container) {
@@ -1114,6 +1278,10 @@ function renderExamView(container) {
     const damagePerCorrect = Math.ceil(100 / totalQs);
     const damagePerIncorrect = 25; // 4 mistakes = death
     
+    // Items state (battle session-local modifiers)
+    let isShieldActive = false;
+    let isDoubleStrikeActive = false;
+    
     // Calculate dynamic Boss Name from title
     let docTitle = currentData.title || "無題の資料";
     let cleanTitle = docTitle.replace(/Google NotebookLM 提携特訓プロジェクト:\s*/, '').replace(/統合ローカル解析セット:\s*/, '').substring(0, 15);
@@ -1121,6 +1289,130 @@ function renderExamView(container) {
     
     // Reset any running interval/timers
     if (examInterval) clearInterval(examInterval);
+    
+    // Local Item usage logic via closure
+    window.useBattleItem = (itemId) => {
+        if (!userInventory[itemId] || userInventory[itemId] <= 0) {
+            showToast('このアイテムを持っていません！よろず屋で購入してください。', 'warning');
+            return;
+        }
+        
+        const logEl = document.getElementById('battleLog');
+        
+        if (itemId === 'hp_potion') {
+            if (playerHp >= 100) {
+                showToast('すでにHPは満タンです！', 'info');
+                return;
+            }
+            playerHp = Math.min(100, playerHp + 30);
+            userInventory[itemId]--;
+            playRetroSound('item');
+            showToast('HPポーションを使用！ HPが30回復しました。', 'success');
+            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight:800;">🧪 アイテム使用</span><br>HPポーションを使用してHPを30回復した！`;
+        } 
+        else if (itemId === 'scroll_insight') {
+            const currentQ = currentData.exam[currentQIdx];
+            const correctOptIdx = currentQ.answer;
+            const options = document.querySelectorAll('.option');
+            
+            const incorrectIndices = [];
+            options.forEach((opt, idx) => {
+                if (idx !== correctOptIdx && opt.style.opacity !== '0.3') {
+                    incorrectIndices.push(idx);
+                }
+            });
+            
+            if (incorrectIndices.length === 0) {
+                showToast('これ以上消去できる選択肢がありません！', 'info');
+                return;
+            }
+            
+            const toDisable = incorrectIndices.sort(() => 0.5 - Math.random()).slice(0, 2);
+            toDisable.forEach(idx => {
+                const opt = options[idx];
+                if (opt) {
+                    opt.style.opacity = '0.3';
+                    opt.style.pointerEvents = 'none';
+                    opt.style.textDecoration = 'line-through';
+                }
+            });
+            
+            userInventory[itemId]--;
+            playRetroSound('item');
+            showToast('賢者のスクロールを使用！ 誤答の選択肢を2つ排除しました。', 'success');
+            if (logEl) logEl.innerHTML = `<span style="color: #38bdf8; font-weight:800;">📜 アイテム使用</span><br>賢者のスクロールを使用して誤答を排除した！`;
+        } 
+        else if (itemId === 'shield_scroll') {
+            if (isShieldActive) {
+                showToast('すでにシールドが展開されています！', 'info');
+                return;
+            }
+            isShieldActive = true;
+            userInventory[itemId]--;
+            playRetroSound('shield');
+            showToast('防護の巻物を使用！ 次の被ダメージを無効化します。', 'success');
+            if (logEl) logEl.innerHTML = `<span style="color: #fbbf24; font-weight:800;">🛡️ アイテム使用</span><br>防護の魔法シールドを展開した！`;
+            const shieldBtn = document.getElementById('btn_item_shield_scroll');
+            if (shieldBtn) shieldBtn.classList.add('active-effect');
+        } 
+        else if (itemId === 'double_strike') {
+            if (isDoubleStrikeActive) {
+                showToast('すでに二連撃の準備ができています！', 'info');
+                return;
+            }
+            isDoubleStrikeActive = true;
+            userInventory[itemId]--;
+            playRetroSound('item');
+            showToast('二連撃の巻物を使用！ 次の攻撃ダメージが2倍になります。', 'success');
+            if (logEl) logEl.innerHTML = `<span style="color: #ef4444; font-weight:800;">💥 アイテム使用</span><br>次回攻撃ダメージ2倍のバフを付与した！`;
+            const strikeBtn = document.getElementById('btn_item_double_strike');
+            if (strikeBtn) strikeBtn.classList.add('active-effect');
+        }
+        
+        localStorage.setItem('studyflow_inventory', JSON.stringify(userInventory));
+        
+        for (let key in userInventory) {
+            const cntSpan = document.getElementById(`cnt_item_${key}`);
+            if (cntSpan) cntSpan.innerText = userInventory[key];
+            const btnEl = document.getElementById(`btn_item_${key}`);
+            if (btnEl && userInventory[key] <= 0) {
+                btnEl.disabled = true;
+            }
+        }
+        
+        drawBattleArenaHeaderOnly();
+    };
+
+    function drawBattleArenaHeaderOnly() {
+        const pBar = document.querySelector('.fighter-card.player .hp-bar-fill');
+        const pText = document.querySelector('.fighter-card.player .hp-text');
+        const bBar = document.querySelector('.fighter-card.boss .hp-bar-fill');
+        const bText = document.querySelector('.fighter-card.boss .hp-text');
+        const pAvatar = document.querySelector('.fighter-card.player .fighter-avatar');
+        
+        if (pBar) {
+            pBar.style.width = `${playerHp}%`;
+            pBar.className = 'hp-bar-fill ' + (playerHp > 50 ? '' : (playerHp > 20 ? 'warning' : 'danger'));
+        }
+        if (pText) pText.innerText = `HP: ${playerHp} / 100`;
+        
+        if (bBar) {
+            bBar.style.width = `${bossHp}%`;
+            bBar.className = 'hp-bar-fill boss-hp ' + (bossHp > 50 ? '' : (bossHp > 20 ? 'warning' : 'danger'));
+        }
+        if (bText) bText.innerText = `HP: ${bossHp} / 100`;
+        
+        if (pAvatar) {
+            pAvatar.innerHTML = isShieldActive ? '🛡️' : '🦸';
+            if (isShieldActive) {
+                pAvatar.style.borderColor = '#fbbf24';
+                pAvatar.style.boxShadow = '0 0 15px rgba(251,191,36,0.6)';
+            } else {
+                pAvatar.style.borderColor = 'var(--primary)';
+                pAvatar.style.boxShadow = '0 0 10px var(--primary-glow)';
+            }
+        }
+    }
     
     function drawBattleArena() {
         // HP bar classes
@@ -1133,7 +1425,7 @@ function renderExamView(container) {
                 <div class="battle-header">
                     <!-- Player Stats -->
                     <div class="fighter-card player">
-                        <div class="fighter-avatar">🛡️</div>
+                        <div class="fighter-avatar" style="transition: all 0.3s ease;">${isShieldActive ? '🛡️' : '🦸'}</div>
                         <div class="fighter-stats">
                             <div class="fighter-name">勇者（あなた）</div>
                             <div class="hp-container">
@@ -1156,6 +1448,23 @@ function renderExamView(container) {
                             <div class="hp-text">HP: ${bossHp} / 100</div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Battle Items Inventory Hotbar -->
+                <div class="battle-items-hotbar" style="display: flex; gap: 8px; border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 12px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.72rem; color: var(--text-dim); font-weight: 800; margin-right: 6px;">戦闘アイテム:</span>
+                    <button class="item-btn" onclick="useBattleItem('hp_potion')" id="btn_item_hp_potion" ${userInventory.hp_potion <= 0 ? 'disabled' : ''}>
+                        🧪 ポーション (<span id="cnt_item_hp_potion">${userInventory.hp_potion}</span>)
+                    </button>
+                    <button class="item-btn" onclick="useBattleItem('scroll_insight')" id="btn_item_scroll_insight" ${userInventory.scroll_insight <= 0 ? 'disabled' : ''}>
+                        📜 賢者 (<span id="cnt_item_scroll_insight">${userInventory.scroll_insight}</span>)
+                    </button>
+                    <button class="item-btn ${isShieldActive ? 'active-effect' : ''}" onclick="useBattleItem('shield_scroll')" id="btn_item_shield_scroll" ${userInventory.shield_scroll <= 0 ? 'disabled' : ''}>
+                        🛡️ 防護 (<span id="cnt_item_shield_scroll">${userInventory.shield_scroll}</span>)
+                    </button>
+                    <button class="item-btn ${isDoubleStrikeActive ? 'active-effect' : ''}" onclick="useBattleItem('double_strike')" id="btn_item_double_strike" ${userInventory.double_strike <= 0 ? 'disabled' : ''}>
+                        💥 二連撃 (<span id="cnt_item_double_strike">${userInventory.double_strike}</span>)
+                    </button>
                 </div>
                 
                 <!-- Battle Combat Log -->
@@ -1221,21 +1530,35 @@ function renderExamView(container) {
         
         if (isCorrect) {
             // Player attacks!
-            bossHp = Math.max(0, bossHp - damagePerCorrect);
+            let damage = damagePerCorrect;
+            let strikeMsg = "";
+            if (isDoubleStrikeActive) {
+                damage = damage * 2;
+                isDoubleStrikeActive = false;
+                strikeMsg = "二連撃発動！ダブルダメージ！ ";
+            }
+            bossHp = Math.max(0, bossHp - damage);
             
-            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight: 800;"><i class="fas fa-magic"></i> ⚔️ クリティカルヒット！ 正解！</span><br>ボス「${bossName}」に ${damagePerCorrect} ダメージを与えた！`;
+            playRetroSound('hit');
+            if (logEl) logEl.innerHTML = `<span style="color: #10b981; font-weight: 800;"><i class="fas fa-magic"></i> ⚔️ ${strikeMsg}クリティカルヒット！ 正解！</span><br>ボス「${bossName}」に ${damage} ダメージを与えた！`;
             if (arenaEl) {
                 arenaEl.classList.add('flash-green-effect');
                 setTimeout(() => arenaEl.classList.remove('flash-green-effect'), 500);
             }
         } else {
             // Boss attacks!
-            playerHp = Math.max(0, playerHp - damagePerIncorrect);
-            
-            if (logEl) logEl.innerHTML = `<span style="color: #f43f5e; font-weight: 800;"><i class="fas fa-bolt"></i> 手痛い反撃！ 不正解...（正解は ${String.fromCharCode(65 + q.answer)}）</span><br>「${bossName}」の攻撃！あなたは ${damagePerIncorrect} ダメージを受けた！`;
-            if (arenaEl) {
-                arenaEl.classList.add('shake-effect', 'flash-red-effect');
-                setTimeout(() => arenaEl.classList.remove('shake-effect', 'flash-red-effect'), 500);
+            if (isShieldActive) {
+                isShieldActive = false;
+                playRetroSound('shield');
+                if (logEl) logEl.innerHTML = `<span style="color: #fbbf24; font-weight: 800;"><i class="fas fa-shield-halved"></i> 盾ガード！ ダメージ無効（正解は ${String.fromCharCode(65 + q.answer)}）</span><br>「${bossName}」の攻撃！防護の魔法盾がダメージを防いだ！`;
+            } else {
+                playerHp = Math.max(0, playerHp - damagePerIncorrect);
+                playRetroSound('hurt');
+                if (logEl) logEl.innerHTML = `<span style="color: #f43f5e; font-weight: 800;"><i class="fas fa-bolt"></i> 手痛い反撃！ 不正解...（正解は ${String.fromCharCode(65 + q.answer)}）</span><br>「${bossName}」の攻撃！あなたは ${damagePerIncorrect} ダメージを受けた！`;
+                if (arenaEl) {
+                    arenaEl.classList.add('shake-effect', 'flash-red-effect');
+                    setTimeout(() => arenaEl.classList.remove('shake-effect', 'flash-red-effect'), 500);
+                }
             }
         }
         
@@ -1249,6 +1572,7 @@ function renderExamView(container) {
     };
     
     function showBattleVictory() {
+        playRetroSound('victory');
         container.innerHTML = `
             <div class="battle-result-card">
                 <div class="battle-result-icon win">🏆</div>
@@ -1286,6 +1610,7 @@ function renderExamView(container) {
     }
     
     function showBattleDefeat() {
+        playRetroSound('gameover');
         container.innerHTML = `
             <div class="battle-result-card">
                 <div class="battle-result-icon lose">💀</div>
@@ -1310,9 +1635,7 @@ function renderExamView(container) {
         
         // Add standard fail XP
         addXp(10);
-    }
-    
-    // Start Battle
+    }    // Start Battle
     drawBattleArena();
 }
 
