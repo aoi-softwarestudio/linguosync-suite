@@ -1519,4 +1519,138 @@ body.arctic-crystal {
         radial-gradient(circle at 90% 90%, rgba(148, 163, 184, 0.12) 0%, transparent 45%);
 }
 
+/* --- ADVANCED GAMIFICATION SYSTEMS (GOLD, SHOP & BATTLE HOTBAR) --- */
+.gold-badge {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+    transition: var(--transition-smooth);
+}
+.gold-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+}
+
+/* Shop Layout Styles */
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-top: 1rem;
+}
+
+.shop-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.shop-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(251, 191, 36, 0.3);
+    background: rgba(251, 191, 36, 0.02);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.08);
+}
+
+.shop-card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 4px;
+}
+
+.shop-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: white;
+}
+
+.shop-card-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    flex: 1;
+}
+
+.shop-card-price {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.shop-buy-btn {
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    border: none;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 4px 10px rgba(251, 191, 36, 0.2);
+}
+
+.shop-buy-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.35);
+}
+
+/* Battle Items Hotbar Styles */
+.battle-items-hotbar {
+    margin-bottom: 0.5rem;
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: blur(8px);
+}
+
+.item-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.item-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-glow);
+    transform: translateY(-1px);
+}
+
+.item-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.item-btn.active-effect {
+    background: rgba(99, 102, 241, 0.2) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 10px var(--primary-glow);
+    animation: pulse-blue 1.5s infinite alternate;
+}
+
+@keyframes pulse-blue {
+    from { box-shadow: 0 0 4px var(--primary-glow); }
+    to { box-shadow: 0 0 12px var(--primary); }
+}
+
+
 
