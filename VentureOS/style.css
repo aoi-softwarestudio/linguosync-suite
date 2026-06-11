@@ -140,6 +140,17 @@ header {
 }
 
 .status-active { background: rgba(74, 222, 128, 0.1); color: var(--growth); }
+.status-closed { background: rgba(248, 113, 113, 0.1); color: var(--risk); }
+
+.venture-card.closed {
+    opacity: 0.55;
+    filter: grayscale(0.7);
+}
+.venture-card.closed:hover {
+    transform: none;
+    border-color: var(--border);
+    box-shadow: none;
+}
 
 /* AI CEO Section */
 .ceo-section {
