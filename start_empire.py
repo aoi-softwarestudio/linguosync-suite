@@ -13,9 +13,8 @@ import signal
 # 8004: VentureOS Command Center (Static Server)
 
 PORTS = {
-    8000: ("LinguoSync", "LinguoSync"),
-    8001: ("StudyFlow", "StudyFlow"),
-    8002: ("NovaCapital", "NovaCapital"),
+    8000: ("VendiMap API", ""),
+    8003: ("VendiMap", ""),
     8004: ("VentureOS", "VentureOS"),
     8005: ("SocialIntent", "SocialIntent")
 }
@@ -227,25 +226,19 @@ def update_routing():
     
     # 1. Update VentureOS config.js
     config_path = os.path.join(base_dir, "VentureOS", "config.js")
-    studyflow_url = tunnel_urls.get(8001, "http://localhost:8001")
-    novacapital_url = tunnel_urls.get(8002, "http://localhost:8002")
-    linguosync_url = tunnel_urls.get(8000, "http://localhost:8000")
+    vendimap_url = tunnel_urls.get(8003, "http://localhost:8003")
     socialintent_url = tunnel_urls.get(8005, "http://localhost:8005")
     
     # In Local Mode, use relative links or localhost URLs for clean click-through
     if is_local_mode:
         config_content = f"""const VENTURE_LINKS = {{
-    studyflow: "../StudyFlow/index.html",
-    novacapital: "../NovaCapital/index.html",
-    linguosync: "../LinguoSync/index.html",
-    socialintent: "../SocialIntent/index.html"
+    vendimap: "http://localhost:8003/index.html",
+    socialintent: "http://localhost:8005/index.html"
 }};
 """
     else:
         config_content = f"""const VENTURE_LINKS = {{
-    studyflow: "{studyflow_url}",
-    novacapital: "{novacapital_url}",
-    linguosync: "{linguosync_url}",
+    vendimap: "{vendimap_url}",
     socialintent: "{socialintent_url}"
 }};
 """
@@ -253,7 +246,7 @@ def update_routing():
         f.write(config_content)
     print(f"   Updated: {config_path}")
     
-    # 2. Update backendApiUrl in StudyFlow app.js & NovaCapital analysis.js
+    # 2. Update backendApiUrl
     core_backend_url = tunnel_urls.get(8000, "http://localhost:8000")
     
     def update_js_backend(file_path):
@@ -270,9 +263,18 @@ def update_routing():
             f.write(updated)
         print(f"   Updated: {file_path} -> backend = {core_backend_url}")
 
-    update_js_backend(os.path.join(base_dir, "StudyFlow", "app.js"))
-    update_js_backend(os.path.join(base_dir, "NovaCapital", "analysis.js"))
     update_js_backend(os.path.join(base_dir, "SocialIntent", "index.html"))
+    update_js_backend(os.path.join(base_dir, "app.js"))
+    
+    # 3. Update config.json with current backendApiUrl
+    import json
+    config_json_path = os.path.join(base_dir, "config.json")
+    try:
+        with open(config_json_path, "w", encoding="utf-8") as f:
+            json.dump({"backendApiUrl": core_backend_url}, f, ensure_ascii=False, indent=2)
+        print(f"   Updated: {config_json_path} -> backendApiUrl = {core_backend_url}")
+    except Exception as e:
+        print(f"   [ERROR] Failed to write config.json: {e}")
 
 
 def print_dashboard():
@@ -304,15 +306,11 @@ __      __  ______   _   _   _______   _    _   _____    ______    ____     ____
         print("            Please open the following local links in your browser:")
         print("            --------------------------------------------------------")
         print(f"    [Venture OS Center] : http://localhost:8004/index.html")
-        print(f"    [StudyFlow AI]      : http://localhost:8001/index.html")
-        print(f"    [Nova Capital]      : http://localhost:8002/index.html")
-        print(f"    [LinguoSync]        : http://localhost:8000")
+        print(f"    [VendiMap App]      : http://localhost:8003/index.html")
         print(f"    [SocialIntent AI]   : http://localhost:8005/index.html")
     else:
         print(f"    [Venture OS Center] : {tunnel_urls.get(8004)}")
-        print(f"    [StudyFlow AI]      : {tunnel_urls.get(8001)}")
-        print(f"    [Nova Capital]      : {tunnel_urls.get(8002)}")
-        print(f"    [LinguoSync]        : {tunnel_urls.get(8000)}")
+        print(f"    [VendiMap App]      : {tunnel_urls.get(8003)}")
         print(f"    [SocialIntent AI]   : {tunnel_urls.get(8005)}")
         
     print(border)
@@ -350,10 +348,11 @@ if __name__ == "__main__":
         kill_conflicting_processes()
         start_servers()
 
-        start_tunnels()
-        
-        # Poll log files for URLs, fallback dynamically to Local Mode if firewall is restricted
-        poll_for_urls()
+        # Force high-performance local mode directly to avoid network timeouts and Cloudflare 1033 errors
+        is_local_mode = True
+        for port in PORTS.keys():
+            tunnel_urls[port] = f"http://localhost:{port}"
+
         update_routing()
         print_dashboard()
         
