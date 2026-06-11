@@ -50,7 +50,7 @@ async function initEmpire() {
 }
 
 function getVentureKeyByIndex(index) {
-    const keys = ["studyflow", "novacapital", "linguosync", "socialintent"];
+    const keys = ["vendimap", "socialintent", "studyflow", "novacapital", "linguosync"];
     return keys[index];
 }
 
@@ -243,44 +243,56 @@ function showToastNotification(tx) {
 function showRealtimeVentureDetails(ventureKey) {
     const lang = localStorage.getItem('ventureos_lang') || 'ja';
     const stats = currentStats || {
+        vendimap: { spots: 0, scans: 0, purchases: 0 },
+        socialintent: { searches: 0, copies: 0 },
         studyflow: { uploads: 0, flashcards: 0, exams: 0 },
         novacapital: { analyses: 0, mock_trades: 0 },
         linguosync: { transcriptions: 0, exports: 0 }
     };
     
     const details = {
-        studyflow: {
-            title: { ja: "StudyFlow AI", en: "StudyFlow AI" },
+        vendimap: {
+            title: { ja: "VendiMap App", en: "VendiMap App" },
             statsText: {
-                ja: `・アップロード資料数: ${stats.studyflow.uploads} 件\n・単語カードめくり数: ${stats.studyflow.flashcards} 回\n・模擬試験受験数: ${stats.studyflow.exams} 回`,
-                en: `• Materials Uploaded: ${stats.studyflow.uploads}\n• Flashcard Flips: ${stats.studyflow.flashcards}\n• Mock Exams Taken: ${stats.studyflow.exams}`
+                ja: `・自販機登録数: ${stats.vendimap ? stats.vendimap.spots : 0} 件\n・AIビジョンスキャン数: ${stats.vendimap ? stats.vendimap.scans : 0} 回\n・命名権購入数: ${stats.vendimap ? stats.vendimap.purchases : 0} 回`,
+                en: `• Vending Spots: ${stats.vendimap ? stats.vendimap.spots : 0}\n• AI Vision Scans: ${stats.vendimap ? stats.vendimap.scans : 0}\n• Rights Purchased: ${stats.vendimap ? stats.vendimap.purchases : 0}`
             },
             desc: {
-                ja: "AI学習最適化エンジン。学生がアップロードした資料から自律的に問題、要約、3Dフラッシュカードを生成します。",
-                en: "Self-driven educational optimization agent. Instantly generates interactive study assets and timer-based exams from raw course outlines."
+                ja: "ネオン仕様プレミアム自販機マッピングSaaS。AIビジョンスキャン技術と、クレカ決済による命名権購入機能を搭載。",
+                en: "Ultra-premium vending machine mapping SaaS featuring AI computer vision scanner and ownership licensing via credit card checkout."
+            }
+        },
+        studyflow: {
+            title: { ja: "StudyFlow AI [CLOSED]", en: "StudyFlow AI [CLOSED]" },
+            statsText: {
+                ja: `※この事業は終了しました※\n・最終アップロード資料数: ${stats.studyflow.uploads} 件\n・最終単語カードめくり数: ${stats.studyflow.flashcards} 回\n・最終模擬試験受験数: ${stats.studyflow.exams} 回`,
+                en: `*This venture has been closed*\n• Total Materials Uploaded: ${stats.studyflow.uploads}\n• Total Flashcard Flips: ${stats.studyflow.flashcards}\n• Total Mock Exams Taken: ${stats.studyflow.exams}`
+            },
+            desc: {
+                ja: "[アーカイブ済み] AI学習最適化エンジン。学生がアップロードした資料から自律的に問題、要約、3Dフラッシュカードを生成します。",
+                en: "[Archived] Self-driven educational optimization agent. Instantly generates interactive study assets and timer-based exams from raw course outlines."
             }
         },
         novacapital: {
-            title: { ja: "Nova Capital Wealth", en: "Nova Capital Wealth" },
+            title: { ja: "Nova Capital Wealth [CLOSED]", en: "Nova Capital Wealth [CLOSED]" },
             statsText: {
-                ja: `・AI資産詳細分析数: ${stats.novacapital.analyses} 回\n・自動取引シミュレーション数: ${stats.novacapital.mock_trades} 回`,
-                en: `• Asset Deep Analyses: ${stats.novacapital.analyses}\n• Mock Trade Integrations: ${stats.novacapital.mock_trades}`
+                ja: `※この事業は終了しました※\n・最終AI資産詳細分析数: ${stats.novacapital.analyses} 回\n・最終自動取引シミュレーション数: ${stats.novacapital.mock_trades} 回`,
+                en: `*This venture has been closed*\n• Total Asset Deep Analyses: ${stats.novacapital.analyses}\n• Total Mock Trade Integrations: ${stats.novacapital.mock_trades}`
             },
             desc: {
-                ja: "富裕層向けオルタナティブ資産AI分析ボード。市場情報をGemini LLM経由で自律解析します。",
-                en: "Ultra-premium alternative assets board. Autonomously crawls indices and generates analyst reasoning explanations via server proxy."
+                ja: "[アーカイブ済み] 富裕層向けオルタナティブ資産AI分析ボード。市場情報をGemini LLM経由で自律解析します。",
+                en: "[Archived] Ultra-premium alternative assets board. Autonomously crawls indices and generates analyst reasoning explanations via server proxy."
             }
         },
-
         linguosync: {
-            title: { ja: "LinguoSync Studio", en: "LinguoSync Studio" },
+            title: { ja: "LinguoSync Studio [CLOSED]", en: "LinguoSync Studio [CLOSED]" },
             statsText: {
-                ja: `・音声文字起こし数: ${stats.linguosync.transcriptions} 件\n・処理動画エクスポート数: ${stats.linguosync.exports} 本`,
-                en: `• Audio Transcriptions: ${stats.linguosync.transcriptions}\n• Exported Videos: ${stats.linguosync.exports}`
+                ja: `※この事業は終了しました※\n・最終音声文字起こし数: ${stats.linguosync.transcriptions} 件\n・最終処理動画エクスポート数: ${stats.linguosync.exports} 本`,
+                en: `*This venture has been closed*\n• Total Audio Transcriptions: ${stats.linguosync.transcriptions}\n• Total Exported Videos: ${stats.linguosync.exports}`
             },
             desc: {
-                ja: "音声感情・ピッチ調整をサポートする、AI自動翻訳・動画吹き替えコアエンジンゲートウェイ。",
-                en: "Multilingual transcription, synthesis, and video voiceover pipeline using local Whisper models and Google translation proxies."
+                ja: "[アーカイブ済み] 音声感情・ピッチ調整をサポートする、AI自動翻訳・動画吹き替えコアエンジンゲートウェイ。",
+                en: "[Archived] Multilingual transcription, synthesis, and video voiceover pipeline using local Whisper models and Google translation proxies."
             }
         },
         socialintent: {
@@ -290,7 +302,7 @@ function showRealtimeVentureDetails(ventureKey) {
                 en: `• Intent Searches: ${JSON.parse(localStorage.getItem('socialintent_local_stats') || '{"searches":0}').searches}\n• Hook Copies: 3`
             },
             desc: {
-                ja: "SNSのトレンド検索インテントとSEOを逆算し、AIがバイラルコピーフックを自動構築するSaaS。",
+                ja: "SNS of トレンド検索インテントとSEOを逆算し、AIがバイラルコピーフックを自動構築するSaaS。",
                 en: "Viral SEO & SNS intent analytics engine. Autonomously constructs highly engaging viral copy hooks from seed keywords."
             }
         }
@@ -299,7 +311,12 @@ function showRealtimeVentureDetails(ventureKey) {
     const v = details[ventureKey];
     if (!v) return;
     
-    const alertMsg = `${v.title[lang]} - リアルタイム稼働データ:\n\n${v.statsText[lang]}\n\n事業説明:\n${v.desc[lang]}\n\nAI CEO: 「この事業は現在稼働中です。活動ログはリアルタイムでVenture OS Command Centerと同期されています。」`;
+    const isClosed = ventureKey === 'studyflow' || ventureKey === 'novacapital' || ventureKey === 'linguosync';
+    const activeText = isClosed 
+        ? (lang === 'ja' ? "「この事業はクローズ（終了）し、アーカイブ化されました。」" : "\"This venture has been archived and closed.\"")
+        : (lang === 'ja' ? "「この事業は現在稼働中です。活動ログはリアルタイムでVenture OS Command Centerと同期されています。」" : "\"This venture is currently active. Action logs are synced in real-time.\"");
+        
+    const alertMsg = `${v.title[lang]} - ${lang === 'ja' ? '統計データ' : 'Statistics'}:\n\n${v.statsText[lang]}\n\n${lang === 'ja' ? '事業説明' : 'Description'}:\n${v.desc[lang]}\n\nAI CEO: ${activeText}`;
     alert(alertMsg);
 }
 
