@@ -82,12 +82,20 @@ This report documents the systematic QA check and premium refinements executed a
 ---
 
 ## 6. VendiMap
-* **Visual Impression**: ⭐⭐⭐⭐⭐ (Glassmorphic Map Overlay)
-* **Usability & Flow**: ⭐⭐⭐⭐⭐ (Custom premium toast integration)
+* **Visual Impression**: ⭐⭐⭐⭐⭐ (Glassmorphic Map Overlay & Neon Markers)
+* **Usability & Flow**: ⭐⭐⭐⭐⭐ (Interactive explicit rarity voting & robust offline synchronization)
 
-### 🔴 Discovered Issues & Bugs
+### 🔴 Discovered Issues & Bugs (Fixed)
 - **Native alert() dialogs**: Default browser dialog boxes cheapened the SaaS experience.
   - *Fix Applied:* Built and integrated a stunning Custom Toast Notification Engine inside `index.html` and `app.js` with dynamic severity alerts (`success`, `warning`, `info`, `error`).
+- **Data Loss on Refresh**: All user-updated comments, photo uploads, verified counts, AI lineup scans, and purchased ownership records disappeared upon reloading the browser.
+  - *Fix Applied:* Implemented a comprehensive `saveSpotsToLocal` persistence engine. Modified spots are tagged with an `isModified` flag, selectively saving only dirty entries to `localStorage` (safeguarding storage capacity) and dynamically restoring all fields on initialization.
+- **Duplicate Declaration Crash**: Leftover duplicate definitions of the `calculateRarity` function caused a runtime crash (`Identifier 'calculateRarity' has already been declared`), resulting in a blank screen when loading the app.
+  - *Fix Applied:* Audited `app.js` and removed the duplicate outdated definition, restoring flawless execution.
 
 ### 💡 Suggested Improvements
-- Let users customize toast popup entry animation pathways (e.g. slide-in from bottom-right vs fade-in center).
+- **Micro-Interactions for Rarity Voting**: Add a hover-effect on the rarity vote gems (`.rarity-vote-gem`) to dynamically fill the icons up to the hovered element, providing intuitive visual feedback before the click.
+- **Marker Clustering Integration**: In dense cities (like central Tokyo), the raw marker density is limited by zoom level to avoid map lag. Integrating `Leaflet.markercluster` would allow displaying all 3,410+ vending machines in an interactive clustered layout without any performance bottleneck.
+- **"Under Evaluation" Marker Visuals**: Map markers for vending machines under 3 votes are currently rendered as generic markers. Adding a subtle indicator (e.g. a question mark icon or a blinking light purple border) would immediately draw user curiosity to vote and help determine its true rarity.
+- **Frictionless License Key Application**: Currently, after purchasing a machine's naming rights in the Lemon Squeezy simulator modal, users must manually copy the generated key and click "適用" in the settings modal. Automating key insertion and activation directly in the checkout completion success callback would make the purchase flow seamless.
+- **SaaS Backup Utility (Import/Export JSON)**: Since all user actions are sandboxed inside `localStorage`, caching clear-outs will erase custom state. Adding a simple JSON export/import tool in the settings dashboard would let power users back up their customized "Vending Empire".
