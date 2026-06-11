@@ -21,6 +21,39 @@ async function loadDynamicConfig() {
     }
 }
 
+// Favorites Management Helpers (Saved locally per user, not shared globally)
+function getFavorites() {
+    try {
+        return JSON.parse(localStorage.getItem('vendix_favorites') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveFavorites(favs) {
+    localStorage.setItem('vendix_favorites', JSON.stringify(favs));
+}
+
+function isFavorite(spotId) {
+    const favs = getFavorites();
+    return favs.includes(String(spotId));
+}
+
+function toggleFavorite(spotId) {
+    let favs = getFavorites();
+    const idStr = String(spotId);
+    const index = favs.indexOf(idStr);
+    let added = false;
+    if (index === -1) {
+        favs.push(idStr);
+        added = true;
+    } else {
+        favs.splice(index, 1);
+    }
+    saveFavorites(favs);
+    return added;
+}
+
 async function reportActivity(venture, action) {
     try {
         await fetch(`${backendApiUrl}/api/report-activity`, {
@@ -1973,6 +2006,32 @@ function initMap() {
             }
         });
         document.getElementById('closePanelBtn').addEventListener('click', closeDetailPanel);
+        
+        const spotFavoriteBtn = document.getElementById('spotFavoriteBtn');
+        if (spotFavoriteBtn) {
+            spotFavoriteBtn.addEventListener('click', () => {
+                if (!selectedSpot) return;
+                const isAdded = toggleFavorite(selectedSpot.id || selectedSpot.osmId);
+                const icon = spotFavoriteBtn.querySelector('i');
+                if (icon) {
+                    if (isAdded) {
+                        icon.className = 'fas fa-star';
+                        spotFavoriteBtn.style.color = '#fbbf24'; // Gold star
+                        spotFavoriteBtn.setAttribute('title', 'お気に入りから削除');
+                        showToast('お気に入りに追加しました⭐', 'success');
+                    } else {
+                        icon.className = 'far fa-star';
+                        spotFavoriteBtn.style.color = 'var(--text-secondary)';
+                        spotFavoriteBtn.setAttribute('title', 'お気に入りに追加');
+                        showToast('お気に入りから削除しました', 'info');
+                    }
+                }
+                if (currentFilter === 'favorites') {
+                    renderMarkers(initialSpots);
+                }
+            });
+        }
+
         document.getElementById('addPhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
         
         // AI Live Camera Scanner Bindings
@@ -2243,6 +2302,10 @@ function shouldShowSpot(spot) {
     else if (currentFilter === 'cheap') categoryMatch = spot.priceRange.includes('100円');
     else if (currentFilter === 'rare') categoryMatch = spot.rarity >= 4;
     else if (currentFilter === 'cashless') categoryMatch = spot.paymentMethods.length > 1;
+    else if (currentFilter === 'favorites') {
+        const favs = getFavorites();
+        categoryMatch = favs.includes(String(spot.id)) || favs.includes(String(spot.osmId));
+    }
     
     if (!categoryMatch) return false;
 
@@ -2340,6 +2403,24 @@ async function showDetailPanel(spot) {
         badge.style.marginLeft = '10px';
         badge.style.verticalAlign = 'middle';
         nameElement.appendChild(badge);
+    }
+
+    // Update Favorite Button UI based on user local state
+    const favBtn = document.getElementById('spotFavoriteBtn');
+    if (favBtn) {
+        const isFav = isFavorite(spot.id) || isFavorite(spot.osmId);
+        const icon = favBtn.querySelector('i');
+        if (icon) {
+            if (isFav) {
+                icon.className = 'fas fa-star';
+                favBtn.style.color = '#fbbf24'; // Gold star
+                favBtn.setAttribute('title', 'お気に入りから削除');
+            } else {
+                icon.className = 'far fa-star';
+                favBtn.style.color = 'var(--text-secondary)';
+                favBtn.setAttribute('title', 'お気に入りに追加');
+            }
+        }
     }
 
     document.getElementById('spotManufacturer').innerText = spot.manufacturer;
