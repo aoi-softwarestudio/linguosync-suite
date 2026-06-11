@@ -2103,3 +2103,17 @@ body.light-mode .achievement-item.locked .achievement-icon {
     margin-bottom: 20px;
     text-align: center;
 }
+
+#spotFavoriteBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#spotFavoriteBtn:hover {
+    transform: scale(1.25);
+}
+
+#spotFavoriteBtn:active {
+    transform: scale(0.9);
+}
