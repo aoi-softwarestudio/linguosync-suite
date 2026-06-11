@@ -87,46 +87,20 @@
     </div>
 
     <section class="ventures-grid">
-        <!-- StudyFlow -->
-        <div class="venture-card" onclick="window.open(VENTURE_LINKS.studyflow, '_blank')">
-            <i class="fas fa-graduation-cap venture-icon" style="color: #8b5cf6;"></i>
-            <h3 class="venture-title">StudyFlow AI</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">Education SaaS — AI個人学習コーチ</p>
+        <!-- VendiMap App -->
+        <div class="venture-card" data-venture="vendimap" onclick="window.open(VENTURE_LINKS.vendimap, '_blank')">
+            <i class="fas fa-map-marked-alt venture-icon" style="color: #00f2ff;"></i>
+            <h3 class="venture-title">VendiMap App</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Vending IoT SaaS — 自販機・命名権マップ</p>
             <div class="venture-status">
                 <span class="status-indicator status-active">LIVE</span>
-                <span class="mono" style="font-weight: 700; color: var(--text-dim); font-size: 0.75rem;">収益化準備中</span>
-            </div>
-            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
-        </div>
-
-        <!-- Nova Capital -->
-        <div class="venture-card" onclick="window.open(VENTURE_LINKS.novacapital, '_blank')">
-            <i class="fas fa-chart-line venture-icon" style="color: #10b981;"></i>
-            <h3 class="venture-title">Nova Capital</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">WealthTech — Niche Asset Alpha</p>
-            <div class="venture-status">
-                <span class="status-indicator status-active" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);">LIVE</span>
-                <span class="mono" style="font-weight: 700; color: var(--text-dim); font-size: 0.75rem;">収益化準備中</span>
-            </div>
-            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
-        </div>
-
-
-
-        <!-- LinguoSync -->
-        <div class="venture-card" onclick="window.open(VENTURE_LINKS.linguosync, '_blank')">
-            <i class="fas fa-globe venture-icon" style="color: #ff007a;"></i>
-            <h3 class="venture-title">LinguoSync</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim);">AdTech — 多言語AI動画翻訳</p>
-            <div class="venture-status">
-                <span class="status-indicator status-active">LIVE</span>
-                <span class="mono" style="font-weight: 700; color: var(--text-dim); font-size: 0.75rem;">収益化準備中</span>
+                <span class="mono" style="font-weight: 700; color: var(--growth); font-size: 0.75rem; text-shadow: 0 0 10px rgba(74,222,128,0.2);">収益化稼働中</span>
             </div>
             <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
         </div>
 
         <!-- SocialIntent AI -->
-        <div class="venture-card" onclick="window.open(VENTURE_LINKS.socialintent, '_blank')">
+        <div class="venture-card" data-venture="socialintent" onclick="window.open(VENTURE_LINKS.socialintent, '_blank')">
             <i class="fas fa-bullseye venture-icon" style="color: #ec4899;"></i>
             <h3 class="venture-title">SocialIntent AI</h3>
             <p style="font-size: 0.85rem; color: var(--text-dim);">SEO/SNS SaaS — トレンド発掘・コピー生成</p>
@@ -135,6 +109,42 @@
                 <span class="mono" style="font-weight: 700; color: var(--text-dim); font-size: 0.75rem;">収益化準備中</span>
             </div>
             <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
+        </div>
+
+        <!-- StudyFlow -->
+        <div class="venture-card closed" data-venture="studyflow" style="cursor: default;">
+            <i class="fas fa-graduation-cap venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">StudyFlow AI</h3>
+            <p style="font-size: 0.85rem; color: #475569;">Education SaaS — AI個人学習コーチ</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
+        </div>
+
+        <!-- Nova Capital -->
+        <div class="venture-card closed" data-venture="novacapital" style="cursor: default;">
+            <i class="fas fa-chart-line venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">Nova Capital</h3>
+            <p style="font-size: 0.85rem; color: #475569;">WealthTech — Niche Asset Alpha</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
+        </div>
+
+        <!-- LinguoSync -->
+        <div class="venture-card closed" data-venture="linguosync" style="cursor: default;">
+            <i class="fas fa-globe venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">LinguoSync</h3>
+            <p style="font-size: 0.85rem; color: #475569;">AdTech — 多言語AI動画翻訳</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
         </div>
     </section>
 
