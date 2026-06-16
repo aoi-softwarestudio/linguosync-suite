@@ -77,6 +77,7 @@ let addingSpotMode = false;
 let tempMarker = null;
 let darkLayer, lightLayer;
 let isDarkMode = false;
+let hasCenteredOnUser = false;
 let newSpotPhotoBase64 = null;
 let userLocation = null;
 let userMarker = null;
@@ -1887,6 +1888,17 @@ function initMap() {
                         lng: position.coords.longitude
                     };
                     const accuracy = position.coords.accuracy;
+                    
+                    // First-time location acquisition: center map on user automatically
+                    if (!hasCenteredOnUser) {
+                        hasCenteredOnUser = true;
+                        isAutoFollow = true;
+                        const locateBtn = document.getElementById('locateBtn');
+                        if (locateBtn) locateBtn.classList.add('active');
+                        if (map) {
+                            map.setView([userLocation.lat, userLocation.lng], 16);
+                        }
+                    }
                     
                     // Update UI GPS accuracy badge in real-time
                     const accuracyText = `GPS精度: ±${Math.round(accuracy)}m`;
