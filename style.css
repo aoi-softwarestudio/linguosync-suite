@@ -2136,7 +2136,8 @@ body.light-mode .achievement-item.locked .achievement-icon {
     }
 
     .search-bar {
-        padding: 12px 18px;
+        padding: 10px 14px;
+        border-radius: 20px;
     }
 
     .filter-container {
@@ -2144,9 +2145,9 @@ body.light-mode .achievement-item.locked .achievement-icon {
         padding: 2px 0;
     }
 
-    /* 3. Stack action buttons and user profile vertically on the right side */
+    /* 3. Stack action buttons vertically on the right side */
     .header-right {
-        top: 135px; /* Offset to sit safely below search and filters */
+        top: 130px; /* Offset to sit safely below search and filters */
         right: 15px !important;
         left: auto !important;
         flex-direction: column;
@@ -2164,10 +2165,5 @@ body.light-mode .achievement-item.locked .achievement-icon {
         height: 48px;
         border-radius: 50% !important; /* Premium round floating actions */
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
-    }
-
-    .user-profile {
-        order: -1; /* Place user profile avatar at the top of the action column */
-        margin-bottom: 2px;
     }
 }
