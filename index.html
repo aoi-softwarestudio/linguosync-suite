@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=20260616-v7">
+    <link rel="stylesheet" href="style.css?v=20260616-v9">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -146,6 +146,7 @@
                 <div class="filter-chip" data-filter="rare">激レア</div>
                 <div class="filter-chip" data-filter="cashless">キャッシュレス可</div>
                 <div class="filter-chip" data-filter="favorites">⭐ お気に入り</div>
+                <div class="filter-chip" id="myOwnedFilterChip" data-filter="my-owned" style="display: none;"><i class="fas fa-crown" style="color: #fbbf24;"></i> マイ自販機</div>
             </div>
         </header>
 
@@ -193,8 +194,17 @@
         <aside class="detail-panel pointer-events-auto" id="detailPanel">
             <div class="drag-handle-bar"></div>
             <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <div class="panel-title">
-                    <h2 id="spotName">自販機の名前</h2>
+                <div class="panel-title" style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <h2 id="spotName" style="margin: 0;">自販機の名前</h2>
+                        <button id="spotNameEditBtn" style="display: none; background: none; border: none; font-size: 0.95rem; color: var(--text-secondary); cursor: pointer; padding: 4px; transition: color 0.2s;" title="名前を変更"><i class="fas fa-edit"></i></button>
+                    </div>
+                    <!-- Name Edit Container (hidden by default) -->
+                    <div id="spotNameEditContainer" style="display: none; align-items: center; gap: 8px; margin-top: 8px; width: 100%;">
+                        <input type="text" id="spotNameEditInput" class="form-control" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.9rem; font-weight: 700; border-radius: 8px;" placeholder="新しい自販機名を入力...">
+                        <button id="spotNameSaveBtn" class="btn-submit" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; background: var(--accent-color); color: white; white-space: nowrap;">保存</button>
+                        <button id="spotNameCancelBtn" class="btn-secondary" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; background: var(--border-color); color: var(--text-primary); white-space: nowrap;">キャンセル</button>
+                    </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                         <p id="spotManufacturer" style="color: var(--text-secondary); font-size: 0.9rem;">メーカー名</p>
                         <span style="color: var(--border-color);">|</span>
@@ -393,17 +403,6 @@
                 <button id="vendi-modal-buy-btn" style="width: 100%; background: linear-gradient(135deg, #635bff 0%, #4338ca 100%); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 1.5rem; padding: 0.85rem; border-radius: 8px; font-weight: 900; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 91, 255, 0.4); transition: var(--transition);">
                     <i class="fab fa-stripe-s"></i> Stripe で安全に支払う
                 </button>
-                
-                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: block;">
-                    <div style="margin-bottom: 1.2rem;">
-                        <label style="display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; text-transform: uppercase;">ライセンスキーをお持ちの方</label>
-                        <input type="text" id="vendi-license-input" class="form-control" placeholder="LS-XXXX-XXXX-XXXX" style="padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.8rem;">
-                        <div id="vendi-license-status" style="margin-top: 0.5rem; display: block; font-size: 0.65rem; color: var(--text-secondary); opacity: 0.8;">
-                            未有効化
-                        </div>
-                    </div>
-                    <button id="vendi-license-activate-btn" class="btn-submit btn-secondary" style="padding: 0.75rem; border-radius: 8px; font-weight: 800; border: none; cursor: pointer;">ライセンスを適用</button>
-                </div>
             </div>
         </div>
     </div>
@@ -480,6 +479,6 @@
     <!-- Flash effect overlay on Level Up -->
     <div id="flashOverlay" class="flash-overlay"></div>
 
-    <script type="module" src="app.js?v=20260616-v5"></script>
+    <script type="module" src="app.js?v=20260616-v9"></script>
 </body>
 </html>
