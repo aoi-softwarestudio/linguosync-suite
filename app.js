@@ -2678,10 +2678,11 @@ function addComment() {
 }
 
 function handleFilter(e) {
-    if (e.target.classList.contains('filter-chip')) {
+    const chip = e.target.closest('.filter-chip');
+    if (chip) {
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        e.target.classList.add('active');
-        currentFilter = e.target.dataset.filter;
+        chip.classList.add('active');
+        currentFilter = chip.dataset.filter;
         renderMarkers(initialSpots);
     }
 }
