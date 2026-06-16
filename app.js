@@ -375,8 +375,8 @@ const VendiGamification = {
         // Update SVG progress ring
         const progressCircle = document.getElementById('userXPProgressCircle');
         if (progressCircle) {
-            const radius = 21;
-            const circumference = 2 * Math.PI * radius; // ~131.95
+            const radius = parseFloat(progressCircle.getAttribute('r')) || 17;
+            const circumference = 2 * Math.PI * radius;
             const xpNeeded = this.getXPNeededForNextLevel(this.state.level);
             const progress = Math.min(1, Math.max(0, this.state.xp / xpNeeded));
             const offset = circumference * (1 - progress);
