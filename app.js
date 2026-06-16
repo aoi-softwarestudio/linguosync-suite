@@ -1523,7 +1523,7 @@ async function performAIScan(base64Data, spot) {
         }
         
         reportActivity('vendimap', 'scans');
-        VendiGamification.addXP(50, "AI画像アップロード ＆ スキャン");
+        VendiGamification.addXP(50, "AI写真撮影 ＆ スキャン");
         
         if (typeof dispatchGlobalUpdateMetadata === 'function') {
             dispatchGlobalUpdateMetadata(spot, {});
