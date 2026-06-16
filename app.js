@@ -2129,66 +2129,70 @@ function initMap() {
             }
         });
 
-        // Naming rights license verification manual
-        document.getElementById('vendi-license-activate-btn').addEventListener('click', () => {
-            const licenseInput = document.getElementById('vendi-license-input');
-            const licenseKey = licenseInput ? licenseInput.value.trim() : '';
-            const statusMsg = document.getElementById('vendi-license-status');
-            
-            if (!licenseKey) {
-                showToast('ライセンスキーを入力してください。', 'warning');
-                return;
-            }
-            
-            const isValid = licenseKey.toUpperCase().startsWith('LS-') && licenseKey.length >= 10;
-            
-            if (isValid) {
-                if (statusMsg) {
-                    statusMsg.className = 'suite-key-status connected';
-                    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> ライセンス認証完了！';
-                    statusMsg.style.color = '#00ff88';
+        // Naming rights license verification manual (safely bound)
+        const activateBtn = document.getElementById('vendi-license-activate-btn');
+        if (activateBtn) {
+            activateBtn.addEventListener('click', () => {
+                const licenseInput = document.getElementById('vendi-license-input');
+                const licenseKey = licenseInput ? licenseInput.value.trim() : '';
+                const statusMsg = document.getElementById('vendi-license-status');
+                
+                if (!licenseKey) {
+                    showToast('ライセンスキーを入力してください。', 'warning');
+                    return;
                 }
                 
-                localStorage.setItem('vendimap_license_key', licenseKey);
-                if (typeof triggerAutoSync === 'function') triggerAutoSync();
+                const isValid = licenseKey.toUpperCase().startsWith('LS-') && licenseKey.length >= 10;
                 
-                setTimeout(() => {
-                    if (selectedSpot) {
-                        const ownerName = currentUser ? currentUser.name : "小島 蒼大";
-                        selectedSpot.owner = ownerName;
-                        selectedSpot.namingRightsAvailable = false;
-                        selectedSpot.isModified = true;
-                        saveSpotsToLocal();
-                        if (typeof dispatchGlobalUpdateMetadata === 'function') {
-                            dispatchGlobalUpdateMetadata(selectedSpot, { owner: ownerName });
-                        }
-                        showToast(`👑 命名権アンロック！あなたは「${selectedSpot.name}」の所有者になりました！`, 'success');
-                        
-                        VendiGamification.state.stats.boughtCount++;
-                        if (!VendiGamification.state.boughtSpotIds) {
-                            VendiGamification.state.boughtSpotIds = [];
-                        }
-                        if (!VendiGamification.state.boughtSpotIds.includes(selectedSpot.id)) {
-                            VendiGamification.state.boughtSpotIds.push(selectedSpot.id);
-                        }
-                        
-                        reportActivity('vendimap', 'purchases');
-                        VendiGamification.addXP(300, "自販機命名権・オーナー権の購入");
-                        
-                        renderMarkers(initialSpots);
-                        showDetailPanel(selectedSpot);
+                if (isValid) {
+                    if (statusMsg) {
+                        statusMsg.className = 'suite-key-status connected';
+                        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> ライセンス認証完了！';
+                        statusMsg.style.color = '#00ff88';
                     }
-                    document.getElementById('suite-settings-modal').style.display = 'none';
-                    licenseInput.value = '';
-                }, 1000);
-            } else {
-                if (statusMsg) {
-                    statusMsg.innerHTML = '<i class="fas fa-times-circle"></i> 無効なライセンスキーです。';
-                    statusMsg.style.color = '#ff4b2b';
+                    
+                    localStorage.setItem('vendimap_license_key', licenseKey);
+                    if (typeof triggerAutoSync === 'function') triggerAutoSync();
+                    
+                    setTimeout(() => {
+                        if (selectedSpot) {
+                            const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                            selectedSpot.owner = ownerName;
+                            selectedSpot.namingRightsAvailable = false;
+                            selectedSpot.isModified = true;
+                            saveSpotsToLocal();
+                            if (typeof dispatchGlobalUpdateMetadata === 'function') {
+                                dispatchGlobalUpdateMetadata(selectedSpot, { owner: ownerName });
+                            }
+                            showToast(`👑 命名権アンロック！あなたは「${selectedSpot.name}」の所有者になりました！`, 'success');
+                            
+                            VendiGamification.state.stats.boughtCount++;
+                            if (!VendiGamification.state.boughtSpotIds) {
+                                VendiGamification.state.boughtSpotIds = [];
+                            }
+                            if (!VendiGamification.state.boughtSpotIds.includes(selectedSpot.id)) {
+                                VendiGamification.state.boughtSpotIds.push(selectedSpot.id);
+                            }
+                            
+                            reportActivity('vendimap', 'purchases');
+                            VendiGamification.addXP(300, "自販機命名権・オーナー権の購入");
+                            
+                            renderMarkers(initialSpots);
+                            showDetailPanel(selectedSpot);
+                        }
+                        const settingsModal = document.getElementById('suite-settings-modal');
+                        if (settingsModal) settingsModal.style.display = 'none';
+                        if (licenseInput) licenseInput.value = '';
+                    }, 1000);
+                } else {
+                    if (statusMsg) {
+                        statusMsg.className = 'suite-key-status error';
+                        statusMsg.innerHTML = '<i class="fas fa-times-circle"></i> 無効なライセンスキー';
+                        statusMsg.style.color = '#ff4444';
+                    }
                 }
-                showToast('無効なライセンスキーです。LS-で始まる正しいキーを入力してください。', 'error');
-            }
-        });
+            });
+        }
         
         // Star Rating input handler
         document.querySelectorAll('.rating-star').forEach(star => {
@@ -2270,7 +2274,10 @@ function renderMarkers(spots) {
 
         let markerClass = 'custom-marker';
         const isEvaluating = (spot.rarityVotesCount || 0) < 3;
-        if (spot.owner !== null) {
+        const isMyOwned = currentUser && spot.owner && spot.owner === currentUser.name;
+        if (isMyOwned) {
+            markerClass = 'custom-marker premium-gold-aura my-owned-marker';
+        } else if (spot.owner !== null && spot.owner.trim() !== '') {
             markerClass = 'custom-marker premium-gold-aura';
         } else if (spot.rarity === 5) {
             markerClass = 'custom-marker rarity-ultra-neon';
@@ -2317,6 +2324,9 @@ function shouldShowSpot(spot) {
     else if (currentFilter === 'favorites') {
         const favs = getFavorites();
         categoryMatch = favs.includes(String(spot.id)) || favs.includes(String(spot.osmId));
+    }
+    else if (currentFilter === 'my-owned') {
+        categoryMatch = currentUser && spot.owner && spot.owner === currentUser.name;
     }
     
     if (!categoryMatch) return false;
@@ -2384,7 +2394,12 @@ async function showDetailPanel(spot) {
         map.panTo([spot.lat + latOffset, spot.lng + lngOffset]);
     }
 
+    // Reset editing state
+    const editContainer = document.getElementById('spotNameEditContainer');
+    if (editContainer) editContainer.style.display = 'none';
     const nameElement = document.getElementById('spotName');
+    if (nameElement) nameElement.style.display = 'block';
+    
     nameElement.innerText = spot.name;
 
     // Address resolving fallback on the fly
@@ -2415,6 +2430,13 @@ async function showDetailPanel(spot) {
         badge.style.marginLeft = '10px';
         badge.style.verticalAlign = 'middle';
         nameElement.appendChild(badge);
+    }
+
+    // Toggle Spot Name Edit button based on ownership
+    const isOwner = currentUser && spot.owner && spot.owner === currentUser.name;
+    const editBtn = document.getElementById('spotNameEditBtn');
+    if (editBtn) {
+        editBtn.style.display = isOwner ? 'inline-block' : 'none';
     }
 
     // Update Favorite Button UI based on user local state
@@ -3161,8 +3183,17 @@ function handleLogout() {
     if (confirm('ログアウトしますか？')) {
         currentUser = null;
         localStorage.removeItem('vendimap_user');
+        localStorage.removeItem('vendimap_license_key');
+        
+        // Switch back to a random guest sync user ID on logout
+        const randomSyncId = 'user_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('vendimap_sync_user_id', randomSyncId);
+        
         updateAuthUI();
-        VendiGamification.updateUI();
+        if (typeof VendiGamification !== 'undefined') {
+            VendiGamification.init();
+        }
+        renderMarkers(initialSpots);
         showToast('ログアウトしました。', 'info');
     }
 }
@@ -3187,11 +3218,13 @@ function updateAuthUI() {
     const guestMenu = document.getElementById('guestMenuContent');
     const userMenu = document.getElementById('userMenuContent');
     const avatar = document.getElementById('userAvatar');
+    const myOwnedChip = document.getElementById('myOwnedFilterChip');
     
     if (currentUser) {
         if (guestMenu) guestMenu.style.display = 'none';
         if (userMenu) userMenu.style.display = 'block';
         if (avatar) avatar.src = currentUser.avatar;
+        if (myOwnedChip) myOwnedChip.style.display = 'inline-block';
         
         const nameDisplay = document.getElementById('userNameDisplay');
         if (nameDisplay) nameDisplay.innerText = currentUser.name;
@@ -3201,6 +3234,15 @@ function updateAuthUI() {
         if (guestMenu) guestMenu.style.display = 'block';
         if (userMenu) userMenu.style.display = 'none';
         if (avatar) avatar.src = "https://i.pravatar.cc/150?u=guest";
+        if (myOwnedChip) {
+            myOwnedChip.style.display = 'none';
+            if (currentFilter === 'my-owned') {
+                currentFilter = 'all';
+                document.querySelectorAll('.filter-chip').forEach(c => {
+                    c.classList.toggle('active', c.dataset.filter === 'all');
+                });
+            }
+        }
     }
 }
 
@@ -3231,13 +3273,47 @@ function handleNameChange() {
     }
 }
 
-function mockGoogleLogin() {
+async function loadUserDataFromServer(syncUserId) {
+    if (!syncUserId) return;
+    try {
+        const res = await fetch(`${backendApiUrl}/api/sync?userId=${syncUserId}`);
+        if (res.ok) {
+            const result = await res.json();
+            if (result.status === 'success' && result.data) {
+                const d = result.data;
+                if (d.local_spots) localStorage.setItem('vendimap_local_spots', JSON.stringify(d.local_spots));
+                if (d.rarity_votes) localStorage.setItem('user_rarity_votes', JSON.stringify(d.rarity_votes));
+                if (d.user) localStorage.setItem('vendimap_user', JSON.stringify(d.user));
+                if (d.gamification) localStorage.setItem('vendimap_gamification_state', JSON.stringify(d.gamification));
+                if (d.license_key) localStorage.setItem('vendimap_license_key', d.license_key);
+                
+                loadSavedUser();
+                if (typeof VendiGamification !== 'undefined') {
+                    VendiGamification.init();
+                }
+                renderMarkers(initialSpots);
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to load sync data from SQLite server:", e);
+    }
+}
+
+async function mockGoogleLogin() {
     currentUser = {
         name: "小島 蒼大",
         email: "kojima.soda@gmail.com",
         avatar: "https://i.pravatar.cc/150?u=kojima"
     };
     saveUserSession();
+    
+    // Generate an account-bound syncUserId from the user email
+    const syncUserId = 'user_' + btoa(currentUser.email).replace(/=/g, '');
+    localStorage.setItem('vendimap_sync_user_id', syncUserId);
+    
+    // Instantly load synchronized license/progress data from server
+    await loadUserDataFromServer(syncUserId);
+    
     updateAuthUI();
     VendiGamification.updateUI();
     document.getElementById('loginModal').style.display = 'none';
@@ -3950,6 +4026,13 @@ async function fetchAndMergeGlobalSpots(bbox = null) {
                     const spotId = isNaN(gs.spot_id) ? gs.spot_id : Number(gs.spot_id);
                     const target = initialSpots.find(s => s.id === spotId || s.osmId === spotId || s.id === gs.spot_id);
                     if (target) {
+                        if (gs.name) target.name = gs.name;
+                        if (gs.manufacturer) target.manufacturer = gs.manufacturer;
+                        if (gs.price_range) target.priceRange = gs.price_range;
+                        if (gs.has_trash_bin) target.hasTrashBin = gs.has_trash_bin;
+                        if (gs.payment_methods) target.paymentMethods = gs.payment_methods;
+                        if (gs.lineup) target.lineup = gs.lineup;
+                        if (gs.description) target.description = gs.description;
                         if (gs.owner) {
                             target.owner = gs.owner;
                             target.namingRightsAvailable = false;
@@ -4038,8 +4121,11 @@ window.onload = async () => {
     window.fetchOSMVendingMachines = fetchOSMVendingMachines;
     window.getFetchedGrids = () => fetchedGrids;
     window.clearFetchedGrids = () => { fetchedGrids.length = 0; };
+    window.mockGoogleLogin = mockGoogleLogin;
+    window.handleLogout = handleLogout;
     
     initMap();
+    window.map = map;
 
     // Bind Search Clear Button
     const clearBtn = document.getElementById('searchClearBtn');
@@ -4137,6 +4223,12 @@ window.onload = async () => {
                         
                         // Open details panel to display newly acquired ownership
                         showDetailPanel(target);
+                        
+                        // Automatically open the rename editor dialog so the user can rename it instantly
+                        setTimeout(() => {
+                            const nameEditBtn = document.getElementById('spotNameEditBtn');
+                            if (nameEditBtn) nameEditBtn.click();
+                        }, 800);
                     } else {
                         showToast("決済された自販機が見つかりませんでした。", "warning");
                     }
@@ -4238,6 +4330,87 @@ window.onload = async () => {
     initSwipeToClose(document.querySelector('#achievementsModal .responsive-modal-card'), () => {
         document.getElementById('achievementsModal').style.display = 'none';
     });
+
+    // Bind Spot Name Edit actions
+    const nameEditBtn = document.getElementById('spotNameEditBtn');
+    const nameEditContainer = document.getElementById('spotNameEditContainer');
+    const nameEditInput = document.getElementById('spotNameEditInput');
+    const nameSaveBtn = document.getElementById('spotNameSaveBtn');
+    const nameCancelBtn = document.getElementById('spotNameCancelBtn');
+    const spotNameHeading = document.getElementById('spotName');
+
+    if (nameEditBtn && nameEditContainer && nameEditInput && nameSaveBtn && nameCancelBtn && spotNameHeading) {
+        nameEditBtn.addEventListener('click', () => {
+            if (selectedSpot) {
+                // Pre-populate raw name excluding any HTML badge elements
+                nameEditInput.value = selectedSpot.name;
+                spotNameHeading.style.display = 'none';
+                nameEditBtn.style.display = 'none';
+                nameEditContainer.style.display = 'flex';
+                nameEditInput.focus();
+            }
+        });
+
+        nameCancelBtn.addEventListener('click', () => {
+            spotNameHeading.style.display = 'block';
+            nameEditBtn.style.display = 'inline-block';
+            nameEditContainer.style.display = 'none';
+        });
+
+        nameSaveBtn.addEventListener('click', async () => {
+            const newName = nameEditInput.value.trim();
+            if (!newName) {
+                showToast('名前を入力してください。', 'warning');
+                return;
+            }
+
+            if (!selectedSpot) return;
+
+            nameSaveBtn.disabled = true;
+            nameSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                const res = await fetch(`${backendApiUrl}/api/update-spot-metadata`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spot_id: String(selectedSpot.id || selectedSpot.osmId),
+                        name: newName,
+                        owner: ownerName
+                    })
+                });
+
+                if (res.ok) {
+                    selectedSpot.name = newName;
+                    selectedSpot.isModified = true;
+                    saveSpotsToLocal();
+                    
+                    spotNameHeading.innerText = newName;
+                    
+                    // Toggle UI back
+                    spotNameHeading.style.display = 'block';
+                    nameEditBtn.style.display = 'inline-block';
+                    nameEditContainer.style.display = 'none';
+                    
+                    showToast('自販機の名前を変更しました！', 'success');
+                    
+                    // Refresh map markers and trigger sync
+                    renderMarkers(initialSpots);
+                    if (typeof triggerAutoSync === 'function') triggerAutoSync();
+                } else {
+                    const errData = await res.json();
+                    showToast(errData.detail || '名前の変更に失敗しました。', 'error');
+                }
+            } catch (e) {
+                console.error("Failed to rename spot:", e);
+                showToast('通信エラーが発生しました。', 'error');
+            } finally {
+                nameSaveBtn.disabled = false;
+                nameSaveBtn.innerText = '保存';
+            }
+        });
+    }
 };
 window.onerror = function(msg, url, line) { 
     console.error("System Error: ", msg, " Line: ", line);
