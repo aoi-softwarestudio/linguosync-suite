@@ -1118,11 +1118,11 @@ const VendiGamification = {
                 progressText = `${metCount} / ${totalCount} 条件`;
                 
                 checklistHtml = `
-                    <div class="achievement-checklist" style="margin-top: 8px; padding-left: 44px; display: flex; flex-direction: column; gap: 6px;">
+                    <div class="achievement-checklist" style="margin-top: 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
                         ${checkResult.conditions.map(cond => `
                             <div style="display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: ${cond.met ? 'var(--text-primary)' : 'var(--text-secondary)'}; line-height: 1.3;">
                                 <i class="${cond.met ? 'fas fa-check-circle' : 'far fa-circle'}" style="color: ${cond.met ? '#ffd700' : 'var(--text-secondary)'}; font-size: 0.88rem; flex-shrink: 0;"></i>
-                                <span style="${cond.met ? 'opacity: 0.95;' : 'opacity: 0.75;'}">${cond.text}</span>
+                                <span style="${cond.met ? 'opacity: 1.0;' : 'opacity: 0.9;'}">${cond.text}</span>
                             </div>
                         `).join('')}
                     </div>
