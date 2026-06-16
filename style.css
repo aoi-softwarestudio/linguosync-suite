@@ -2183,7 +2183,7 @@ body.light-mode .achievement-item.locked .achievement-icon {
 
 /* --- My Owned Vending Machine Crown Float Styling --- */
 .my-owned-marker .marker-pin::after {
-    content: "👑";
+    content: "\1f451";
     position: absolute;
     top: -10px;
     right: -10px;
