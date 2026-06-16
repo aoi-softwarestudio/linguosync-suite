@@ -2120,48 +2120,37 @@ body.light-mode .achievement-item.locked .achievement-icon {
 
 /* --- Mobile Viewport Layout Optimization (VENDIX) --- */
 @media (max-width: 767px) {
-    /* 1. Show a prominent VENDIX mascot logo icon but hide text label */
+    /* 1. Hide absolute floating logo to maximize search bar width */
     .logo-floating {
-        display: flex !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 1005;
+        display: none !important;
     }
 
-    .logo-floating img {
-        width: 48px !important; /* Prominent size matching action buttons */
-        height: 48px !important;
-        border-radius: 12px;
-        box-shadow: var(--card-shadow);
-    }
-
-    .logo-text {
-        display: none !important; /* Hide brand text label on mobile screens */
-    }
-
-    /* 2. Position search bar right next to the logo to prevent overlap */
+    /* 2. Position search container and filter container as a full-width block at the top */
     .header-center {
         top: 15px;
-        left: 75px !important; /* 15px (margin) + 48px (logo width) + 12px (space) */
-        right: 15px !important;
-        width: auto !important; /* Autocalculate width between left and right constraints */
+        width: calc(100% - 30px) !important;
         max-width: none !important;
+        left: 15px !important;
         transform: none !important;
         gap: 10px;
+    }
+
+    .search-container {
+        width: 100% !important;
+        max-width: none !important;
     }
 
     .search-bar {
         padding: 10px 14px;
         border-radius: 20px;
-        height: 48px; /* Match logo height for vertical alignment symmetry */
+        height: 48px; /* Match avatar height for vertical alignment symmetry */
     }
 
-    /* Pull filters leftwards to align flush with the left margin (15px) */
     .filter-container {
-        margin-left: -60px !important;
-        width: calc(100% + 60px) !important;
         justify-content: flex-start;
         padding: 2px 0;
+        margin-left: 0 !important;
+        width: 100% !important;
     }
 
     /* 3. Stack action buttons vertically on the right side */
