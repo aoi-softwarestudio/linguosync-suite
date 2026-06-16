@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vendimap-cache-v32';
+const CACHE_NAME = 'vendimap-cache-v33';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -20,7 +20,9 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME).then(cache => {
       // Force reload on fetch requests during installation to bypass HTTP disk cache
       const requests = ASSETS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
-      return cache.addAll(requests).catch(err => {
+      return cache.addAll(requests).then(() => {
+        self.skipWaiting();
+      }).catch(err => {
         console.warn('Pre-caching warning (some assets might fail if offline during install):', err);
       });
     })
@@ -37,6 +39,8 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim();
     })
   );
 });
