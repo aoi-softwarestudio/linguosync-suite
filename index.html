@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VENDIX | 全国自販機マップ</title>
+    <title>マイジハ | 全国自販機マップ</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,11 +15,11 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=20260616-v6">
+    <link rel="stylesheet" href="style.css?v=20260616-v7">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="VENDIX">
+    <meta name="apple-mobile-web-app-title" content="マイジハ">
     <script src="leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
@@ -69,8 +69,8 @@
 
     <div class="overlay-ui">
         <div class="logo-floating pointer-events-auto">
-            <img src="vendix_logo.png" alt="VENDIX Logo">
-            <span class="logo-text">VENDIX</span>
+            <img src="vendix_logo.png" alt="マイジハ Logo">
+            <span class="logo-text">マイジハ</span>
         </div>
 
         <header class="header-center pointer-events-auto">
@@ -132,7 +132,7 @@
                             
                             <!-- Unified Common settings (Theme, Ranking) inside user profile dropdown menu -->
                             <hr>
-                            <div class="dropdown-item" id="rankingBtn" style="cursor: pointer;"><i class="fas fa-crown" style="color: #fbbf24;"></i> VENDIX ランキング</div>
+                            <div class="dropdown-item" id="rankingBtn" style="cursor: pointer;"><i class="fas fa-crown" style="color: #fbbf24;"></i> マイジハ ランキング</div>
                             <div class="dropdown-item" id="themeToggleBtn" style="cursor: pointer;"><i class="fas fa-moon" style="color: var(--text-secondary);"></i> テーマ切り替え</div>
                         </div>
                         <input type="file" id="userAvatarInput" accept="image/*" style="display: none;">
@@ -160,7 +160,7 @@
         <div id="loginModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 4000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
             <div class="detail-panel open" style="position: relative; width: 100%; max-width: 400px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 40px; text-align: center;">
                 <img src="vendix_logo.png" style="width: 60px; margin-bottom: 20px;">
-                <h2 style="margin-bottom: 10px;">VENDIXにログイン</h2>
+                <h2 style="margin-bottom: 10px;">マイジハにログイン</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.9rem;">所有する自販機を管理したり、ランキングに参加しましょう。</p>
                 
                 <button id="googleLoginBtn" class="btn-submit" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
@@ -175,7 +175,7 @@
         <div id="rankingModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
             <div class="detail-panel open" style="position: relative; width: 100%; max-width: 500px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-crown"></i> VENDIX ランキング</h2>
+                    <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-crown"></i> マイジハ ランキング</h2>
                     <button class="modal-card-close" onclick="document.getElementById('rankingModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;"><i class="fas fa-times"></i></button>
                 </div>
                 
@@ -480,6 +480,6 @@
     <!-- Flash effect overlay on Level Up -->
     <div id="flashOverlay" class="flash-overlay"></div>
 
-    <script type="module" src="app.js?v=20260616-v4"></script>
+    <script type="module" src="app.js?v=20260616-v5"></script>
 </body>
 </html>
