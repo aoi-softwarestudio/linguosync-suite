@@ -420,6 +420,18 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
         rarity_votes_count = spot["rarity_votes_count"]
         verified_count = spot["verified_count"]
         last_updated = payload.last_updated or spot["last_updated"]
+        name = spot["name"]
+        
+        # Check if name is being changed and verify ownership
+        if payload.name and payload.name != spot["name"]:
+            if spot["owner"] is not None and spot["owner"].strip() != "":
+                if payload.owner != spot["owner"]:
+                    conn.close()
+                    raise HTTPException(
+                        status_code=403,
+                        detail="この自販機のオーナーではないため、名前を変更できません。"
+                    )
+            name = payload.name
         
         if payload.owner is not None:
             owner = payload.owner
@@ -448,13 +460,14 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
                 comments = ?,
                 photos = ?,
                 verified_count = ?,
-                last_updated = ?
+                last_updated = ?,
+                name = ?
             WHERE spot_id = ?
         """, (
             owner, naming_rights_available, rating_sum, rating_count,
             rarity_votes_sum, rarity_votes_count, json.dumps(comments, ensure_ascii=False),
             json.dumps(photos, ensure_ascii=False), verified_count, last_updated,
-            payload.spot_id
+            name, payload.spot_id
         ))
         
         conn.commit()
