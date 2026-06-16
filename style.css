@@ -169,7 +169,7 @@ body {
     transform: translateX(-50%);
     width: 90%;
     max-width: 650px;
-    z-index: 1000;
+    z-index: 1010;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -263,12 +263,17 @@ body {
     flex-direction: column;
     gap: 6px;
     box-shadow: var(--card-shadow);
-    z-index: 1100;
+    z-index: 2500;
     animation: fadeIn 0.2s ease-out;
 }
 
 .dropdown-menu.show {
     display: flex;
+}
+
+/* Elevate the stack contexts of parent elements to ensure front visibility when menu is active */
+.header-center:has(.dropdown-menu.show) {
+    z-index: 2500 !important;
 }
 
 .dropdown-header {
