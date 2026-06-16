@@ -2810,6 +2810,8 @@ function showAddModal(latlng) {
     }
     
     // Clear new spot fields
+    const newSpotNickname = document.getElementById('newSpotNickname');
+    if (newSpotNickname) newSpotNickname.value = '';
     document.getElementById('newSpotName').value = '';
     document.getElementById('newSpotLineup').value = '';
     document.getElementById('newSpotManufacturer').selectedIndex = 0;
@@ -2863,11 +2865,15 @@ function saveNewSpot() {
     const lineupText = document.getElementById('newSpotLineup').value;
     const lineup = lineupText ? lineupText.split(',').map(s => s.trim()) : ["お茶 (130円)"];
     
+    const nicknameField = document.getElementById('newSpotNickname');
+    const customName = nicknameField ? nicknameField.value.trim() : "";
+    const addressVal = document.getElementById('newSpotName').value;
+    
     const newSpot = {
-        id: Date.now(), name: document.getElementById('newSpotName').value || "新規自販機",
+        id: Date.now(), name: customName || addressVal || "新規自販機",
         lat: pos.lat, lng: pos.lng, manufacturer: document.getElementById('newSpotManufacturer').value,
         rating: 3.0, priceRange: "130円〜", hasTrashBin: document.getElementById('newSpotTrash').value,
-        paymentMethods: ["現金"], lineup: lineup, description: "新しく発見されました。", type: "standard",
+        paymentMethods: ["現金"], lineup: lineup, description: addressVal || "新しく発見されました。", type: "standard",
         photos: newSpotPhotoBase64 ? [newSpotPhotoBase64] : [], verifiedCount: 0, lastUpdated: new Date().toLocaleDateString('ja-JP'),
         comments: [], namingRightsAvailable: true, owner: null,
         rarityVotesCount: 0, rarityVotesSum: 0, isModified: true
