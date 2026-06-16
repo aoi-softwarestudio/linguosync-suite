@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=20260616-v5">
+    <link rel="stylesheet" href="style.css?v=20260616-v6">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -87,7 +87,7 @@
                     <div id="userProfile" class="user-profile">
                         <!-- Circular SVG Progress Ring for XP Meter -->
                         <svg class="xp-ring" width="48" height="48" style="position: absolute; top: 0; left: 0; transform: rotate(-90deg); overflow: visible; z-index: 1;">
-                            <circle cx="24" cy="24" r="21" stroke="rgba(255,255,255,0.08)" stroke-width="2.5" fill="transparent" />
+                            <circle cx="24" cy="24" r="21" stroke="var(--border-color)" stroke-width="2.5" fill="transparent" />
                             <circle id="userXPProgressCircle" cx="24" cy="24" r="21" stroke="url(#gold-gradient)" stroke-width="3" fill="transparent" stroke-dasharray="131.95" stroke-dashoffset="131.95" stroke-linecap="round" style="transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.4));" />
                             <defs>
                                 <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -174,7 +174,10 @@
         <!-- Ranking Modal -->
         <div id="rankingModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; align-items: center; justify-content: center; padding: 20px;" class="pointer-events-auto">
             <div class="detail-panel open" style="position: relative; width: 100%; max-width: 500px; height: auto; bottom: auto; top: auto; right: auto; transform: none; padding: 30px;">
-                <h2 style="margin-bottom: 20px; text-align: center;"><i class="fas fa-crown" style="color: #fbbf24;"></i> VENDIX ランキング</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-crown"></i> VENDIX ランキング</h2>
+                    <button class="modal-card-close" onclick="document.getElementById('rankingModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;"><i class="fas fa-times"></i></button>
+                </div>
                 
                 <div class="ranking-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button class="filter-chip active" id="rankByCountBtn" style="flex: 1; text-align: center;">所有数</button>
@@ -184,8 +187,6 @@
                 <div id="rankingContent" style="max-height: 400px; overflow-y: auto;">
                     <!-- Ranking items will be rendered here -->
                 </div>
-
-                <button class="btn-submit" onclick="document.getElementById('rankingModal').style.display='none'" style="background: transparent; border: 1px solid var(--border-color); margin-top: 20px;">閉じる</button>
             </div>
         </div>
 
@@ -328,7 +329,7 @@
                         <span>所在地 (命名権販売用)</span>
                         <span id="gpsAccuracyDisplay" style="font-size: 0.72rem; color: var(--accent-color); font-weight: 600;"><i class="fas fa-location-crosshairs"></i> GPS精度: 測定中...</span>
                     </label>
-                    <input type="text" class="form-control" id="newSpotName" placeholder="現在地を解析中..." readonly style="background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: not-allowed;">
+                    <input type="text" class="form-control" id="newSpotName" placeholder="現在地を解析中..." readonly style="background: var(--card-inner-bg); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: not-allowed;">
                 </div>
                 <div class="info-grid">
                     <div class="form-group">
@@ -349,7 +350,7 @@
                     <label>ラインナップ (カンマ区切りで入力)</label>
                     <input type="text" class="form-control" id="newSpotLineup" placeholder="例: コーラ, 天然水, 激レアおでん缶">
                 </div>
-                <div class="form-group" style="margin-top: 15px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; background: rgba(255,255,255,0.02);">
+                <div class="form-group" style="margin-top: 15px; border: 1px dashed var(--border-color); border-radius: 12px; padding: 15px; background: var(--card-inner-bg);">
                     <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-color);">
                         <i class="fas fa-robot"></i> AI自動スキャン登録 (写真を撮影)
                     </label>
@@ -412,7 +413,10 @@
     <div id="achievementsModal" class="responsive-modal-overlay pointer-events-auto">
         <div class="responsive-modal-card">
             <div class="drag-handle-bar"></div>
-            <h2 style="margin-bottom: 20px; text-align: center; color: var(--accent-gold-text);"><i class="fas fa-trophy"></i> マイ実績 ＆ レベル</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-trophy"></i> マイ実績 ＆ レベル</h2>
+                <button class="modal-card-close" onclick="document.getElementById('achievementsModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
             
             <div class="modal-inner-card">
                 <div id="modalUserAvatarContainer" style="display: inline-block; position: relative; margin-bottom: 10px;">
@@ -431,8 +435,6 @@
             <div id="achievementsListContent" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
                 <!-- Achievements items dynamically filled -->
             </div>
-
-            <button class="btn-submit btn-secondary" onclick="document.getElementById('achievementsModal').style.display='none'" style="margin-top: 20px; width: 100%;">閉じる</button>
         </div>
     </div>
 
@@ -478,6 +480,6 @@
     <!-- Flash effect overlay on Level Up -->
     <div id="flashOverlay" class="flash-overlay"></div>
 
-    <script type="module" src="app.js?v=20260616-v3"></script>
+    <script type="module" src="app.js?v=20260616-v4"></script>
 </body>
 </html>
