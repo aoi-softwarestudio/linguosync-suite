@@ -1119,11 +1119,11 @@ const VendiGamification = {
                 progressText = `${metCount} / ${totalCount} 条件`;
                 
                 checklistHtml = `
-                    <div class="achievement-checklist" style="margin-top: 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+                    <div class="achievement-checklist" style="margin-top: 10px; padding-left: 15px; display: flex; flex-direction: column; gap: 8px; border-left: 2px dashed var(--border-color); margin-left: 20px;">
                         ${checkResult.conditions.map(cond => `
-                            <div style="display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: ${cond.met ? 'var(--text-primary)' : 'var(--text-secondary)'}; line-height: 1.3;">
-                                <i class="${cond.met ? 'fas fa-check-circle' : 'far fa-circle'}" style="color: ${cond.met ? '#ffd700' : 'var(--text-secondary)'}; font-size: 0.88rem; flex-shrink: 0;"></i>
-                                <span style="${cond.met ? 'opacity: 1.0;' : 'opacity: 0.9;'}">${cond.text}</span>
+                            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: ${cond.met ? 'var(--text-primary)' : 'var(--text-secondary)'}; line-height: 1.4;">
+                                <i class="${cond.met ? 'fas fa-check-circle' : 'far fa-circle'}" style="color: ${cond.met ? 'var(--accent-gold-text)' : 'var(--text-secondary)'}; font-size: 0.98rem; flex-shrink: 0;"></i>
+                                <span style="${cond.met ? 'opacity: 1.0; font-weight: 600;' : 'opacity: 0.85;'}">${cond.text}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -1131,33 +1131,40 @@ const VendiGamification = {
             }
             
             const div = document.createElement('div');
-            div.className = `achievement-item ${highestUnlockedIdx >= 0 ? '' : 'locked'}`;
+            div.className = `achievement-item ${highestUnlockedIdx >= 0 ? '' : 'locked'} ${isCompleted ? 'completed-gold' : ''}`;
             div.style.flexDirection = 'column';
             div.style.alignItems = 'stretch';
-            div.style.gap = '8px';
-            div.style.padding = '12px 15px';
+            div.style.gap = '10px';
+            div.style.padding = '16px 20px';
+            div.style.borderRadius = '16px';
+            
+            // If completed, add extra premium golden styling
+            if (isCompleted) {
+                div.style.border = '1.5px solid var(--accent-gold-text)';
+                div.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.15)';
+            }
             
             div.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="achievement-icon" style="width: 32px; height: 32px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div class="achievement-icon" style="width: 42px; height: 42px; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);">
                         <i class="fas ${highestUnlockedIdx >= 0 ? cat.icon : 'fa-lock'}"></i>
                     </div>
                     <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h5 style="color: var(--text-primary); font-weight: 800; font-size: 0.85rem; margin: 0;">${cat.name}</h5>
-                            <span style="font-size: 0.7rem; color: var(--accent-gold-text); font-weight: 900;">${currentTitle}</span>
+                            <h5 style="color: var(--text-primary); font-weight: 800; font-size: 1.05rem; margin: 0; letter-spacing: 0.3px;">${cat.name}</h5>
+                            <span style="font-size: 0.88rem; color: var(--accent-gold-text); font-weight: 900; background: rgba(255, 215, 0, 0.1); padding: 2px 8px; border-radius: 8px;">${currentTitle}</span>
                         </div>
-                        <p style="color: var(--text-secondary); font-size: 0.7rem; margin: 2px 0 0 0; line-height: 1.2;">
-                            ${isCompleted ? '🏆 すべての実績を完全達成！' : `次の目標: ${nextTitle}`}
+                        <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 4px 0 0 0; line-height: 1.3;">
+                            ${isCompleted ? '🏆 すべての実績を完全達成！' : `次の目標: <strong>${nextTitle}</strong>`}
                         </p>
                     </div>
                 </div>
                 ${checklistHtml}
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
-                    <div style="flex: 1; background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden; position: relative;">
-                        <div style="background: linear-gradient(90deg, #ffd700, #ffa500); width: ${progressPercent}%; height: 100%; border-radius: 3px; transition: width 0.4s ease-out;"></div>
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                    <div style="flex: 1; background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; position: relative;">
+                        <div style="background: linear-gradient(90deg, #ffd700, #ffa500); width: ${progressPercent}%; height: 100%; border-radius: 4px; transition: width 0.4s ease-out;"></div>
                     </div>
-                    <span style="font-size: 0.65rem; color: var(--text-secondary); font-weight: bold; width: 55px; text-align: right;">${progressText}</span>
+                    <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: bold; width: 65px; text-align: right;">${progressText}</span>
                 </div>
             `;
             container.appendChild(div);
