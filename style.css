@@ -2319,6 +2319,42 @@ body.light-mode .achievement-item.locked .achievement-icon {
         border-radius: 50% !important; /* Premium round floating actions */
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
     }
+
+    /* Mobile responsive adjustments for name editing container */
+    .panel-title h2 {
+        font-size: 1.25rem !important;
+        line-height: 1.35;
+        word-break: break-all;
+    }
+
+    #spotNameEditBtn {
+        font-size: 1.1rem !important;
+        padding: 6px !important;
+    }
+
+    #spotNameEditContainer {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+    }
+
+    #spotNameEditContainer .name-edit-buttons {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    #spotNameEditContainer .name-edit-buttons button {
+        flex: 1;
+        text-align: center;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0 !important;
+    }
 }
 
 /* --- My Owned Vending Machine Crown Float Styling --- */
