@@ -1631,12 +1631,13 @@ body.light-mode .status-badge.comments-badge {
 /* --- Achievements Dashboard & Icons --- */
 .achievement-item {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 12px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 16px 20px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 16px;
     transition: var(--transition);
 }
 .achievement-item:hover {
@@ -1654,6 +1655,11 @@ body.light-mode .achievement-item:hover {
 .achievement-item.locked {
     opacity: 0.65;
 }
+.achievement-item.completed-gold {
+    border: 1.5px solid var(--accent-gold-text) !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+}
+
 .achievement-icon {
     width: 42px;
     height: 42px;
@@ -1664,7 +1670,8 @@ body.light-mode .achievement-item:hover {
     justify-content: center;
     color: white !important;
     font-size: 1.25rem;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
+    flex-shrink: 0;
 }
 .achievement-icon i {
     color: white !important;
@@ -1679,6 +1686,86 @@ body.light-mode .achievement-item:hover {
 }
 body.light-mode .achievement-item.locked .achievement-icon {
     background: rgba(0, 0, 0, 0.08);
+}
+
+/* CSS classes for inner elements to allow mobile responsive layout overrides */
+.achievement-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.achievement-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.achievement-cat-name {
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+.achievement-status-badge {
+    font-size: 0.88rem;
+    color: var(--accent-gold-text);
+    font-weight: 900;
+    background: rgba(255, 215, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.achievement-desc {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    margin: 4px 0 0 0;
+    line-height: 1.3;
+}
+.achievement-checklist {
+    margin-top: 10px;
+    padding-left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 2px dashed var(--border-color);
+    margin-left: 20px;
+}
+.achievement-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+.achievement-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+}
+.achievement-progress-bar-wrap {
+    flex: 1;
+    background: var(--border-color);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+.achievement-progress-bar {
+    background: linear-gradient(90deg, #ffd700, #ffa500);
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease-out;
+}
+.achievement-progress-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: bold;
+    width: 65px;
+    text-align: right;
+    flex-shrink: 0;
 }
 
 /* --- Premium Theme-Adaptive Modals --- */
@@ -1779,6 +1866,58 @@ body.light-mode .achievement-item.locked .achievement-icon {
     
     #achievementsListContent {
         max-height: 52vh !important;
+    }
+
+    /* Mobile Achievements UI Overrides for perfect visibility and zero-overflow layout */
+    .achievement-item {
+        padding: 12px 14px !important;
+        gap: 8px !important;
+        border-radius: 12px !important;
+    }
+    .achievement-header {
+        gap: 10px !important;
+    }
+    .achievement-icon {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 1.05rem !important;
+    }
+    .achievement-title-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    .achievement-cat-name {
+        font-size: 0.92rem !important;
+    }
+    .achievement-status-badge {
+        font-size: 0.75rem !important;
+        padding: 1px 6px !important;
+        border-radius: 6px !important;
+        align-self: flex-start !important;
+    }
+    .achievement-desc {
+        font-size: 0.78rem !important;
+        margin-top: 2px !important;
+    }
+    .achievement-checklist {
+        margin-left: 16px !important;
+        padding-left: 10px !important;
+        gap: 6px !important;
+    }
+    .achievement-checklist-item {
+        font-size: 0.82rem !important;
+        gap: 8px !important;
+    }
+    .achievement-progress-row {
+        gap: 8px !important;
+    }
+    .achievement-progress-bar-wrap {
+        height: 6px !important;
+    }
+    .achievement-progress-text {
+        font-size: 0.72rem !important;
+        width: 55px !important;
     }
 }
 
