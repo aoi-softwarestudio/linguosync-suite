@@ -2728,15 +2728,29 @@ async function updateModalAddress(lat, lng) {
     lastGeocodeTime = now;
     lastGeocodedLatLng = { lat, lng };
     
+    const nicknameField = document.getElementById('newSpotNickname');
     if (inputField.value === '' || inputField.value === '位置情報を解析中...' || inputField.value === '新規自販機') {
         inputField.value = "位置情報を解析中...";
+        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '新規自販機')) {
+            nicknameField.value = "位置情報を解析中...";
+        }
     }
     
     try {
         const resolvedAddr = await fetchReverseGeocodeAddress(lat, lng);
-        inputField.value = resolvedAddr || "新規自販機";
+        const address = resolvedAddr || "新規自販機";
+        inputField.value = address;
+        
+        const nicknameField = document.getElementById('newSpotNickname');
+        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '位置情報を解析中...' || nicknameField.value === '新規自販機')) {
+            nicknameField.value = address;
+        }
     } catch (e) {
         inputField.value = "新規自販機";
+        const nicknameField = document.getElementById('newSpotNickname');
+        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '位置情報を解析中...' || nicknameField.value === '新規自販機')) {
+            nicknameField.value = "新規自販機";
+        }
     }
 }
 
