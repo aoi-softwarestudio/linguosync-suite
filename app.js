@@ -1335,8 +1335,15 @@ let scannerFacingMode = 'environment';
 
 async function startCameraScanner(mode = 'ai-scan') {
     currentCameraMode = mode;
+    
+    // Check secure context
+    if (window.isSecureContext === false) {
+        showToast("カメラ機能を利用するには、HTTPSまたはlocalhostによるセキュアな接続が必要です。", "error");
+        return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast("この端末はカメラスキャンに対応していません。", "warning");
+        showToast("この端末はカメラスキャンに対応していないか、機能が制限されています。", "warning");
         return;
     }
     
@@ -1348,14 +1355,47 @@ async function startCameraScanner(mode = 'ai-scan') {
             stopCameraScanner();
         }
         
-        scannerStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: scannerFacingMode,
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+        let stream = null;
+        let lastError = null;
+        
+        const constraintsList = [
+            {
+                video: {
+                    facingMode: { ideal: scannerFacingMode },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
             },
-            audio: false
-        });
+            {
+                video: {
+                    facingMode: scannerFacingMode
+                },
+                audio: false
+            },
+            {
+                video: true,
+                audio: false
+            }
+        ];
+        
+        for (const constraints of constraintsList) {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (stream) {
+                    break;
+                }
+            } catch (err) {
+                console.warn("Camera fallback attempt failed for constraints:", constraints, err);
+                lastError = err;
+            }
+        }
+        
+        if (!stream) {
+            throw lastError || new Error("No camera stream acquired");
+        }
+        
+        scannerStream = stream;
         
         const video = document.getElementById('scannerVideo');
         if (video) {
@@ -1364,7 +1404,19 @@ async function startCameraScanner(mode = 'ai-scan') {
         showToast("AIカメラ診断を開始しました。カメラを商品棚に向けてください。", "info");
     } catch (e) {
         console.error("Camera access failed:", e);
-        showToast("カメラの起動に失敗しました。パーミッション設定をご確認ください。", "error");
+        let errorMsg = "カメラの起動に失敗しました。";
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            errorMsg = "カメラの使用が拒否されました。ブラウザの設定からカメラへのアクセス権限を許可してください。";
+        } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+            errorMsg = "有効なカメラデバイスが見つかりません。カメラの接続状態を確認してください。";
+        } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+            errorMsg = "カメラを起動できません。他のアプリでカメラが使用中である可能性があります。";
+        } else if (e.name === 'OverconstrainedError') {
+            errorMsg = "指定された設定（背面カメラなど）に対応するカメラが見つかりません。";
+        } else {
+            errorMsg += `詳細: ${e.name || e.message || e}`;
+        }
+        showToast(errorMsg, "error");
         stopCameraScanner();
     }
 }
