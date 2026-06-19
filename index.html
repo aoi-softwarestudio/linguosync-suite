@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=20260616-v10">
+    <link rel="stylesheet" href="style.css?v=20260619-v1">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -201,9 +201,9 @@
                     </div>
                     <!-- Name Edit Container (hidden by default) -->
                     <div id="spotNameEditContainer" style="display: none; align-items: center; gap: 8px; margin-top: 8px; width: 100%;">
-                        <input type="text" id="spotNameEditInput" class="form-control" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.9rem; font-weight: 700; border-radius: 8px;" placeholder="新しい自販機名を入力...">
-                        <button id="spotNameSaveBtn" class="btn-submit" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; background: var(--accent-color); color: white; white-space: nowrap;">保存</button>
-                        <button id="spotNameCancelBtn" class="btn-secondary" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; background: var(--border-color); color: var(--text-primary); white-space: nowrap;">キャンセル</button>
+                        <input type="text" id="spotNameEditInput" class="form-control" style="flex: 1; padding: 10px 14px; font-size: 0.95rem; font-weight: 700; border-radius: 14px; border: 1px solid var(--border-color); background: var(--card-inner-bg); color: var(--text-primary); outline: none;" placeholder="新しい自販機名を入力...">
+                        <button id="spotNameSaveBtn" class="btn-submit" style="padding: 10px 16px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; border: none; cursor: pointer; background: var(--accent-gradient); color: white; white-space: nowrap; margin-top: 0; width: auto;">保存</button>
+                        <button id="spotNameCancelBtn" class="btn-secondary" style="padding: 10px 16px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; border: none; cursor: pointer; background: var(--border-color); color: var(--text-primary); white-space: nowrap; margin-top: 0; width: auto;">キャンセル</button>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                         <p id="spotManufacturer" style="color: var(--text-secondary); font-size: 0.9rem;">メーカー名</p>
@@ -336,7 +336,7 @@
                 <h3>新規自販機を登録</h3>
                 <div class="form-group" style="margin-top: 20px;">
                     <label>自販機名（ニックネーム）</label>
-                    <input type="text" class="form-control" id="newSpotNickname" placeholder="例：サントリー自販機、角のチェリオ..." style="background: var(--card-inner-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; padding: 0.4rem 0.6rem;">
+                    <input type="text" class="form-control" id="newSpotNickname" placeholder="例：サントリー自販機、角のチェリオ..." style="background: var(--card-inner-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 14px; padding: 10px 14px; font-size: 0.95rem;">
                 </div>
                 <div class="form-group" style="margin-top: 15px;">
                     <label style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -483,6 +483,6 @@
     <!-- Flash effect overlay on Level Up -->
     <div id="flashOverlay" class="flash-overlay"></div>
 
-    <script type="module" src="app.js?v=20260616-v10"></script>
+    <script type="module" src="app.js?v=20260619-v1"></script>
 </body>
 </html>
