@@ -81,19 +81,41 @@ body.light-mode {
 }
 
 body {
-    background-color: var(--bg-color);
+    background-color: #080d1a; /* Enforce elegant dark backdrop on desktop */
     color: var(--text-primary);
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: background-color 0.5s ease, color 0.5s ease;
-}
+  }
 
-#map {
+  .app-viewport {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
     height: 100vh;
-    width: 100vw;
+    height: 100dvh;
+    background-color: var(--bg-color);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    /* CSS Magic: Contain position: fixed elements to this viewport */
+    transform: translate3d(0, 0, 0);
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.5s ease;
+  }
+
+  #map {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     z-index: 1;
-}
+  }
 
 /* Leaflet overrides */
 .leaflet-container {
@@ -455,6 +477,8 @@ body.light-mode .search-highlight {
     bottom: 0;
 }
 
+/* Desktop detail panel layout disabled for mobile-only lock */
+/*
 @media (min-width: 768px) {
     .detail-panel {
         top: 90px;
@@ -474,6 +498,7 @@ body.light-mode .search-highlight {
         transform: translateX(0);
     }
 }
+*/
 
 .panel-header {
     display: flex;
