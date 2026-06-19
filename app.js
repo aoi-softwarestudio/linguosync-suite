@@ -2041,8 +2041,6 @@ function initMap() {
             });
         }
 
-        document.getElementById('addPhotoBtn').addEventListener('click', () => document.getElementById('photoInput').click());
-        
         // AI Live Camera Scanner Bindings
         document.getElementById('aiScannerBtn').addEventListener('click', startCameraScanner);
         document.getElementById('closeCameraBtn').addEventListener('click', stopCameraScanner);
@@ -2052,10 +2050,6 @@ function initMap() {
         document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
         
         // New Spot Photo Upload and AI Scan bindings
-        const newSpotUploadBtn = document.getElementById('newSpotUploadBtn');
-        if (newSpotUploadBtn) {
-            newSpotUploadBtn.addEventListener('click', () => document.getElementById('newSpotPhotoInput').click());
-        }
         const newSpotPhotoInput = document.getElementById('newSpotPhotoInput');
         if (newSpotPhotoInput) {
             newSpotPhotoInput.addEventListener('change', handleNewSpotPhotoUpload);
