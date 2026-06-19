@@ -2728,29 +2728,16 @@ async function updateModalAddress(lat, lng) {
     lastGeocodeTime = now;
     lastGeocodedLatLng = { lat, lng };
     
-    const nicknameField = document.getElementById('newSpotNickname');
     if (inputField.value === '' || inputField.value === '位置情報を解析中...' || inputField.value === '新規自販機') {
         inputField.value = "位置情報を解析中...";
-        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '新規自販機')) {
-            nicknameField.value = "位置情報を解析中...";
-        }
     }
     
     try {
         const resolvedAddr = await fetchReverseGeocodeAddress(lat, lng);
         const address = resolvedAddr || "新規自販機";
         inputField.value = address;
-        
-        const nicknameField = document.getElementById('newSpotNickname');
-        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '位置情報を解析中...' || nicknameField.value === '新規自販機')) {
-            nicknameField.value = address;
-        }
     } catch (e) {
         inputField.value = "新規自販機";
-        const nicknameField = document.getElementById('newSpotNickname');
-        if (nicknameField && (nicknameField.value === '' || nicknameField.value === '位置情報を解析中...' || nicknameField.value === '新規自販機')) {
-            nicknameField.value = "新規自販機";
-        }
     }
 }
 
@@ -2824,8 +2811,6 @@ function showAddModal(latlng) {
     }
     
     // Clear new spot fields
-    const newSpotNickname = document.getElementById('newSpotNickname');
-    if (newSpotNickname) newSpotNickname.value = '';
     document.getElementById('newSpotName').value = '';
     document.getElementById('newSpotLineup').value = '';
     document.getElementById('newSpotManufacturer').selectedIndex = 0;
@@ -2866,11 +2851,12 @@ function saveNewSpot() {
     if (!tempMarker) return;
     const pos = tempMarker.getLatLng();
     
-    if (!userLocation) {
+    const currentLoc = userLocation || window.userLocation;
+    if (!currentLoc) {
         showToast('現在地が特定されていません。追加できません。', 'error');
         return;
     }
-    const distance = haversineDistance(userLocation.lat, userLocation.lng, pos.lat, pos.lng);
+    const distance = haversineDistance(currentLoc.lat, currentLoc.lng, pos.lat, pos.lng);
     if (distance > 50) {
         showToast(`距離エラー: 現在地から ${Math.round(distance)}m 離れています。50m以内の自販機のみ登録可能です。`, 'error');
         return;
@@ -2879,12 +2865,10 @@ function saveNewSpot() {
     const lineupText = document.getElementById('newSpotLineup').value;
     const lineup = lineupText ? lineupText.split(',').map(s => s.trim()) : ["お茶 (130円)"];
     
-    const nicknameField = document.getElementById('newSpotNickname');
-    const customName = nicknameField ? nicknameField.value.trim() : "";
     const addressVal = document.getElementById('newSpotName').value;
     
     const newSpot = {
-        id: Date.now(), name: customName || addressVal || "新規自販機",
+        id: Date.now(), name: addressVal || "新規自販機",
         lat: pos.lat, lng: pos.lng, manufacturer: document.getElementById('newSpotManufacturer').value,
         rating: 3.0, priceRange: "130円〜", hasTrashBin: document.getElementById('newSpotTrash').value,
         paymentMethods: ["現金"], lineup: lineup, description: addressVal || "新しく発見されました。", type: "standard",
@@ -4138,6 +4122,7 @@ window.onload = async () => {
     loadSavedUser();
     window.initialSpots = initialSpots;
     window.showDetailPanel = showDetailPanel;
+    window.showAddModal = showAddModal;
     window.getRandomLineupForManufacturer = getRandomLineupForManufacturer;
     window.fetchOSMVendingMachines = fetchOSMVendingMachines;
     window.getFetchedGrids = () => fetchedGrids;
