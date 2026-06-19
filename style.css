@@ -448,6 +448,7 @@ body.light-mode .search-highlight {
     box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
     max-height: 85vh;
     overflow-y: auto;
+    z-index: 110000;
 }
 
 .detail-panel.open {
@@ -466,7 +467,7 @@ body.light-mode .search-highlight {
         border: 1px solid var(--border-color);
         transform: translateX(120%);
         transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 900;
+        z-index: 110000;
         overflow-y: auto;
     }
     .detail-panel.open {
@@ -2368,4 +2369,18 @@ body.light-mode .achievement-item.locked .achievement-icon {
         transform: scale(4.5); /* Expands to very large diameter for maximum visibility on zoom-out */
         opacity: 0;
     }
+}
+
+/* Accessibility-friendly hidden file input to avoid display: none click blocking */
+.visually-hidden-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
 }
