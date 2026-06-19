@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=20260619-v5">
+    <link rel="stylesheet" href="style.css?v=20260620-v1">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -60,7 +60,8 @@
     </script>
 </head>
 <body class="light-mode">
-    <!-- Offline Warning Banner -->
+    <div class="app-viewport">
+        <!-- Offline Warning Banner -->
     <div id="offlineBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #f59e0b, #d97706); color: white; text-align: center; padding: 10px 20px; font-weight: 800; font-size: 0.8rem; z-index: 999999; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4); animation: slideDown 0.3s ease-out; font-family: 'Inter', sans-serif;">
         <i class="fas fa-wifi-slash" style="margin-right: 8px;"></i> オフラインモード：ローカルキャッシュデータを表示中
     </div>
@@ -478,6 +479,7 @@
 
     <!-- Flash effect overlay on Level Up -->
     <div id="flashOverlay" class="flash-overlay"></div>
+    </div><!-- /.app-viewport -->
 
     <script type="module" src="app.js?v=20260620-v1"></script>
 </body>
