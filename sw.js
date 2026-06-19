@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vendimap-cache-v34';
+const CACHE_NAME = 'vendimap-cache-v36';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -83,6 +83,9 @@ self.addEventListener('fetch', event => {
           return caches.match(event.request, { ignoreSearch: true });
         })
     );
+  } else if (url.origin !== self.location.origin) {
+    // Cross-origin requests (e.g. Geocoding API) should always go directly to network
+    event.respondWith(fetch(event.request));
   } else {
     // Static assets: Cache-First, fallback to Network (matching assets ignoring search queries for version-busting links)
     event.respondWith(
