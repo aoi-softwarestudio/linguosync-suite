@@ -2182,6 +2182,10 @@ body.light-mode .achievement-item.locked .achievement-icon {
 }
 
 /* --- My Owned Vending Machine Crown Float Styling --- */
+.my-owned-marker {
+    z-index: 99999 !important; /* Always keep own markers on top of all other elements */
+}
+
 .my-owned-marker .marker-pin::after {
     content: "\1f451";
     position: absolute;
@@ -2196,4 +2200,33 @@ body.light-mode .achievement-item.locked .achievement-icon {
 @keyframes crownFloatAnimation {
     0%, 100% { transform: translateY(0) scale(1); }
     50% { transform: translateY(-4px) scale(1.15); }
+}
+
+/* Pulsing Ripple Effect under the marker pin to attract attention even when map is zoomed out */
+.my-owned-marker::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    margin-left: -22px;
+    margin-top: -22px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 20px #ffd700;
+    animation: myOwnedRipple 2.5s infinite ease-out;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes myOwnedRipple {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4.5); /* Expands to very large diameter for maximum visibility on zoom-out */
+        opacity: 0;
+    }
 }
