@@ -78,6 +78,7 @@ let addingSpotMode = false;
 let tempMarker = null;
 let darkLayer, lightLayer;
 let isDarkMode = false;
+let currentCameraMode = 'ai-scan'; // 'ai-scan', 'add-photo', 'new-spot'
 let hasCenteredOnUser = false;
 let newSpotPhotoBase64 = null;
 let userLocation = null;
@@ -1332,7 +1333,8 @@ function getRandomLineupForManufacturer(m) {
 let scannerStream = null;
 let scannerFacingMode = 'environment';
 
-async function startCameraScanner() {
+async function startCameraScanner(mode = 'ai-scan') {
+    currentCameraMode = mode;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showToast("この端末はカメラスキャンに対応していません。", "warning");
         return;
@@ -1388,7 +1390,7 @@ async function switchScannerCamera() {
 }
 
 async function captureAndScan() {
-    if (!scannerStream || !selectedSpot) return;
+    if (!scannerStream) return;
     
     const video = document.getElementById('scannerVideo');
     if (!video) return;
@@ -1408,12 +1410,45 @@ async function captureAndScan() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const base64Data = dataUrl.split(',')[1];
+    
     // Stop camera stream to free resources during AI analysis
     stopCameraScanner();
     
     try {
-        const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        await performAIScan(base64Data, selectedSpot);
+        if (currentCameraMode === 'ai-scan') {
+            if (selectedSpot) {
+                await performAIScan(base64Data, selectedSpot);
+            }
+        } else if (currentCameraMode === 'add-photo') {
+            if (selectedSpot) {
+                selectedSpot.photos.push(dataUrl);
+                selectedSpot.isModified = true;
+                saveSpotsToLocal();
+                
+                if (typeof dispatchGlobalUpdateMetadata === 'function') {
+                    dispatchGlobalUpdateMetadata(selectedSpot, { photo: dataUrl });
+                }
+                renderPhotos(selectedSpot);
+                showToast('その場で撮影した写真を追加しました！', 'success');
+            }
+        } else if (currentCameraMode === 'new-spot') {
+            const previewBox = document.getElementById('newSpotPhotoPreviewBox');
+            const previewImg = document.getElementById('newSpotPhotoPreviewImg');
+            const previewBadge = document.getElementById('newSpotPhotoPreviewBadge');
+            const statusSpan = document.getElementById('newSpotUploadStatus');
+            
+            if (previewBox) {
+                previewBox.style.display = 'block';
+                previewBox.className = 'scan-preview-box scanning';
+            }
+            if (previewBadge) previewBadge.innerText = 'AI解析中...';
+            if (statusSpan) statusSpan.innerText = 'AI解析中...';
+            if (previewImg) previewImg.src = dataUrl;
+            
+            await performNewSpotAIScan(dataUrl);
+        }
     } catch (e) {
         console.error("Capture image error:", e);
         showToast("画像のキャプチャ処理に失敗しました。", "error");
@@ -2047,12 +2082,19 @@ function initMap() {
         document.getElementById('switchCameraBtn').addEventListener('click', switchScannerCamera);
         document.getElementById('captureScanBtn').addEventListener('click', captureAndScan);
         
-        document.getElementById('photoInput').addEventListener('change', handlePhotoUpload);
+        // Photo upload functionality is disabled for security. Enforcing live camera scanner.
+        const spotPhotos = document.getElementById('spotPhotos');
+        if (spotPhotos) {
+            spotPhotos.addEventListener('click', (e) => {
+                if (e.target.closest('#addPhotoBtn')) {
+                    startCameraScanner('add-photo');
+                }
+            });
+        }
         
-        // New Spot Photo Upload and AI Scan bindings
-        const newSpotPhotoInput = document.getElementById('newSpotPhotoInput');
-        if (newSpotPhotoInput) {
-            newSpotPhotoInput.addEventListener('change', handleNewSpotPhotoUpload);
+        const newSpotUploadBtn = document.getElementById('newSpotUploadBtn');
+        if (newSpotUploadBtn) {
+            newSpotUploadBtn.addEventListener('click', () => startCameraScanner('new-spot'));
         }
 
         // Camera Modal File Upload Scan bindings
@@ -2914,43 +2956,7 @@ function saveNewSpot() {
     VendiGamification.addXP(150, "新しい自販機の発見・登録");
 }
 
-async function handleNewSpotPhotoUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const statusSpan = document.getElementById('newSpotUploadStatus');
-    if (statusSpan) statusSpan.innerText = '画像最適化中...';
-    
-    // Display preview box immediately
-    const previewBox = document.getElementById('newSpotPhotoPreviewBox');
-    const previewImg = document.getElementById('newSpotPhotoPreviewImg');
-    const previewBadge = document.getElementById('newSpotPhotoPreviewBadge');
-    
-    if (previewBox) {
-        previewBox.style.display = 'block';
-        previewBox.className = 'scan-preview-box scanning';
-    }
-    if (previewBadge) previewBadge.innerText = '画像最適化中...';
-    
-    // Read local file for responsive UI preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        if (previewImg) previewImg.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-    
-    try {
-        const compressedDataUrl = await compressImage(file, 1000, 1000, 0.85);
-        await performNewSpotAIScan(compressedDataUrl);
-    } catch (err) {
-        console.warn('Image compression failed for new spot, falling back to original:', err);
-        const fallbackReader = new FileReader();
-        fallbackReader.onload = async (event) => {
-            await performNewSpotAIScan(event.target.result);
-        };
-        fallbackReader.readAsDataURL(file);
-    }
-}
+// handleNewSpotPhotoUpload has been deprecated to block file uploads. Direct live camera capture is now enforced.
 
 async function performNewSpotAIScan(dataUrl) {
     const statusSpan = document.getElementById('newSpotUploadStatus');
@@ -3075,42 +3081,7 @@ async function performNewSpotAIScan(dataUrl) {
 }
 
 
-async function handlePhotoUpload(e) {
-    const file = e.target.files[0];
-    if (file && selectedSpot) {
-        try {
-            showToast('画像を最適化中...', 'info');
-            const compressedDataUrl = await compressImage(file, 1000, 1000, 0.85);
-            
-            selectedSpot.photos.push(compressedDataUrl);
-            selectedSpot.isModified = true;
-            saveSpotsToLocal();
-            
-            if (typeof dispatchGlobalUpdateMetadata === 'function') {
-                dispatchGlobalUpdateMetadata(selectedSpot, { photo: compressedDataUrl });
-            }
-            renderPhotos(selectedSpot);
-            
-            const base64Data = compressedDataUrl.split(',')[1];
-            await performAIScan(base64Data, selectedSpot);
-        } catch (err) {
-            console.warn('Image compression failed, falling back to original:', err);
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                selectedSpot.photos.push(event.target.result);
-                selectedSpot.isModified = true;
-                saveSpotsToLocal();
-                if (typeof dispatchGlobalUpdateMetadata === 'function') {
-                    dispatchGlobalUpdateMetadata(selectedSpot, { photo: event.target.result });
-                }
-                renderPhotos(selectedSpot);
-                const base64Data = event.target.result.split(',')[1];
-                await performAIScan(base64Data, selectedSpot);
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-}
+// handlePhotoUpload has been deprecated to block file uploads. Direct live camera capture is now enforced.
 
 async function handleCameraFileScan(e) {
     const file = e.target.files[0];
