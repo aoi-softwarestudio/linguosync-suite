@@ -70,6 +70,7 @@ async function reportActivity(venture, action) {
 let map;
 let markerClusterGroup;
 let markers = [];
+let myOwnedMarkers = [];
 let currentFilter = 'all';
 let currentSearchQuery = '';
 let selectedSpot = null;
@@ -2251,6 +2252,8 @@ function renderMarkers(spots) {
     if (markerClusterGroup) {
         markerClusterGroup.clearLayers();
     }
+    myOwnedMarkers.forEach(m => map.removeLayer(m));
+    myOwnedMarkers = [];
     markers = [];
 
     const bounds = map.getBounds();
@@ -2259,13 +2262,25 @@ function renderMarkers(spots) {
     // With clustering, we can render many more markers without lag!
     const maxMarkers = zoom >= 15 ? 1500 : zoom >= 13 ? 800 : zoom >= 11 ? 400 : 150;
 
+    // Prioritize my owned spots to render first to avoid limit cutoffs
+    const sortedSpots = [...spots].sort((a, b) => {
+        const aOwned = currentUser && a.owner && a.owner === currentUser.name;
+        const bOwned = currentUser && b.owner && b.owner === currentUser.name;
+        if (aOwned && !bOwned) return -1;
+        if (!aOwned && bOwned) return 1;
+        return 0;
+    });
+
     let rendered = 0;
-    for (const spot of spots) {
-        if (rendered >= maxMarkers) break;
+    for (const spot of sortedSpots) {
+        const isMyOwned = currentUser && spot.owner && spot.owner === currentUser.name;
+
+        // Skip non-owned spots if limit reached
+        if (!isMyOwned && rendered >= maxMarkers) continue;
         if (!shouldShowSpot(spot)) continue;
 
-        // Skip spots outside current viewport
-        if (!bounds.contains([spot.lat, spot.lng])) continue;
+        // Skip non-owned spots outside viewport
+        if (!isMyOwned && !bounds.contains([spot.lat, spot.lng])) continue;
 
         spot.rarity = calculateRarity(spot);
         if (spot.rarity >= 4) spot.type = 'rare';
@@ -2274,7 +2289,6 @@ function renderMarkers(spots) {
 
         let markerClass = 'custom-marker';
         const isEvaluating = (spot.rarityVotesCount || 0) < 3;
-        const isMyOwned = currentUser && spot.owner && spot.owner === currentUser.name;
         if (isMyOwned) {
             markerClass = 'custom-marker premium-gold-aura my-owned-marker';
         } else if (spot.owner !== null && spot.owner.trim() !== '') {
@@ -2308,9 +2322,15 @@ function renderMarkers(spots) {
             showDetailPanel(spot);
         });
         
-        markerClusterGroup.addLayer(marker);
+        if (isMyOwned) {
+            // Add owned marker directly to map (never clustered)
+            marker.addTo(map);
+            myOwnedMarkers.push(marker);
+        } else {
+            markerClusterGroup.addLayer(marker);
+            rendered++;
+        }
         markers.push(marker);
-        rendered++;
     }
 }
 
