@@ -2024,12 +2024,12 @@ function initMap() {
                 const icon = spotFavoriteBtn.querySelector('i');
                 if (icon) {
                     if (isAdded) {
-                        icon.className = 'fas fa-star';
-                        spotFavoriteBtn.style.color = '#fbbf24'; // Gold star
+                        icon.className = 'fas fa-heart';
+                        spotFavoriteBtn.style.color = '#ff4b72'; // Vivid pink-red
                         spotFavoriteBtn.setAttribute('title', 'お気に入りから削除');
-                        showToast('お気に入りに追加しました⭐', 'success');
+                        showToast('お気に入りに追加しました💖', 'success');
                     } else {
-                        icon.className = 'far fa-star';
+                        icon.className = 'far fa-heart';
                         spotFavoriteBtn.style.color = 'var(--text-secondary)';
                         spotFavoriteBtn.setAttribute('title', 'お気に入りに追加');
                         showToast('お気に入りから削除しました', 'info');
@@ -2456,11 +2456,11 @@ async function showDetailPanel(spot) {
         const icon = favBtn.querySelector('i');
         if (icon) {
             if (isFav) {
-                icon.className = 'fas fa-star';
-                favBtn.style.color = '#fbbf24'; // Gold star
+                icon.className = 'fas fa-heart';
+                favBtn.style.color = '#ff4b72'; // Gold star
                 favBtn.setAttribute('title', 'お気に入りから削除');
             } else {
-                icon.className = 'far fa-star';
+                icon.className = 'far fa-heart';
                 favBtn.style.color = 'var(--text-secondary)';
                 favBtn.setAttribute('title', 'お気に入りに追加');
             }
