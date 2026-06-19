@@ -1230,7 +1230,7 @@ function executeVendiSimulatedCheckout() {
     const steps = [
         "カード情報を安全に検証しています...",
         "独占オーナーシップ契約書を生成中...",
-        "マイジハ 命名権アクティベーションコードを生成しています...",
+        "VendiMap 命名権アクティベーションコードを生成しています...",
         "完了！まもなくアクティベーションコードを発行します..."
     ];
 
@@ -1298,7 +1298,7 @@ function executeVendiSimulatedCheckout() {
             const emailVal = document.getElementById('lemon-email').value || 'sota.kojima@empire.com';
             const tx = {
                 id: "TX-" + Date.now().toString().substr(-6),
-                app: "マイジハ",
+                app: "VendiMap",
                 amount: 480,
                 email: emailVal,
                 time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -3405,7 +3405,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 3000) {
             ...options,
             signal: controller.signal,
             headers: {
-                'User-Agent': 'MyJihaApp/1.0 (contact@aoisoftware.com)',
+                'User-Agent': 'VendiMapApp/1.0 (contact@aoisoftware.com)',
                 'Accept-Language': 'ja',
                 ...(options.headers || {})
             }
@@ -4234,7 +4234,7 @@ window.onload = async () => {
                         }
                         
                         // Automatically generate and activate license key for seamless integration
-                        const autoKey = `LS-MYJIHA-${sessionId.replace('mock_session_', '').substring(0, 10).toUpperCase()}`;
+                        const autoKey = `LS-VENDIMAP-${sessionId.replace('mock_session_', '').substring(0, 10).toUpperCase()}`;
                         localStorage.setItem('vendimap_license_key', autoKey);
                         
                         const licenseInput = document.getElementById('vendi-license-input');
