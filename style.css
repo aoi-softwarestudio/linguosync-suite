@@ -1655,15 +1655,15 @@ body.light-mode .achievement-item:hover {
     opacity: 0.65;
 }
 .achievement-icon {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: var(--accent-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white !important;
-    font-size: 0.95rem;
+    font-size: 1.25rem;
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }
 .achievement-icon i {
@@ -1778,7 +1778,7 @@ body.light-mode .achievement-item.locked .achievement-icon {
     }
     
     #achievementsListContent {
-        max-height: 42vh !important;
+        max-height: 52vh !important;
     }
 }
 
@@ -1800,7 +1800,7 @@ body.light-mode .achievement-item.locked .achievement-icon {
     }
     
     #achievementsListContent {
-        max-height: 380px !important;
+        max-height: 460px !important;
     }
 }
 
