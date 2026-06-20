@@ -1206,7 +1206,7 @@ function initLemonCheckoutPreview() {
     if (emailInput) {
         emailInput.addEventListener('input', (e) => {
             const val = e.target.value.split('@')[0].toUpperCase();
-            previewName.innerText = val ? val.substring(0, 16) : "SOTA KOJIMA";
+            previewName.innerText = val ? val.substring(0, 16) : "TOP HUNTER";
         });
     }
 
@@ -1261,7 +1261,7 @@ function executeVendiSimulatedCheckout() {
             }
             
             if (selectedSpot) {
-                const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                const ownerName = currentUser ? currentUser.name : "トップハンター";
                 selectedSpot.owner = ownerName;
                 selectedSpot.namingRightsAvailable = false;
                 selectedSpot.isModified = true;
@@ -1295,7 +1295,7 @@ function executeVendiSimulatedCheckout() {
 
             // Save transaction log
             const history = JSON.parse(localStorage.getItem('ventureos_tx_history') || '[]');
-            const emailVal = document.getElementById('lemon-email').value || 'sota.kojima@empire.com';
+            const emailVal = document.getElementById('lemon-email').value || 'hunter@example.com';
             const tx = {
                 id: "TX-" + Date.now().toString().substr(-6),
                 app: "VendiMap",
@@ -2241,7 +2241,7 @@ function initMap() {
                     
                     setTimeout(() => {
                         if (selectedSpot) {
-                            const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                            const ownerName = currentUser ? currentUser.name : "トップハンター";
                             selectedSpot.owner = ownerName;
                             selectedSpot.namingRightsAvailable = false;
                             selectedSpot.isModified = true;
@@ -3339,9 +3339,9 @@ async function loadUserDataFromServer(syncUserId) {
 
 async function mockGoogleLogin() {
     currentUser = {
-        name: "小島 蒼大",
-        email: "kojima.soda@gmail.com",
-        avatar: "https://i.pravatar.cc/150?u=kojima"
+        name: "トップハンター",
+        email: "tophunter@example.com",
+        avatar: "https://i.pravatar.cc/150?u=tophunter"
     };
     saveUserSession();
     
@@ -4224,7 +4224,7 @@ window.onload = async () => {
                     const spotId = isNaN(spotIdParam) ? spotIdParam : Number(spotIdParam);
                     const target = initialSpots.find(s => s.id === spotId || s.osmId === spotId);
                     if (target) {
-                        const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                        const ownerName = currentUser ? currentUser.name : "トップハンター";
                         target.owner = ownerName;
                         target.namingRightsAvailable = false;
                         target.isModified = true;
@@ -4409,7 +4409,7 @@ window.onload = async () => {
             nameSaveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
             try {
-                const ownerName = currentUser ? currentUser.name : "小島 蒼大";
+                const ownerName = currentUser ? currentUser.name : "トップハンター";
                 const res = await fetch(`${backendApiUrl}/api/update-spot-metadata`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
