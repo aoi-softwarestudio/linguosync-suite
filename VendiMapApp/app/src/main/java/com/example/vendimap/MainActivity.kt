@@ -63,12 +63,12 @@ class MainActivity : ComponentActivity() {
                             }
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
-                            settings.geolocationEnabled = true
+                            settings.setGeolocationEnabled(true)
                             settings.databaseEnabled = true
                             
                             // Support local dev server (10.0.2.2 for Android Emulator)
                             // Change this to the production Netlify URL when releasing
-                            loadUrl("http://10.0.2.2:8003/index.html")
+                            loadUrl("https://vendi-map.netlify.app/index.html")
                             webView = this
                         }
                     },
