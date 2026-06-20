@@ -4,6 +4,9 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+import java.util.Properties
+
+
 android {
     namespace = "com.example.vendimap"
     compileSdk = 36
@@ -20,7 +23,7 @@ android {
 
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
-            val properties = java.util.Properties()
+            val properties = Properties()
             properties.load(keystorePropertiesFile.inputStream())
             create("release") {
                 storeFile = rootProject.file(properties.getProperty("storeFile"))
