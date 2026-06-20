@@ -1,4 +1,0 @@
-#Sat Jun 20 21:08:28 JST 2026
-base.0=C\:\\COO\\開発部門\\VendiMapApp\\app\\build\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
-renamed.0=classes.dex
-path.0=classes.dex
