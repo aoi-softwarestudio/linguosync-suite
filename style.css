@@ -152,7 +152,19 @@ body {
 /* --- Header & Search --- */
 
 .logo-floating {
-    display: none !important;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1010;
+    display: none; /* Hidden by default on mobile-first layout */
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-floating img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 .logo-text {
