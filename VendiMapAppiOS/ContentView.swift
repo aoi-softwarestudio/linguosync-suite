@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     // Replace with your actual live production URL hosted on Netlify
-    let productionURL = URL(string: "https://vendi-map.netlify.app")!
+    let productionURL = URL(string: "https://socialintent-trends.onrender.com")!
 
     var body: some View {
         ZStack {
