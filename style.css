@@ -78,6 +78,7 @@ body.light-mode {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -90,6 +91,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: background-color 0.5s ease, color 0.5s ease;
+    overscroll-behavior: none;
   }
 
   .app-viewport {
@@ -106,6 +108,7 @@ body {
     display: flex;
     flex-direction: column;
     transition: background-color 0.5s ease;
+    overscroll-behavior: none;
   }
 
   #map {
@@ -460,12 +463,25 @@ body.light-mode .search-highlight {
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--border-color);
     border-radius: 32px 32px 0 0;
-    padding: 24px;
+    padding: 32px 24px calc(24px + env(safe-area-inset-bottom, 0px)) 24px;
     transition: bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
     max-height: 85vh;
     overflow-y: auto;
     z-index: 110000;
+}
+
+.detail-panel::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 5px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    opacity: 0.8;
 }
 
 .detail-panel.open {
@@ -2439,4 +2455,22 @@ body.light-mode .achievement-item.locked .achievement-icon {
     border: 0;
     opacity: 0;
     pointer-events: none;
+}
+
+/* Mobile touch & select optimizations for native app feel */
+.logo-floating,
+.user-profile,
+.nav-btn,
+.modal-card-close,
+.lineup-item-badge,
+.mini-badge,
+.mascot-overlay,
+.auth-container,
+.action-btn,
+.filter-chip,
+.modal-card-header,
+.panel-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
