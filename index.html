@@ -116,7 +116,7 @@
                                 <div class="dropdown-item" id="menuLoginBtn" style="cursor: pointer;"><i class="fas fa-sign-in-alt" style="color: var(--accent-color);"></i> ログインする</div>
                                 <div class="dropdown-item" onclick="document.getElementById('achievementsModal').style.display='flex'" style="cursor: pointer;"><i class="fas fa-trophy" style="color: var(--accent-gold-text);"></i> 実績 ＆ レベル</div>
                             </div>
-                            <!-- State: Logged-in (Sota Kojima) -->
+                            <!-- State: Logged-in -->
                             <div id="userMenuContent" style="display: none;">
                                 <div class="dropdown-header">
                                     <p id="userNameDisplay" style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">ユーザー名</p>
@@ -197,7 +197,7 @@
             <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <div class="panel-title" style="flex: 1; min-width: 0; width: 100%;">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; width: 100%;">
-                        <h2 id="spotName" style="margin: 0; flex: 1; word-break: break-all;">自販機の名前</h2>
+                        <h2 id="spotName" style="margin: 0; flex: 1; word-break: normal; overflow-wrap: break-word; line-break: strict;">自販機の名前</h2>
                         <button id="spotNameEditBtn" style="display: none; background: none; border: none; font-size: 0.95rem; color: var(--text-secondary); cursor: pointer; padding: 4px; transition: color 0.2s; flex-shrink: 0;" title="名前を変更"><i class="fas fa-edit"></i></button>
                     </div>
                     <!-- Name Edit Container (hidden by default) -->
@@ -208,9 +208,9 @@
                             <button id="spotNameCancelBtn" class="btn-secondary" style="padding: 10px 16px; border-radius: 14px; font-size: 0.8rem; font-weight: 800; border: none; cursor: pointer; background: var(--border-color); color: var(--text-primary); white-space: nowrap; margin-top: 0; width: auto;">キャンセル</button>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                        <p id="spotManufacturer" style="color: var(--text-secondary); font-size: 0.9rem;">メーカー名</p>
-                        <span style="color: var(--border-color);">|</span>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
+                        <p id="spotManufacturer" style="color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; flex-shrink: 0;">メーカー名</p>
+                        <span style="color: var(--border-color); white-space: nowrap; flex-shrink: 0;">|</span>
                         <p id="spotOwner" style="color: var(--accent-color); font-size: 0.9rem; font-weight: 600;">オーナー: 募集中</p>
                     </div>
                 </div>
@@ -420,7 +420,7 @@
             
             <div class="modal-inner-card">
                 <div id="modalUserAvatarContainer" style="display: inline-block; position: relative; margin-bottom: 10px;">
-                    <img id="modalUserAvatar" src="https://i.pravatar.cc/150?u=kojima" style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--accent-gold-text); box-shadow: 0 0 15px rgba(255,215,0,0.3);">
+                    <img id="modalUserAvatar" src="https://i.pravatar.cc/150?u=tophunter" style="width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--accent-gold-text); box-shadow: 0 0 15px rgba(255,215,0,0.3);">
                     <span id="modalUserLevelBadge" style="position: absolute; bottom: 0; right: 0; background: var(--accent-gold-text); color: var(--success-text); font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border-radius: 10px;">LV 1</span>
                 </div>
                 <h3 id="modalUserName" style="font-weight: 900; margin-bottom: 2px; color: var(--text-primary);">ゲストハンター</h3>
