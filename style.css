@@ -156,7 +156,7 @@ body {
     top: 20px;
     left: 20px;
     z-index: 1010;
-    display: none; /* Hidden by default on mobile-first layout */
+    display: flex;
     align-items: center;
     gap: 8px;
 }
@@ -2283,63 +2283,63 @@ body.light-mode .achievement-item.locked .achievement-icon {
     transform: scale(0.9);
 }
 
-/* --- Mobile Viewport Layout Optimization (VENDIX) --- */
+/* --- Global Viewport Layout Optimization (VENDIX) --- */
+/* 1. Hide absolute floating logo to maximize search bar width */
+.logo-floating {
+    display: none !important;
+}
+
+/* 2. Position search container and filter container as a full-width block at the top */
+.header-center {
+    top: 15px;
+    width: calc(100% - 30px) !important;
+    max-width: none !important;
+    left: 15px !important;
+    transform: none !important;
+    gap: 10px;
+}
+
+.search-container {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.search-bar {
+    padding: 10px 14px;
+    border-radius: 20px;
+    height: 48px; /* Match avatar height for vertical alignment symmetry */
+}
+
+.filter-container {
+    justify-content: flex-start;
+    padding: 2px 0;
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+/* 3. Stack action buttons vertically on the right side */
+.header-right {
+    top: 130px; /* Offset to sit safely below search and filters */
+    right: 15px !important;
+    left: auto !important;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.action-buttons {
+    flex-direction: column; /* Vertical align buttons */
+    gap: 10px;
+}
+
+.btn-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50% !important; /* Premium round floating actions */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
 @media (max-width: 767px) {
-    /* 1. Hide absolute floating logo to maximize search bar width */
-    .logo-floating {
-        display: none !important;
-    }
-
-    /* 2. Position search container and filter container as a full-width block at the top */
-    .header-center {
-        top: 15px;
-        width: calc(100% - 30px) !important;
-        max-width: none !important;
-        left: 15px !important;
-        transform: none !important;
-        gap: 10px;
-    }
-
-    .search-container {
-        width: 100% !important;
-        max-width: none !important;
-    }
-
-    .search-bar {
-        padding: 10px 14px;
-        border-radius: 20px;
-        height: 48px; /* Match avatar height for vertical alignment symmetry */
-    }
-
-    .filter-container {
-        justify-content: flex-start;
-        padding: 2px 0;
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-
-    /* 3. Stack action buttons vertically on the right side */
-    .header-right {
-        top: 130px; /* Offset to sit safely below search and filters */
-        right: 15px !important;
-        left: auto !important;
-        flex-direction: column;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .action-buttons {
-        flex-direction: column; /* Vertical align buttons */
-        gap: 10px;
-    }
-
-    .btn-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50% !important; /* Premium round floating actions */
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
-    }
-
     /* Mobile responsive adjustments for name editing container */
     .panel-title h2 {
         font-size: 1.25rem !important;
