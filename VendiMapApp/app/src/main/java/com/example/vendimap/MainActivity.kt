@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                             
                             // Support local dev server (10.0.2.2 for Android Emulator)
                             // Change this to the production Render URL when releasing
-                            loadUrl("https://socialintent-trends.onrender.com/index.html")
+                            loadUrl("https://vendimap-app.onrender.com/index.html")
                             webView = this
                         }
                     },
