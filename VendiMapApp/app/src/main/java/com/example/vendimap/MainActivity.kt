@@ -68,8 +68,7 @@ class MainActivity : ComponentActivity() {
                             
                             // Support local dev server (10.0.2.2 for Android Emulator)
                             // Change this to the production Render URL when releasing
-                            // Appended v=2 query parameter to bypass potential WebView cache restore issues
-                            loadUrl("https://vendimap-app.onrender.com/index.html?v=2")
+                            loadUrl("https://vendimap-app.onrender.com/index.html")
                             webView = this
                         }
                     },
