@@ -3,3 +3,8 @@ services:
     name: socialintent-trends
     runtime: static
     staticPublishPath: SocialIntent
+
+  - type: web
+    name: vendimap-app
+    runtime: static
+    staticPublishPath: .
