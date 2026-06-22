@@ -122,6 +122,47 @@ function normalizeQuery(q) {
     }
     return normalized;
 }
+
+function matchFuzzy(fieldVal, query) {
+    if (!fieldVal) return false;
+    const val = fieldVal.toLowerCase();
+    const q = query.toLowerCase();
+    
+    if (val.includes(q)) return true;
+    
+    // Japanese Vending Machine Synonym Dictionary for fuzzy matches
+    const jpSynonyms = [
+        { main: '伊藤園', synonyms: ['イトウエン', 'いとうえん', 'itoen', 'ito en', '伊藤園'] },
+        { main: 'サントリー', synonyms: ['サントリー', 'さんとりー', 'suntory', 'suntori'] },
+        { main: 'コカ・コーラ', synonyms: ['コカコーラ', 'こかこーら', 'coca-cola', 'cocacola', 'coke', 'コカ・コーラ'] },
+        { main: 'ダイドー', synonyms: ['ダイドードリンコ', 'だいどー', 'dydo', 'daido'] },
+        { main: 'キリン', synonyms: ['きりん', 'kirin'] },
+        { main: 'アサヒ', synonyms: ['あさひ', 'asahi', 'アサヒ飲料'] },
+        { main: '大塚製薬', synonyms: ['おおつか', 'otsuka', 'ポカリ', 'pokari'] },
+        { main: '明治', synonyms: ['めいじ', 'meiji'] },
+        { main: 'ポッカサッポロ', synonyms: ['ぽっか', 'pokka', 'サッポロ'] }
+    ];
+    
+    for (const group of jpSynonyms) {
+        if (val.includes(group.main.toLowerCase())) {
+            if (group.synonyms.some(syn => syn.includes(q) || q.includes(syn))) {
+                return true;
+            }
+        }
+        if (q.includes(group.main.toLowerCase())) {
+            if (group.synonyms.some(syn => val.includes(syn))) {
+                return true;
+            }
+        }
+    }
+    
+    // Convert Hiragana/Katakana for fallback match
+    const katakanaVal = toKatakana(val);
+    const katakanaQ = toKatakana(q);
+    if (katakanaVal.includes(katakanaQ)) return true;
+    
+    return false;
+}
 let accuracyCircle = null;
 let isAutoFollow = false;
 let currentInputRating = 0;
@@ -3431,9 +3472,6 @@ function handleSearch(e) {
     const query = e.target.value.trim();
     currentSearchQuery = query.toLowerCase();
     
-    // Normalize query for internal matching (fuzzy brand + Japanese char matching)
-    const normalizedQuery = normalizeQuery(currentSearchQuery);
-    
     renderMarkers(initialSpots);
     
     const clearBtn = document.getElementById('searchClearBtn');
@@ -3452,28 +3490,35 @@ function handleSearch(e) {
     
     clearTimeout(searchDebounceTimeout);
     
+    // Multi-word AND search support
+    const queryParts = currentSearchQuery.split(/[\s　]+/).filter(p => p.length > 0);
+    
     let matchingSpots = initialSpots.filter(spot => {
-        // Standard matches with normalized query
-        const nameMatch = spot.name.toLowerCase().includes(normalizedQuery) || spot.name.toLowerCase().includes(currentSearchQuery);
-        const mfgMatch = spot.manufacturer.toLowerCase().includes(normalizedQuery) || spot.manufacturer.toLowerCase().includes(currentSearchQuery);
-        const lineupMatch = spot.lineup.some(item => item.toLowerCase().includes(normalizedQuery) || item.toLowerCase().includes(currentSearchQuery));
-        const priceMatch = spot.priceRange.toLowerCase().includes(normalizedQuery) || spot.priceRange.toLowerCase().includes(currentSearchQuery);
-        const paymentMatch = spot.paymentMethods.some(pm => pm.toLowerCase().includes(normalizedQuery) || pm.toLowerCase().includes(currentSearchQuery));
-        
-        // Smart Tag Matchers
-        const trashQuery = normalizedQuery.includes('ゴミ') || normalizedQuery.includes('ごみ') || normalizedQuery.includes('トラッシュ') || normalizedQuery.includes('trash');
-        const trashMatch = trashQuery && spot.trashCan === 'あり';
-        
-        const cashlessQuery = normalizedQuery.includes('キャッシュレス') || normalizedQuery.includes('電子マネー') || normalizedQuery.includes('カード') || normalizedQuery.includes('スマホ決済') || normalizedQuery.includes('cashless');
-        const cashlessMatch = cashlessQuery && (spot.paymentMethods.includes('交通系IC') || spot.paymentMethods.includes('QRコード') || spot.paymentMethods.includes('クレジットカード') || spot.paymentMethods.some(pm => pm !== '現金'));
-        
-        const rareQuery = normalizedQuery.includes('レア') || normalizedQuery.includes('珍しい') || normalizedQuery.includes('評価中') || normalizedQuery.includes('rare');
-        const rareMatch = rareQuery && (spot.rarity >= 4 || (spot.rarityVotesCount || 0) < 3);
-
-        const cheapQuery = normalizedQuery.includes('100円') || normalizedQuery.includes('百円') || normalizedQuery.includes('安い') || normalizedQuery.includes('ワンコイン') || normalizedQuery.includes('cheap');
-        const cheapMatch = cheapQuery && (spot.priceRange.includes('100円') || spot.priceRange.includes('80円') || spot.priceRange.includes('90円') || spot.priceRange.includes('50円'));
-
-        return nameMatch || mfgMatch || lineupMatch || priceMatch || paymentMatch || trashMatch || cashlessMatch || rareMatch || cheapMatch;
+        // Must match all query parts (AND logic)
+        return queryParts.every(part => {
+            const normalizedPart = normalizeQuery(part);
+            
+            const nameMatch = matchFuzzy(spot.name, part) || matchFuzzy(spot.name, normalizedPart);
+            const mfgMatch = matchFuzzy(spot.manufacturer, part) || matchFuzzy(spot.manufacturer, normalizedPart);
+            const lineupMatch = spot.lineup.some(item => matchFuzzy(item, part) || matchFuzzy(item, normalizedPart));
+            const priceMatch = matchFuzzy(spot.priceRange, part) || matchFuzzy(spot.priceRange, normalizedPart);
+            const paymentMatch = spot.paymentMethods.some(pm => matchFuzzy(pm, part) || matchFuzzy(pm, normalizedPart));
+            
+            // Smart Tag Matchers
+            const trashQuery = normalizedPart.includes('ゴミ') || normalizedPart.includes('ごみ') || normalizedPart.includes('トラッシュ') || normalizedPart.includes('trash');
+            const trashMatch = trashQuery && spot.trashCan === 'あり';
+            
+            const cashlessQuery = normalizedPart.includes('キャッシュレス') || normalizedPart.includes('電子マネー') || normalizedPart.includes('カード') || normalizedPart.includes('スマホ決済') || normalizedPart.includes('cashless');
+            const cashlessMatch = cashlessQuery && (spot.paymentMethods.includes('交通系IC') || spot.paymentMethods.includes('QRコード') || spot.paymentMethods.includes('クレジットカード') || spot.paymentMethods.some(pm => pm !== '現金'));
+            
+            const rareQuery = normalizedPart.includes('レア') || normalizedPart.includes('珍しい') || normalizedPart.includes('評価中') || normalizedPart.includes('rare');
+            const rareMatch = rareQuery && (spot.rarity >= 4 || (spot.rarityVotesCount || 0) < 3);
+            
+            const cheapQuery = normalizedPart.includes('100円') || normalizedPart.includes('百円') || normalizedPart.includes('安い') || normalizedPart.includes('ワンコイン') || normalizedPart.includes('cheap');
+            const cheapMatch = cheapQuery && (spot.priceRange.includes('100円') || spot.priceRange.includes('80円') || spot.priceRange.includes('90円') || spot.priceRange.includes('50円'));
+            
+            return nameMatch || mfgMatch || lineupMatch || priceMatch || paymentMatch || trashMatch || cashlessMatch || rareMatch || cheapMatch;
+        });
     });
     
     // Sort matching spots by distance if userLocation is available (closest first)
