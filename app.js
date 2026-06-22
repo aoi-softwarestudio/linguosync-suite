@@ -3594,6 +3594,12 @@ function handleSearch(e) {
                 nominatimUrl += `&viewbox=${viewbox}&bounded=0`;
             }
 
+            // Compliance headers for Nominatim usage policy (avoids 403 Forbidden blocking on mobile/webviews)
+            const requestHeaders = {
+                "User-Agent": "VendiMapApp/1.0 (contact: support@vendi-map.com; private app) WebEngine/Mobile",
+                "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
+            };
+
             // 2. Prepare Overpass URL (if userLocation is available to search locally for categories or names)
             let overpassPromise = Promise.resolve({ elements: [] });
             if (userLocation) {
@@ -3605,6 +3611,13 @@ function handleSearch(e) {
                 else if (norm.includes('レストラン') || norm.includes('飲食店')) osmFilter = `["amenity"="restaurant"]`;
                 else if (norm.includes('トイレ') || norm.includes('便所')) osmFilter = `["amenity"="toilets"]`;
                 else if (norm.includes('駅')) osmFilter = `["railway"="station"]`;
+                else if (norm.includes('スーパー')) osmFilter = `["shop"="supermarket"]`;
+                else if (norm.includes('駐車場')) osmFilter = `["amenity"="parking"]`;
+                else if (norm.includes('交番') || norm.includes('警察')) osmFilter = `["amenity"="police"]`;
+                else if (norm.includes('神社') || norm.includes('寺')) osmFilter = `["amenity"="place_of_worship"]`;
+                else if (norm.includes('ホテル') || norm.includes('旅館')) osmFilter = `["tourism"="hotel"]`;
+                else if (norm.includes('病院') || norm.includes('クリニック')) osmFilter = `["amenity"="hospital"]`;
+                else if (norm.includes('郵便局')) osmFilter = `["amenity"="post_office"]`;
                 else {
                     // General local facility name search fallback
                     const cleanQuery = query.replace(/["\\\/\[\]\{\}\(\)\*\+\?\.\^\$\|]/g, '');
@@ -3614,20 +3627,20 @@ function handleSearch(e) {
                 }
 
                 if (osmFilter) {
-                    const overpassQuery = `[out:json][timeout:3];
+                    const overpassQuery = `[out:json][timeout:5];
                     (
-                      node${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
-                      way${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
+                       node${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
+                       way${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
                     );
                     out center 15;`;
                     
                     const overpassUrl = `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-                    overpassPromise = fetchWithTimeout(overpassUrl, {}, 2500)
+                    overpassPromise = fetchWithTimeout(overpassUrl, { headers: requestHeaders }, 4000)
                         .then(res => res.ok ? res.json() : { elements: [] })
                         .catch((err) => {
                             console.warn("Overpass main server failed, falling back. Error:", err);
                             const fallbackUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-                            return fetchWithTimeout(fallbackUrl, {}, 2500)
+                            return fetchWithTimeout(fallbackUrl, { headers: requestHeaders }, 4000)
                                 .then(res => res.ok ? res.json() : { elements: [] })
                                 .catch((fallbackErr) => {
                                     console.error("Overpass fallback server failed. Error:", fallbackErr);
@@ -3637,9 +3650,9 @@ function handleSearch(e) {
                 }
             }
 
-            // Fetch Nominatim and Overpass in parallel
+            // Fetch Nominatim and Overpass in parallel (with User-Agent headers and 4s timeout)
             const [nomRes, opRes] = await Promise.all([
-                fetchWithTimeout(nominatimUrl, {}, 2500)
+                fetchWithTimeout(nominatimUrl, { headers: requestHeaders }, 4000)
                     .then(res => res.ok ? res.json() : [])
                     .catch((err) => {
                         console.error("Nominatim fetch failed. Error:", err);
@@ -3751,6 +3764,13 @@ function getOSMTypeLabel(tags) {
     if (tags.amenity === 'restaurant') return 'レストラン';
     if (tags.amenity === 'toilets') return 'トイレ';
     if (tags.amenity === 'fast_food') return 'ファストフード';
+    if (tags.shop === 'supermarket') return 'スーパー';
+    if (tags.amenity === 'parking') return '駐車場';
+    if (tags.amenity === 'police') return '交番';
+    if (tags.amenity === 'place_of_worship') return '神社・寺';
+    if (tags.tourism === 'hotel') return 'ホテル';
+    if (tags.amenity === 'hospital') return '病院';
+    if (tags.amenity === 'post_office') return '郵便局';
     return '周辺施設';
 }
 
@@ -3760,6 +3780,12 @@ function getOSMTypeIconAndMeta(tags) {
     if (tags.amenity === 'cafe') return { icon: 'fa-mug-hot', meta: 'カフェ' };
     if (tags.amenity === 'restaurant') return { icon: 'fa-utensils', meta: 'レストラン' };
     if (tags.amenity === 'toilets') return { icon: 'fa-restroom', meta: 'トイレ' };
+    if (tags.shop === 'supermarket') return { icon: 'fa-basket-shopping', meta: 'スーパー' };
+    if (tags.amenity === 'parking') return { icon: 'fa-square-parking', meta: '駐車場' };
+    if (tags.amenity === 'police') return { icon: 'fa-shield-halved', meta: '交番' };
+    if (tags.amenity === 'place_of_worship') return { icon: 'fa-torii-gate', meta: '神社・寺' };
+    if (tags.tourism === 'hotel') return { icon: 'fa-hotel', meta: 'ホテル' };
+    if (tags.amenity === 'hospital') return { icon: 'fa-hospital', meta: '病院' };
     if (tags.amenity === 'post_office') return { icon: 'fa-envelope', meta: '郵便局' };
     return { icon: 'fa-location-dot', meta: '施設' };
 }
