@@ -163,6 +163,47 @@ function matchFuzzy(fieldVal, query) {
     
     return false;
 }
+
+function matchFuzzy(fieldVal, query) {
+    if (!fieldVal) return false;
+    const val = fieldVal.toLowerCase();
+    const q = query.toLowerCase();
+    
+    if (val.includes(q)) return true;
+    
+    // Japanese Vending Machine Synonym Dictionary for fuzzy matches
+    const jpSynonyms = [
+        { main: '伊藤園', synonyms: ['イトウエン', 'いとうえん', 'itoen', 'ito en', '伊藤園'] },
+        { main: 'サントリー', synonyms: ['サントリー', 'さんとりー', 'suntory', 'suntori'] },
+        { main: 'コカ・コーラ', synonyms: ['コカコーラ', 'こかこーら', 'coca-cola', 'cocacola', 'coke', 'コカ・コーラ'] },
+        { main: 'ダイドー', synonyms: ['ダイドードリンコ', 'だいどー', 'dydo', 'daido'] },
+        { main: 'キリン', synonyms: ['きりん', 'kirin'] },
+        { main: 'アサヒ', synonyms: ['あさひ', 'asahi', 'アサヒ飲料'] },
+        { main: '大塚製薬', synonyms: ['おおつか', 'otsuka', 'ポカリ', 'pokari'] },
+        { main: '明治', synonyms: ['めいじ', 'meiji'] },
+        { main: 'ポッカサッポロ', synonyms: ['ぽっか', 'pokka', 'サッポロ'] }
+    ];
+    
+    for (const group of jpSynonyms) {
+        if (val.includes(group.main.toLowerCase())) {
+            if (group.synonyms.some(syn => syn.includes(q) || q.includes(syn))) {
+                return true;
+            }
+        }
+        if (q.includes(group.main.toLowerCase())) {
+            if (group.synonyms.some(syn => val.includes(syn))) {
+                return true;
+            }
+        }
+    }
+    
+    // Convert Hiragana/Katakana for fallback match
+    const katakanaVal = toKatakana(val);
+    const katakanaQ = toKatakana(q);
+    if (katakanaVal.includes(katakanaQ)) return true;
+    
+    return false;
+}
 let accuracyCircle = null;
 let isAutoFollow = false;
 let currentInputRating = 0;
