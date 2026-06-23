@@ -3600,54 +3600,65 @@ function handleSearch(e) {
                 "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
             };
 
-            // 2. Prepare Overpass URL (if userLocation is available to search locally for categories or names)
+            // 2. Prepare Overpass URL (Local categories if location available, otherwise National Area Search for landmarks/facilities)
             let overpassPromise = Promise.resolve({ elements: [] });
-            if (userLocation) {
-                let osmFilter = null;
-                const norm = query.toLowerCase();
-                if (norm.includes('コンビニ')) osmFilter = `["shop"="convenience"]`;
-                else if (norm.includes('公園')) osmFilter = `["leisure"="park"]`;
-                else if (norm.includes('カフェ') || norm.includes('喫茶店')) osmFilter = `["amenity"="cafe"]`;
-                else if (norm.includes('レストラン') || norm.includes('飲食店')) osmFilter = `["amenity"="restaurant"]`;
-                else if (norm.includes('トイレ') || norm.includes('便所')) osmFilter = `["amenity"="toilets"]`;
-                else if (norm.includes('駅')) osmFilter = `["railway"="station"]`;
-                else if (norm.includes('スーパー')) osmFilter = `["shop"="supermarket"]`;
-                else if (norm.includes('駐車場')) osmFilter = `["amenity"="parking"]`;
-                else if (norm.includes('交番') || norm.includes('警察')) osmFilter = `["amenity"="police"]`;
-                else if (norm.includes('神社') || norm.includes('寺')) osmFilter = `["amenity"="place_of_worship"]`;
-                else if (norm.includes('ホテル') || norm.includes('旅館')) osmFilter = `["tourism"="hotel"]`;
-                else if (norm.includes('病院') || norm.includes('クリニック')) osmFilter = `["amenity"="hospital"]`;
-                else if (norm.includes('郵便局')) osmFilter = `["amenity"="post_office"]`;
-                else {
-                    // General local facility name search fallback
-                    const cleanQuery = query.replace(/["\\\/\[\]\{\}\(\)\*\+\?\.\^\$\|]/g, '');
-                    if (cleanQuery.length >= 2 || (isJapaneseWord && cleanQuery.length >= 1)) {
+            const cleanQuery = query.replace(/["\\\/\[\]\{\}\(\)\*\+\?\.\^\$\|]/g, '');
+            
+            if (cleanQuery.length >= 2 || (isJapaneseWord && cleanQuery.length >= 1)) {
+                let overpassQuery = "";
+                
+                if (userLocation) {
+                    // Localized search based on user coordinates
+                    let osmFilter = null;
+                    const norm = query.toLowerCase();
+                    if (norm.includes('コンビニ')) osmFilter = `["shop"="convenience"]`;
+                    else if (norm.includes('公園')) osmFilter = `["leisure"="park"]`;
+                    else if (norm.includes('カフェ') || norm.includes('喫茶店')) osmFilter = `["amenity"="cafe"]`;
+                    else if (norm.includes('レストラン') || norm.includes('飲食店')) osmFilter = `["amenity"="restaurant"]`;
+                    else if (norm.includes('トイレ') || norm.includes('便所')) osmFilter = `["amenity"="toilets"]`;
+                    else if (norm.includes('駅')) osmFilter = `["railway"="station"]`;
+                    else if (norm.includes('スーパー')) osmFilter = `["shop"="supermarket"]`;
+                    else if (norm.includes('駐車場')) osmFilter = `["amenity"="parking"]`;
+                    else if (norm.includes('交番') || norm.includes('警察')) osmFilter = `["amenity"="police"]`;
+                    else if (norm.includes('神社') || norm.includes('寺')) osmFilter = `["amenity"="place_of_worship"]`;
+                    else if (norm.includes('ホテル') || norm.includes('旅館')) osmFilter = `["tourism"="hotel"]`;
+                    else if (norm.includes('病院') || norm.includes('クリニック')) osmFilter = `["amenity"="hospital"]`;
+                    else if (norm.includes('郵便局')) osmFilter = `["amenity"="post_office"]`;
+                    else {
+                        // General local name match within 2km
                         osmFilter = `["name"~"${cleanQuery}",i]`;
                     }
-                }
-
-                if (osmFilter) {
-                    const overpassQuery = `[out:json][timeout:5];
+                    
+                    overpassQuery = `[out:json][timeout:5];
                     (
                        node${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
                        way${osmFilter}(around:2000,${userLocation.lat},${userLocation.lng});
                     );
                     out center 15;`;
-                    
-                    const overpassUrl = `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-                    overpassPromise = fetchWithTimeout(overpassUrl, { headers: requestHeaders }, 4000)
-                        .then(res => res.ok ? res.json() : { elements: [] })
-                        .catch((err) => {
-                            console.warn("Overpass main server failed, falling back. Error:", err);
-                            const fallbackUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-                            return fetchWithTimeout(fallbackUrl, { headers: requestHeaders }, 4000)
-                                .then(res => res.ok ? res.json() : { elements: [] })
-                                .catch((fallbackErr) => {
-                                    console.error("Overpass fallback server failed. Error:", fallbackErr);
-                                    return { elements: [] };
-                                });
-                        });
+                } else {
+                    // Japan Nationwide Area Search for landmark/facility matches when location is offline or far away
+                    overpassQuery = `[out:json][timeout:8];
+                    area["ISO3166-1"="JP"]->.japan;
+                    (
+                       node["name"~"${cleanQuery}",i](area.japan);
+                       way["name"~"${cleanQuery}",i](area.japan);
+                    );
+                    out center 10;`;
                 }
+
+                const overpassUrl = `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+                overpassPromise = fetchWithTimeout(overpassUrl, { headers: requestHeaders }, 5000)
+                    .then(res => res.ok ? res.json() : { elements: [] })
+                    .catch((err) => {
+                        console.warn("Overpass main server failed, falling back. Error:", err);
+                        const fallbackUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+                        return fetchWithTimeout(fallbackUrl, { headers: requestHeaders }, 5000)
+                            .then(res => res.ok ? res.json() : { elements: [] })
+                            .catch((fallbackErr) => {
+                                console.warn("Overpass fallback server failed. Error:", fallbackErr);
+                                return { elements: [] };
+                            });
+                    });
             }
 
             // Fetch Nominatim and Overpass in parallel (with User-Agent headers and 4s timeout)
@@ -3655,7 +3666,7 @@ function handleSearch(e) {
                 fetchWithTimeout(nominatimUrl, { headers: requestHeaders }, 4000)
                     .then(res => res.ok ? res.json() : [])
                     .catch((err) => {
-                        console.error("Nominatim fetch failed. Error:", err);
+                        console.warn("Nominatim fetch failed. Error:", err);
                         return [];
                     }),
                 overpassPromise
@@ -3751,10 +3762,10 @@ function handleSearch(e) {
             const placePredictions = combined.slice(0, 8);
             renderSuggestions(matchingSpots, placePredictions, dropdown);
         } catch (err) {
-            console.error("Search Error in handleSearch:", err);
+            console.warn("Search Error in handleSearch:", err);
             renderSuggestions(matchingSpots, [], dropdown);
         }
-    }, 400);
+    }, 600);
 }
 
 function getOSMTypeLabel(tags) {
