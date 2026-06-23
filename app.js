@@ -3503,10 +3503,12 @@ async function fetchWithTimeout(url, options = {}, timeout = 3000) {
 let searchDebounceTimeout = null;
 
 function highlightText(text, query) {
-    if (!query) return text;
+    if (!text) return '';
+    const textStr = String(text);
+    if (!query) return textStr;
     const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    return text.replace(regex, '<span class="search-highlight">$1</span>');
+    return textStr.replace(regex, '<span class="search-highlight">$1</span>');
 }
 
 function handleSearch(e) {
@@ -3745,6 +3747,9 @@ function handleSearch(e) {
             let combined = [...overpassPredictions, ...nominatimPredictions];
             const seenCoords = new Set();
             combined = combined.filter(item => {
+                if (!item || item.lat === undefined || item.lon === undefined || isNaN(item.lat) || isNaN(item.lon)) {
+                    return false;
+                }
                 const key = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
                 if (seenCoords.has(key)) return false;
                 seenCoords.add(key);
@@ -3935,7 +3940,7 @@ function renderSuggestions(spots, predictions, dropdown) {
             currentSearchQuery = '';
             renderMarkers(initialSpots);
             
-            if (map) {
+            if (map && prediction.lat !== undefined && prediction.lon !== undefined && !isNaN(prediction.lat) && !isNaN(prediction.lon)) {
                 map.setView([prediction.lat, prediction.lon], 16);
                 showToast(`📍 「${mainTitle}」へ移動しました`, 'info');
                 fetchOSMVendingMachines(prediction.lat, prediction.lon);
