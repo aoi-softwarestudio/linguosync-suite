@@ -3624,6 +3624,7 @@ function handleSearch(e) {
                     else if (norm.includes('ホテル') || norm.includes('旅館')) osmFilter = `["tourism"="hotel"]`;
                     else if (norm.includes('病院') || norm.includes('クリニック')) osmFilter = `["amenity"="hospital"]`;
                     else if (norm.includes('郵便局')) osmFilter = `["amenity"="post_office"]`;
+                    else if (norm.includes('モール') || norm.includes('ショッピング') || norm.includes('デパート') || norm.includes('商業施設')) osmFilter = `["shop"~"mall|department_store",i]`;
                     else {
                         // General local name match within 2km
                         osmFilter = `["name"~"${cleanQuery}",i]`;
@@ -3782,6 +3783,7 @@ function getOSMTypeLabel(tags) {
     if (tags.tourism === 'hotel') return 'ホテル';
     if (tags.amenity === 'hospital') return '病院';
     if (tags.amenity === 'post_office') return '郵便局';
+    if (tags.shop === 'mall' || tags.shop === 'department_store') return '商業施設';
     return '周辺施設';
 }
 
@@ -3798,6 +3800,7 @@ function getOSMTypeIconAndMeta(tags) {
     if (tags.tourism === 'hotel') return { icon: 'fa-hotel', meta: 'ホテル' };
     if (tags.amenity === 'hospital') return { icon: 'fa-hospital', meta: '病院' };
     if (tags.amenity === 'post_office') return { icon: 'fa-envelope', meta: '郵便局' };
+    if (tags.shop === 'mall' || tags.shop === 'department_store') return { icon: 'fa-bag-shopping', meta: '商業施設' };
     return { icon: 'fa-location-dot', meta: '施設' };
 }
 
