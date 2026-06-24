@@ -407,13 +407,13 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
                     rating_sum, rating_count, rarity_votes_sum, rarity_votes_count,
                     comments, photos, verified_count, last_updated, is_custom,
                     owner_message, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '', 'none')
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 payload.spot_id, payload.name, payload.lat, payload.lng, payload.manufacturer,
                 payload.price_range, payload.has_trash_bin, json.dumps(payload.payment_methods, ensure_ascii=False),
                 json.dumps(payload.lineup, ensure_ascii=False), payload.description,
                 None, 1, 3.0, 1, 0, 0, json.dumps([], ensure_ascii=False), json.dumps([], ensure_ascii=False),
-                0, payload.last_updated
+                0, payload.last_updated, 0, '', 'none'
             ))
             conn.commit()
             
