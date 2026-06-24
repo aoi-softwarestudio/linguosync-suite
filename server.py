@@ -59,6 +59,15 @@ def init_db():
                 is_custom INTEGER
             )
         """)
+        
+        # Schema migration: Add owner_message and status if they do not exist
+        c.execute("PRAGMA table_info(global_spots)")
+        columns = [column[1] for column in c.fetchall()]
+        if "owner_message" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN owner_message TEXT DEFAULT ''")
+        if "status" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN status TEXT DEFAULT 'none'")
+            
         conn.commit()
         conn.close()
     except Exception as e:
@@ -378,6 +387,8 @@ class UpdateSpotPayload(BaseModel):
     payment_methods: List[str] = []
     lineup: List[str] = []
     description: str = ""
+    owner_message: str = None
+    status: str = None
 
 @app.post("/api/update-spot-metadata")
 async def update_spot_metadata_post(payload: UpdateSpotPayload):
@@ -394,8 +405,9 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
                     spot_id, name, lat, lng, manufacturer, price_range, has_trash_bin,
                     payment_methods, lineup, description, owner, naming_rights_available,
                     rating_sum, rating_count, rarity_votes_sum, rarity_votes_count,
-                    comments, photos, verified_count, last_updated, is_custom
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+                    comments, photos, verified_count, last_updated, is_custom,
+                    owner_message, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '', 'none')
             """, (
                 payload.spot_id, payload.name, payload.lat, payload.lng, payload.manufacturer,
                 payload.price_range, payload.has_trash_bin, json.dumps(payload.payment_methods, ensure_ascii=False),
@@ -421,6 +433,8 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
         verified_count = spot["verified_count"]
         last_updated = payload.last_updated or spot["last_updated"]
         name = spot["name"]
+        owner_message = spot.get("owner_message", "")
+        status_val = spot.get("status", "none")
         
         # Check if name is being changed and verify ownership
         if payload.name and payload.name != spot["name"]:
@@ -448,6 +462,10 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
             photos.append(payload.photo)
         if payload.verify_presence:
             verified_count += 1
+        if payload.owner_message is not None:
+            owner_message = payload.owner_message
+        if payload.status is not None:
+            status_val = payload.status
             
         c.execute("""
             UPDATE global_spots SET
@@ -461,13 +479,15 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
                 photos = ?,
                 verified_count = ?,
                 last_updated = ?,
-                name = ?
+                name = ?,
+                owner_message = ?,
+                status = ?
             WHERE spot_id = ?
         """, (
             owner, naming_rights_available, rating_sum, rating_count,
             rarity_votes_sum, rarity_votes_count, json.dumps(comments, ensure_ascii=False),
             json.dumps(photos, ensure_ascii=False), verified_count, last_updated,
-            name, payload.spot_id
+            name, owner_message, status_val, payload.spot_id
         ))
         
         conn.commit()
