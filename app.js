@@ -164,46 +164,7 @@ function matchFuzzy(fieldVal, query) {
     return false;
 }
 
-function matchFuzzy(fieldVal, query) {
-    if (!fieldVal) return false;
-    const val = fieldVal.toLowerCase();
-    const q = query.toLowerCase();
-    
-    if (val.includes(q)) return true;
-    
-    // Japanese Vending Machine Synonym Dictionary for fuzzy matches
-    const jpSynonyms = [
-        { main: '伊藤園', synonyms: ['イトウエン', 'いとうえん', 'itoen', 'ito en', '伊藤園'] },
-        { main: 'サントリー', synonyms: ['サントリー', 'さんとりー', 'suntory', 'suntori'] },
-        { main: 'コカ・コーラ', synonyms: ['コカコーラ', 'こかこーら', 'coca-cola', 'cocacola', 'coke', 'コカ・コーラ'] },
-        { main: 'ダイドー', synonyms: ['ダイドードリンコ', 'だいどー', 'dydo', 'daido'] },
-        { main: 'キリン', synonyms: ['きりん', 'kirin'] },
-        { main: 'アサヒ', synonyms: ['あさひ', 'asahi', 'アサヒ飲料'] },
-        { main: '大塚製薬', synonyms: ['おおつか', 'otsuka', 'ポカリ', 'pokari'] },
-        { main: '明治', synonyms: ['めいじ', 'meiji'] },
-        { main: 'ポッカサッポロ', synonyms: ['ぽっか', 'pokka', 'サッポロ'] }
-    ];
-    
-    for (const group of jpSynonyms) {
-        if (val.includes(group.main.toLowerCase())) {
-            if (group.synonyms.some(syn => syn.includes(q) || q.includes(syn))) {
-                return true;
-            }
-        }
-        if (q.includes(group.main.toLowerCase())) {
-            if (group.synonyms.some(syn => val.includes(syn))) {
-                return true;
-            }
-        }
-    }
-    
-    // Convert Hiragana/Katakana for fallback match
-    const katakanaVal = toKatakana(val);
-    const katakanaQ = toKatakana(q);
-    if (katakanaVal.includes(katakanaQ)) return true;
-    
-    return false;
-}
+
 let accuracyCircle = null;
 let isAutoFollow = false;
 let currentInputRating = 0;
@@ -1245,6 +1206,256 @@ const VendiGamification = {
 };
 
 // ----------------------------------------------------
+// Daily Missions Management Engine
+// ----------------------------------------------------
+const VendiMissions = {
+    state: {
+        date: '',
+        missions: []
+    },
+    KEYS: {
+        STATE: 'vendimap_missions_state'
+    },
+    init() {
+        const saved = localStorage.getItem(this.KEYS.STATE);
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (saved) {
+            try {
+                this.state = JSON.parse(saved);
+            } catch(e) {
+                this.state = { date: '', missions: [] };
+            }
+        }
+        
+        if (this.state.date !== today || !this.state.missions || this.state.missions.length === 0) {
+            this.state.date = today;
+            this.state.missions = this.generateMissions();
+            this.save();
+        }
+    },
+    save() {
+        localStorage.setItem(this.KEYS.STATE, JSON.stringify(this.state));
+        if (typeof triggerAutoSync === 'function') triggerAutoSync();
+    },
+    generateMissions() {
+        const templates = [
+            { id: 'scan', type: 'scan', title: '自販機をAIカメラ診断する', target: 1, current: 0, xp: 50, completed: false },
+            { id: 'verify', type: 'verify', title: '自販機の実在確認を1回報告する', target: 1, current: 0, xp: 50, completed: false },
+            { id: 'favorite', type: 'favorite', title: 'お気に入りに自販機を1台追加する', target: 1, current: 0, xp: 30, completed: false },
+            { id: 'report_status', type: 'report_status', title: '自販機の状況報告を1回行う', target: 1, current: 0, xp: 40, completed: false },
+            { id: 'comment', type: 'comment', title: '口コミコメントを1件投稿する', target: 1, current: 0, xp: 40, completed: false }
+        ];
+        
+        const shuffled = [...templates].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3);
+    },
+    progress(type, amount = 1) {
+        let changed = false;
+        if (!this.state.missions) return;
+        this.state.missions.forEach(m => {
+            if (m.type === type && !m.completed) {
+                m.current = Math.min(m.target, m.current + amount);
+                if (m.current >= m.target) {
+                    m.completed = true;
+                    VendiGamification.addXP(m.xp, `デイリーミッション: ${m.title}`);
+                    createConfetti();
+                    playCelebrationSound();
+                }
+                changed = true;
+            }
+        });
+        if (changed) {
+            this.save();
+            this.render();
+        }
+    },
+    render() {
+        const container = document.getElementById('missionsListContent');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (!this.state.missions || this.state.missions.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">ミッションはありません。</p>';
+            return;
+        }
+        
+        this.state.missions.forEach(m => {
+            const pct = (m.current / m.target) * 100;
+            const card = document.createElement('div');
+            card.className = `mission-card ${m.completed ? 'completed' : ''}`;
+            card.innerHTML = `
+                <div class="mission-header">
+                    <span class="mission-title" style="font-weight: 800; font-size: 0.95rem;">${m.completed ? '✅ ' : ''}${m.title}</span>
+                    <span class="mission-xp" style="background: rgba(251, 191, 36, 0.15); color: var(--accent-gold-text); font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 8px;">+${m.xp} XP</span>
+                </div>
+                <div class="mission-progress-bar-wrap" style="background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px; margin-bottom: 6px;">
+                    <div class="mission-progress-bar" style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.4s ease-out;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary);">${m.completed ? 'ミッション達成！' : '進行中'}</span>
+                    <span class="mission-progress-text" style="font-size: 0.72rem; color: var(--text-secondary); font-weight: bold;">${m.current} / ${m.target}</span>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+};
+
+// ----------------------------------------------------
+// Territory Battle (Area Occupation) Engine
+// ----------------------------------------------------
+const VendiTerritory = {
+    render() {
+        const container = document.getElementById('territoryListContent');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const areaGroups = {};
+        initialSpots.forEach(s => {
+            const latKey = s.lat.toFixed(3);
+            const lngKey = s.lng.toFixed(3);
+            const areaKey = `${latKey}_${lngKey}`;
+            
+            if (!areaGroups[areaKey]) {
+                // Remove generic terms and get simple clean area base name
+                let areaName = s.name.replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
+                if (!areaName || areaName.length < 2) {
+                    areaName = `${s.lat.toFixed(3)}, ${s.lng.toFixed(3)}`;
+                } else {
+                    areaName = areaName.substring(0, 10);
+                }
+                
+                areaGroups[areaKey] = {
+                    key: areaKey,
+                    lat: s.lat,
+                    lng: s.lng,
+                    name: `${areaName} 周辺エリア`,
+                    spots: []
+                };
+            }
+            areaGroups[areaKey].spots.push(s);
+        });
+        
+        const myAreas = [];
+        const userName = currentUser ? currentUser.name : 'ゲストハンター';
+        
+        Object.values(areaGroups).forEach(area => {
+            const total = area.spots.length;
+            const owned = area.spots.filter(s => s.owner && s.owner === userName).length;
+            
+            if (total > 0) {
+                let status = 'unexplored';
+                let pct = (owned / total) * 100;
+                
+                let rivalName = 'Shibuya_User';
+                let rivalCount = 0;
+                
+                if (owned < total) {
+                    // Seed-based pseudo random count of rival machines
+                    const seed = Math.abs(Math.sin(area.lat * area.lng) * 1000);
+                    rivalCount = Math.min(total - owned, Math.floor((seed % (total - owned)) + 1));
+                    if (rivalCount > 0) {
+                        const rivals = ['Shibuya_User', '自販機探検隊', '優良ベンダー協会', 'ドリンクマニア', 'Rider_K'];
+                        rivalName = rivals[Math.floor(seed % rivals.length)];
+                    }
+                }
+                
+                if (pct === 100) {
+                    status = 'dominating';
+                } else if (owned > 0) {
+                    status = 'fighting';
+                }
+                
+                myAreas.push({
+                    name: area.name,
+                    total: total,
+                    owned: owned,
+                    rivalCount: rivalCount,
+                    rivalName: rivalName,
+                    pct: pct,
+                    status: status
+                });
+            }
+        });
+        
+        myAreas.sort((a, b) => b.pct - a.pct || b.owned - a.owned);
+        
+        const displayAreas = myAreas.slice(0, 10);
+        
+        if (displayAreas.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding: 20px;">エリア情報がありません。</p>';
+            return;
+        }
+        
+        displayAreas.forEach(area => {
+            const card = document.createElement('div');
+            card.className = 'territory-card';
+            
+            let statusText = '未進出 🗺️';
+            let statusClass = 'unexplored';
+            
+            if (area.status === 'dominating') {
+                statusText = '支配中 👑';
+                statusClass = 'dominating';
+            } else if (area.status === 'fighting') {
+                statusText = '争奪中 ⚡';
+                statusClass = 'fighting';
+            }
+            
+            card.innerHTML = `
+                <div class="territory-info">
+                    <span class="territory-name" style="font-weight: 800; font-size: 0.95rem;">${area.name}</span>
+                    <span class="territory-status ${statusClass}" style="font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">${statusText}</span>
+                </div>
+                <div class="territory-progress-bar-wrap" style="background: var(--border-color); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; margin-bottom: 6px;">
+                    <div class="territory-progress-bar" style="width: ${area.pct}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width 0.4s ease-out;"></div>
+                </div>
+                <div class="territory-meta" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">
+                    <span>あなたの所有: ${area.owned} 台</span>
+                    <span>エリア総数: ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
+                </div>
+                ${area.status === 'fighting' ? `
+                    <div style="font-size: 0.7rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 4px;">
+                        <i class="fas fa-hand-fist" style="color: #ef4444;"></i>
+                        <span>ライバル <strong style="color: var(--text-primary);">${area.rivalName}</strong> が ${area.rivalCount}台 支配しています！</span>
+                    </div>
+                ` : ''}
+            `;
+            container.appendChild(card);
+        });
+    }
+};
+
+// ----------------------------------------------------
+// Tab Switcher for Achievements Modal
+// ----------------------------------------------------
+function switchModalTab(tabName) {
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('modalTabContentAchievements').style.display = 'none';
+    document.getElementById('modalTabContentMissions').style.display = 'none';
+    document.getElementById('modalTabContentTerritory').style.display = 'none';
+    
+    if (tabName === 'achievements') {
+        const btn = document.getElementById('modalTabBtnAchievements');
+        if (btn) btn.classList.add('active');
+        document.getElementById('modalTabContentAchievements').style.display = 'block';
+        VendiGamification.renderAchievementsDashboardList();
+    } else if (tabName === 'missions') {
+        const btn = document.getElementById('modalTabBtnMissions');
+        if (btn) btn.classList.add('active');
+        document.getElementById('modalTabContentMissions').style.display = 'block';
+        VendiMissions.render();
+    } else if (tabName === 'territory') {
+        const btn = document.getElementById('modalTabBtnTerritory');
+        if (btn) btn.classList.add('active');
+        document.getElementById('modalTabContentTerritory').style.display = 'block';
+        VendiTerritory.render();
+    }
+}
+window.switchModalTab = switchModalTab;
+
+// ----------------------------------------------------
 // 4. Lemon Squeezy Simulated Payment & Credit Card Preview
 // ----------------------------------------------------
 function initLemonCheckoutPreview() {
@@ -1690,6 +1901,7 @@ async function performAIScan(base64Data, spot) {
         
         reportActivity('vendimap', 'scans');
         VendiGamification.addXP(50, "AI写真撮影 ＆ スキャン");
+        VendiMissions.progress('scan', 1);
         
         if (typeof dispatchGlobalUpdateMetadata === 'function') {
             dispatchGlobalUpdateMetadata(spot, {});
@@ -2197,6 +2409,7 @@ function initMap() {
                         spotFavoriteBtn.style.color = '#ff4b72'; // Vivid pink-red
                         spotFavoriteBtn.setAttribute('title', 'お気に入りから削除');
                         showToast('お気に入りに追加しました💖', 'success');
+                        VendiMissions.progress('favorite', 1);
                     } else {
                         icon.className = 'far fa-heart';
                         spotFavoriteBtn.style.color = 'var(--text-secondary)';
@@ -2763,6 +2976,37 @@ async function showDetailPanel(spot) {
             lineupContainer.appendChild(badge);
         });
     }
+    
+    // --- New Features: Owner Message & Status Sharing ---
+    const ownerMsgSec = document.getElementById('ownerMessageSection');
+    const ownerMsgDisp = document.getElementById('ownerMessageDisplay');
+    const ownerMsgInput = document.getElementById('ownerMessageInput');
+    const ownerMsgEdit = document.getElementById('ownerMessageEditBox');
+    
+    if (ownerMsgSec) {
+        if (spot.owner) {
+            ownerMsgSec.style.display = 'block';
+            const msg = spot.owner_message || 'お知らせはありません。';
+            ownerMsgDisp.innerText = msg;
+            if (ownerMsgInput) ownerMsgInput.value = spot.owner_message || '';
+            if (ownerMsgEdit) {
+                ownerMsgEdit.style.display = isOwner ? 'flex' : 'none';
+            }
+        } else {
+            ownerMsgSec.style.display = 'none';
+        }
+    }
+    
+    const spotStatus = spot.status || 'none';
+    document.querySelectorAll('.status-report-btn').forEach(btn => {
+        if (btn.getAttribute('data-status') === spotStatus) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    // ----------------------------------------------------
+    
     document.getElementById('detailPanel').classList.add('open');
     CustomScrollbarEngine.init('detailPanel');
 }
@@ -2852,6 +3096,7 @@ function addComment() {
         }
         
         VendiGamification.addXP(30, "レビューコメントの投稿");
+        VendiMissions.progress('comment', 1);
         selectedSpot.isModified = true;
         saveSpotsToLocal();
         if (typeof dispatchGlobalUpdateMetadata === 'function') {
@@ -3274,6 +3519,7 @@ function confirmPresence() {
         }
         
         VendiGamification.addXP(10, "実在確認の報告");
+        VendiMissions.progress('verify', 1);
         selectedSpot.isModified = true;
         saveSpotsToLocal();
         if (typeof dispatchGlobalUpdateMetadata === 'function') {
@@ -3421,7 +3667,7 @@ async function loadUserDataFromServer(syncUserId) {
 
 async function mockGoogleLogin() {
     currentUser = {
-        name: "トップハンター",
+        name: "ジハハンター・タク",
         email: "tophunter@example.com",
         avatar: "https://i.pravatar.cc/150?u=tophunter"
     };
@@ -4284,6 +4530,119 @@ window.onload = async () => {
     }
     
     loadSavedUser();
+    
+    // --- New Features UI Initializations ---
+    VendiMissions.init();
+    
+    // Bind click handlers for daily mission and territory battle tab updates
+    const modalTriggerBtn = document.getElementById('userProfile');
+    if (modalTriggerBtn) {
+        modalTriggerBtn.addEventListener('click', () => {
+            switchModalTab('achievements');
+        });
+    }
+    
+    // Bind status reporting buttons
+    document.querySelectorAll('.status-report-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            if (!selectedSpot) return;
+            const newStatus = btn.getAttribute('data-status');
+            
+            // Show loading state
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            try {
+                const res = await fetch(`${backendApiUrl}/api/update-spot-metadata`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spot_id: String(selectedSpot.id || selectedSpot.osmId),
+                        status: newStatus
+                    })
+                });
+                
+                if (res.ok) {
+                    selectedSpot.status = newStatus;
+                    selectedSpot.isModified = true;
+                    saveSpotsToLocal();
+                    
+                    // Update active button styling
+                    document.querySelectorAll('.status-report-btn').forEach(b => {
+                        if (b.getAttribute('data-status') === newStatus) {
+                            b.classList.add('active');
+                        } else {
+                            b.classList.remove('active');
+                        }
+                    });
+                    
+                    showToast('自販機の状況を報告しました！', 'success');
+                    
+                    // Progress daily mission
+                    VendiMissions.progress('report_status', 1);
+                    
+                    // Re-render markers to show/update the overlay status badges
+                    renderMarkers(initialSpots);
+                } else {
+                    showToast('報告の送信に失敗しました。', 'error');
+                }
+            } catch (err) {
+                console.error("Failed to report status:", err);
+                showToast('通信エラーが発生しました。', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+    });
+    
+    // Bind owner message updates
+    const updateMsgBtn = document.getElementById('updateOwnerMessageBtn');
+    const msgInput = document.getElementById('ownerMessageInput');
+    if (updateMsgBtn && msgInput) {
+        updateMsgBtn.addEventListener('click', async () => {
+            if (!selectedSpot) return;
+            const newMsg = msgInput.value.trim();
+            
+            updateMsgBtn.disabled = true;
+            updateMsgBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            try {
+                const ownerName = currentUser ? currentUser.name : "トップハンター";
+                const res = await fetch(`${backendApiUrl}/api/update-spot-metadata`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        spot_id: String(selectedSpot.id || selectedSpot.osmId),
+                        owner_message: newMsg,
+                        owner: ownerName
+                    })
+                });
+                
+                if (res.ok) {
+                    selectedSpot.owner_message = newMsg;
+                    selectedSpot.isModified = true;
+                    saveSpotsToLocal();
+                    
+                    const display = document.getElementById('ownerMessageDisplay');
+                    if (display) {
+                        display.innerText = newMsg || 'お知らせはありません。';
+                    }
+                    showToast('オーナーメッセージを更新しました！', 'success');
+                } else {
+                    showToast('更新に失敗しました。', 'error');
+                }
+            } catch (err) {
+                console.error("Failed to update owner message:", err);
+                showToast('通信エラーが発生しました。', 'error');
+            } finally {
+                updateMsgBtn.disabled = false;
+                updateMsgBtn.innerText = 'メッセージを更新';
+            }
+        });
+    }
+    
     window.initialSpots = initialSpots;
     window.showDetailPanel = showDetailPanel;
     window.showAddModal = showAddModal;
