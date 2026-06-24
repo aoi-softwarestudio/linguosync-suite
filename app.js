@@ -19,6 +19,14 @@ async function loadDynamicConfig() {
     } catch (e) {
         console.warn("Failed to load dynamic config.json, using default:", e);
     }
+    
+    // Automatically detect production environment and fallback to relative URL
+    // to prevent network/CORS errors when accessing localhost from live environments.
+    const isLocal = ['localhost', '127.0.0.1', '10.0.2.2'].includes(window.location.hostname);
+    if (!isLocal && backendApiUrl.includes('localhost')) {
+        backendApiUrl = ''; // Fallback to relative URL for production
+        console.log("Production environment detected. Fallback backendApiUrl to relative path.");
+    }
 }
 
 // Favorites Management Helpers (Saved locally per user, not shared globally)
