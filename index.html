@@ -262,6 +262,34 @@
                 </div>
             </div>
 
+            <!-- Owner Announcement Section -->
+            <div id="ownerMessageSection" style="margin-bottom: 16px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 12px; padding: 12px; display: none;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;"><i class="fas fa-bullhorn" style="color: var(--accent-color);"></i> オーナーからのお知らせ</label>
+                <p id="ownerMessageDisplay" style="margin: 0; font-size: 0.95rem; font-weight: 600; line-height: 1.4; color: var(--text-primary); word-break: break-all;"></p>
+                
+                <!-- Only visible if current user is owner -->
+                <div id="ownerMessageEditBox" style="display: none; margin-top: 8px; flex-direction: column; gap: 8px;">
+                    <textarea id="ownerMessageInput" class="form-control" rows="2" placeholder="お知らせを入力（宣伝やお得情報など）" style="width: 100%; padding: 8px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-inner-bg); color: var(--text-primary); resize: none;"></textarea>
+                    <button id="updateOwnerMessageBtn" class="btn-submit" style="margin-top: 0; padding: 10px 16px; font-size: 0.8rem; font-weight: 800; width: auto; align-self: flex-end; border-radius: 10px;">メッセージを更新</button>
+                </div>
+            </div>
+
+            <!-- Real-time Status Sharing Section -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">現在の状況を報告 (リアルタイム共有)</label>
+                <div class="status-reporting-box" style="display: flex; gap: 8px;">
+                    <button class="status-report-btn" id="statusReportNone" data-status="none" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; border: 1px solid var(--border-color); background: var(--card-inner-bg); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">
+                        <span style="color: #00ff88;">●</span> 通常
+                    </button>
+                    <button class="status-report-btn" id="statusReportSoldout" data-status="soldout" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; border: 1px solid var(--border-color); background: var(--card-inner-bg); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">
+                        <span style="color: #ef4444;">⚠️</span> 売り切れあり
+                    </button>
+                    <button class="status-report-btn" id="statusReportNew" data-status="new" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 800; border: 1px solid var(--border-color); background: var(--card-inner-bg); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;">
+                        <span style="color: #fbbf24;">🔥</span> 新商品あり
+                    </button>
+                </div>
+            </div>
+
             <div class="form-group" style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <label style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">写真ギャラリー</label>
@@ -414,7 +442,7 @@
         <div class="responsive-modal-card">
             <div class="drag-handle-bar"></div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-trophy"></i> マイ実績 ＆ レベル</h2>
+                <h2 style="margin: 0; color: var(--accent-gold-text); font-size: 1.35rem;"><i class="fas fa-trophy"></i> マイ活動実績 ＆ レベル</h2>
                 <button class="modal-card-close" onclick="document.getElementById('achievementsModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;"><i class="fas fa-times"></i></button>
             </div>
             
@@ -431,9 +459,33 @@
                 <span id="modalXPText" style="font-size: 0.75rem; color: var(--text-secondary);">0 / 100 XP</span>
             </div>
 
-            <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">獲得したバッジ・実績</h4>
-            <div id="achievementsListContent" style="max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-                <!-- Achievements items dynamically filled -->
+            <!-- Mobile-friendly Navigation Tabs -->
+            <div class="modal-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; width: 100%;">
+                <button class="modal-tab-btn active" id="modalTabBtnAchievements" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; border: none; background: var(--card-inner-bg); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;" onclick="switchModalTab('achievements')">🏆 実績</button>
+                <button class="modal-tab-btn" id="modalTabBtnMissions" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; border: none; background: var(--card-inner-bg); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;" onclick="switchModalTab('missions')">📅 ミッション</button>
+                <button class="modal-tab-btn" id="modalTabBtnTerritory" style="flex: 1; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; border: none; background: var(--card-inner-bg); color: var(--text-secondary); cursor: pointer; transition: all 0.2s;" onclick="switchModalTab('territory')">🛡️ 縄張り</button>
+            </div>
+            
+            <!-- Tab Contents -->
+            <div id="modalTabContentAchievements">
+                <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">獲得したバッジ・実績</h4>
+                <div id="achievementsListContent" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
+                    <!-- Achievements items dynamically filled -->
+                </div>
+            </div>
+
+            <div id="modalTabContentMissions" style="display: none;">
+                <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">本日のデイリーミッション</h4>
+                <div id="missionsListContent" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
+                    <!-- Missions items dynamically filled -->
+                </div>
+            </div>
+
+            <div id="modalTabContentTerritory" style="display: none;">
+                <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">あなたの縄張り (エリア占有率)</h4>
+                <div id="territoryListContent" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
+                    <!-- Territory items dynamically filled -->
+                </div>
             </div>
         </div>
     </div>
