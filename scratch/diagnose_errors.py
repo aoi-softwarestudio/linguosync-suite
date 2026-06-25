@@ -31,7 +31,49 @@ async def main():
             await browser.close()
             return
 
-        print("\n--- 2. Opening Detail Panel for first spot ---")
+        print("\n--- 2. Testing Filters (Via DOM clicks) ---")
+        # Locate all filter chips and click them one by one
+        try:
+            # Get list of filter chips text to click
+            filter_texts = ["ゴミ箱あり", "100円以下", "激レア", "キャッシュレス可", "💖 お気に入り", "すべて"]
+            for txt in filter_texts:
+                print(f"Clicking filter chip: {txt}")
+                # Use locator for class and text content
+                locator = page.locator(f".filter-chip:has-text('{txt}')")
+                if await locator.count() > 0:
+                    await locator.first.click()
+                    await page.wait_for_timeout(600)
+                else:
+                    print(f"Filter chip not found: {txt}")
+        except Exception as e:
+            print("Failed during filter click test:", e)
+        
+        print("Filter test logs:")
+        print("\n".join(console_messages))
+        console_messages.clear()
+
+        print("\n--- 3. Testing Search Query Input (Via DOM fill) ---")
+        search_queries = ["コカ", "ボス", "100円", "ゴミ", "電子マネー", "レア"]
+        try:
+            for q in search_queries:
+                print(f"Typing query in search bar: {q}")
+                await page.fill("#searchInput", q)
+                await page.press("#searchInput", "Enter")
+                await page.wait_for_timeout(600)
+            
+            # Clear search
+            print("Clearing search bar...")
+            await page.fill("#searchInput", "")
+            await page.press("#searchInput", "Enter")
+            await page.wait_for_timeout(500)
+        except Exception as e:
+            print("Failed during search test:", e)
+
+        print("Search test logs:")
+        print("\n".join(console_messages))
+        console_messages.clear()
+
+        print("\n--- 4. Opening Detail Panel for first spot ---")
         try:
             await page.evaluate("window.showDetailPanel(window.initialSpots[0])")
             await page.wait_for_timeout(1000)
@@ -41,9 +83,8 @@ async def main():
         except Exception as e:
             print("Failed to open detail panel:", e)
 
-        print("\n--- 3. Clicking Status Report Button ('new') ---")
+        print("\n--- 5. Clicking Status Report Button ('new') ---")
         try:
-            # Click the 'new' status button
             await page.click("#statusReportNew")
             await page.wait_for_timeout(1500)
             print("Clicked status report. Logs:")
@@ -52,30 +93,7 @@ async def main():
         except Exception as e:
             print("Failed to click status button:", e)
 
-        print("\n--- 4. Logging in (Mock) & Updating Owner Message ---")
-        try:
-            # Inject a mock logged-in user who owns the first spot so we can test owner message edit
-            # First spot owner name can be grabbed or we can assign one
-            spot_id = await page.evaluate("window.initialSpots[0].id || window.initialSpots[0].osmId")
-            await page.evaluate(f"""
-                window.currentUser = {{ name: "Test Owner", email: "test@example.com" }};
-                const spot = window.initialSpots.find(s => (s.id || s.osmId) == '{spot_id}');
-                spot.owner = "Test Owner";
-                window.showDetailPanel(spot);
-            """)
-            await page.wait_for_timeout(1000)
-            
-            # Now the owner message edit box should be visible. Let's write a message and save.
-            await page.fill("#ownerMessageInput", "こんにちは！新鮮なドリンク入荷しました！")
-            await page.click("#updateOwnerMessageBtn")
-            await page.wait_for_timeout(1500)
-            print("Updated owner message. Logs:")
-            print("\n".join(console_messages))
-            console_messages.clear()
-        except Exception as e:
-            print("Failed to update owner message:", e)
-
-        print("\n--- 5. Opening Achievements Modal & Switching Tabs ---")
+        print("\n--- 6. Opening Achievements Modal & Switching Tabs ---")
         try:
             await page.evaluate("document.getElementById('achievementsModal').style.display = 'flex'")
             await page.wait_for_timeout(500)
@@ -88,11 +106,6 @@ async def main():
             # Switch to Territory tab
             print("Switching to Territory tab...")
             await page.click("#modalTabBtnTerritory")
-            await page.wait_for_timeout(500)
-            
-            # Switch back to Achievements tab
-            print("Switching to Achievements tab...")
-            await page.click("#modalTabBtnAchievements")
             await page.wait_for_timeout(500)
             
             print("Modal navigation logs:")
