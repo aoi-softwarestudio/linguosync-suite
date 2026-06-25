@@ -2723,17 +2723,27 @@ function renderMarkers(spots) {
 
 
 function shouldShowSpot(spot) {
+    // Safely extract properties with proper fallbacks to prevent TypeErrors
+    const spotName = spot.name || '';
+    const spotMfg = spot.manufacturer || '';
+    const spotPrice = spot.priceRange || '';
+    const spotTrash = spot.hasTrashBin || '';
+    const spotPayment = spot.paymentMethods || [];
+    const spotLineup = spot.lineup || [];
+    const spotRarity = spot.rarity || 0;
+    const spotOwner = spot.owner || '';
+
     let categoryMatch = true;
-    if (currentFilter === 'trash') categoryMatch = spot.hasTrashBin.includes('あり');
-    else if (currentFilter === 'cheap') categoryMatch = spot.priceRange.includes('100円');
-    else if (currentFilter === 'rare') categoryMatch = spot.rarity >= 4;
-    else if (currentFilter === 'cashless') categoryMatch = spot.paymentMethods.length > 1;
+    if (currentFilter === 'trash') categoryMatch = spotTrash.includes('あり');
+    else if (currentFilter === 'cheap') categoryMatch = spotPrice.includes('100円');
+    else if (currentFilter === 'rare') categoryMatch = spotRarity >= 4;
+    else if (currentFilter === 'cashless') categoryMatch = spotPayment.length > 1;
     else if (currentFilter === 'favorites') {
         const favs = getFavorites();
         categoryMatch = favs.includes(String(spot.id)) || favs.includes(String(spot.osmId));
     }
     else if (currentFilter === 'my-owned') {
-        categoryMatch = currentUser && spot.owner && spot.owner === currentUser.name;
+        categoryMatch = currentUser && spotOwner && spotOwner === currentUser.name;
     }
     
     if (!categoryMatch) return false;
@@ -2741,24 +2751,30 @@ function shouldShowSpot(spot) {
     if (currentSearchQuery) {
         const normalizedQuery = normalizeQuery(currentSearchQuery);
         
-        const nameMatch = spot.name.toLowerCase().includes(normalizedQuery) || spot.name.toLowerCase().includes(currentSearchQuery);
-        const manufacturerMatch = spot.manufacturer.toLowerCase().includes(normalizedQuery) || spot.manufacturer.toLowerCase().includes(currentSearchQuery);
-        const lineupMatch = spot.lineup.some(item => item.toLowerCase().includes(normalizedQuery) || item.toLowerCase().includes(currentSearchQuery));
-        const priceMatch = spot.priceRange.toLowerCase().includes(normalizedQuery) || spot.priceRange.toLowerCase().includes(currentSearchQuery);
-        const paymentMatch = spot.paymentMethods.some(pm => pm.toLowerCase().includes(normalizedQuery) || pm.toLowerCase().includes(currentSearchQuery));
+        const nameMatch = spotName.toLowerCase().includes(normalizedQuery) || spotName.toLowerCase().includes(currentSearchQuery);
+        const manufacturerMatch = spotMfg.toLowerCase().includes(normalizedQuery) || spotMfg.toLowerCase().includes(currentSearchQuery);
+        const lineupMatch = spotLineup.some(item => {
+            const strItem = String(item || '');
+            return strItem.toLowerCase().includes(normalizedQuery) || strItem.toLowerCase().includes(currentSearchQuery);
+        });
+        const priceMatch = spotPrice.toLowerCase().includes(normalizedQuery) || spotPrice.toLowerCase().includes(currentSearchQuery);
+        const paymentMatch = spotPayment.some(pm => {
+            const strPm = String(pm || '');
+            return strPm.toLowerCase().includes(normalizedQuery) || strPm.toLowerCase().includes(currentSearchQuery);
+        });
         
         // Smart Tag Matchers
         const trashQuery = normalizedQuery.includes('ゴミ') || normalizedQuery.includes('ごみ') || normalizedQuery.includes('トラッシュ') || normalizedQuery.includes('trash');
-        const trashMatch = trashQuery && spot.trashCan === 'あり';
+        const trashMatch = trashQuery && (spotTrash === 'あり' || (spot.trashCan && spot.trashCan === 'あり'));
         
         const cashlessQuery = normalizedQuery.includes('キャッシュレス') || normalizedQuery.includes('電子マネー') || normalizedQuery.includes('カード') || normalizedQuery.includes('スマホ決済') || normalizedQuery.includes('cashless');
-        const cashlessMatch = cashlessQuery && (spot.paymentMethods.includes('交通系IC') || spot.paymentMethods.includes('QRコード') || spot.paymentMethods.includes('クレジットカード') || spot.paymentMethods.some(pm => pm !== '現金'));
+        const cashlessMatch = cashlessQuery && (spotPayment.includes('交通系IC') || spotPayment.includes('QRコード') || spotPayment.includes('クレジットカード') || spotPayment.some(pm => pm !== '現金'));
         
         const rareQuery = normalizedQuery.includes('レア') || normalizedQuery.includes('珍しい') || normalizedQuery.includes('評価中') || normalizedQuery.includes('rare');
-        const rareMatch = rareQuery && (spot.rarity >= 4 || (spot.rarityVotesCount || 0) < 3);
+        const rareMatch = rareQuery && (spotRarity >= 4 || (spot.rarityVotesCount || 0) < 3);
 
         const cheapQuery = normalizedQuery.includes('100円') || normalizedQuery.includes('百円') || normalizedQuery.includes('安い') || normalizedQuery.includes('ワンコイン') || normalizedQuery.includes('cheap');
-        const cheapMatch = cheapQuery && (spot.priceRange.includes('100円') || spot.priceRange.includes('80円') || spot.priceRange.includes('90円') || spot.priceRange.includes('50円'));
+        const cheapMatch = cheapQuery && (spotPrice.includes('100円') || spotPrice.includes('80円') || spotPrice.includes('90円') || spotPrice.includes('50円'));
 
         return nameMatch || manufacturerMatch || lineupMatch || priceMatch || paymentMatch || trashMatch || cashlessMatch || rareMatch || cheapMatch;
     }
@@ -2772,6 +2788,13 @@ function getIconForType(type) {
 
 async function showDetailPanel(spot) {
     selectedSpot = spot;
+    
+    // Safely normalize fields to prevent TypeErrors in downstream UI renderers
+    if (!Array.isArray(spot.photos)) spot.photos = [];
+    if (!Array.isArray(spot.comments)) spot.comments = [];
+    if (!Array.isArray(spot.paymentMethods)) spot.paymentMethods = [];
+    if (!Array.isArray(spot.lineup)) spot.lineup = [];
+
     commentsExpanded = false;
     currentInputRating = 0;
     updateStarUI();
@@ -2864,11 +2887,12 @@ async function showDetailPanel(spot) {
         }
     }
 
-    document.getElementById('spotManufacturer').innerText = spot.manufacturer;
+    document.getElementById('spotManufacturer').innerText = spot.manufacturer || '不明';
     document.getElementById('spotOwner').innerText = spot.owner ? `オーナー: ${spot.owner}` : "オーナー: 募集中";
-    document.getElementById('spotRating').innerText = spot.rating.toFixed(1);
-    document.getElementById('spotPrice').innerText = spot.priceRange;
-    document.getElementById('spotTrash').innerText = spot.hasTrashBin;
+    const ratingVal = (typeof spot.rating === 'number') ? spot.rating : 3.0;
+    document.getElementById('spotRating').innerText = ratingVal.toFixed(1);
+    document.getElementById('spotPrice').innerText = spot.priceRange || '不明';
+    document.getElementById('spotTrash').innerText = spot.hasTrashBin || 'なし';
     
     const rarityContainer = document.getElementById('spotRarity');
     rarityContainer.innerHTML = '';
@@ -2904,12 +2928,13 @@ async function showDetailPanel(spot) {
 
     const badge = document.getElementById('spotVerificationBadge');
     const badgeText = document.getElementById('spotVerificationText');
-    if (spot.verifiedCount >= 10) {
+    const verifiedCount = spot.verifiedCount || 0;
+    if (verifiedCount >= 10) {
         badge.className = 'status-badge verified';
-        badgeText.innerText = `信頼度: 高 (${spot.verifiedCount}人が確認)`;
+        badgeText.innerText = `信頼度: 高 (${verifiedCount}人が確認)`;
     } else {
         badge.className = 'status-badge unverified';
-        badgeText.innerText = `要確認 (${spot.verifiedCount || 0}人が確認)`;
+        badgeText.innerText = `要確認 (${verifiedCount}人が確認)`;
     }
 
     const namingRightsSection = document.getElementById('namingRightsSection');
