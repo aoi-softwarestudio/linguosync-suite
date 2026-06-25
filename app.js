@@ -1321,23 +1321,26 @@ const VendiTerritory = {
         
         const areaGroups = {};
         initialSpots.forEach(s => {
-            const latKey = s.lat.toFixed(3);
-            const lngKey = s.lng.toFixed(3);
+            const latNum = Number(s.lat);
+            const lngNum = Number(s.lng);
+            if (isNaN(latNum) || isNaN(lngNum)) return;
+            const latKey = latNum.toFixed(3);
+            const lngKey = lngNum.toFixed(3);
             const areaKey = `${latKey}_${lngKey}`;
             
             if (!areaGroups[areaKey]) {
                 // Remove generic terms and get simple clean area base name
-                let areaName = s.name.replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
+                let areaName = (s.name || '').replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
                 if (!areaName || areaName.length < 2) {
-                    areaName = `${s.lat.toFixed(3)}, ${s.lng.toFixed(3)}`;
+                    areaName = `${latNum.toFixed(3)}, ${lngNum.toFixed(3)}`;
                 } else {
                     areaName = areaName.substring(0, 10);
                 }
                 
                 areaGroups[areaKey] = {
                     key: areaKey,
-                    lat: s.lat,
-                    lng: s.lng,
+                    lat: latNum,
+                    lng: lngNum,
                     name: `${areaName} 周辺エリア`,
                     spots: []
                 };
