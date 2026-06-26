@@ -14,8 +14,8 @@ struct WebView: UIViewRepresentable {
         webView.scrollView.isScrollEnabled = true
         webView.scrollView.bounces = true
         
-        // Load target url
-        let request = URLRequest(url: url)
+        // Load target url with cache buster policy
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10.0)
         webView.load(request)
         
         return webView
