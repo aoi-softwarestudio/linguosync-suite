@@ -1372,7 +1372,7 @@ const VendiTerritory = {
         container.innerHTML = '';
         
         const areaGroups = {};
-        const gridSize = 0.05; // Grid size: 0.05 is about 5.5km
+        const gridSize = 0.02; // Grid size: 0.02 is about 2.2km (district level)
         initialSpots.forEach(s => {
             const latNum = Number(s.lat);
             const lngNum = Number(s.lng);
