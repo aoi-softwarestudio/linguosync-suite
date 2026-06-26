@@ -32,7 +32,8 @@ async function loadDynamicConfig() {
 // Favorites Management Helpers (Saved locally per user, not shared globally)
 function getFavorites() {
     try {
-        return JSON.parse(localStorage.getItem('vendix_favorites') || '[]');
+        const parsed = JSON.parse(localStorage.getItem('vendix_favorites') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
         return [];
     }
@@ -307,51 +308,84 @@ const VendiGamification = {
     },
     init() {
         const saved = localStorage.getItem(this.KEYS.STATE);
+        const defaultState = {
+            level: 1,
+            xp: 0,
+            stats: { spotsAdded: 0, photosAdded: 0, commentsAdded: 0, boughtCount: 0, verifiedCount: 0 },
+            verifiedSpotIds: [],
+            unlockedAchievements: [],
+            registeredSpotIds: [],
+            photographedSpotIds: [],
+            commentedSpotIds: [],
+            boughtSpotIds: []
+        };
+
         if (saved) {
-            this.state = JSON.parse(saved);
-            if (!this.state.stats) {
-                this.state.stats = { spotsAdded: 0, photosAdded: 0, commentsAdded: 0, boughtCount: 0, verifiedCount: 0 };
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === 'object') {
+                    this.state = {
+                        ...defaultState,
+                        ...parsed,
+                        stats: {
+                            ...defaultState.stats,
+                            ...(parsed.stats || {})
+                        }
+                    };
+                } else {
+                    this.state = defaultState;
+                }
+            } catch (e) {
+                this.state = defaultState;
             }
-            if (this.state.stats.verifiedCount === undefined) {
-                this.state.stats.verifiedCount = 0;
-            }
-            if (!this.state.verifiedSpotIds) {
-                this.state.verifiedSpotIds = [];
-            }
-            if (!this.state.registeredSpotIds) {
-                this.state.registeredSpotIds = [];
+        } else {
+            this.state = defaultState;
+            this.save();
+        }
+
+        // Ensure array safety for arrays that might be overwritten or missing
+        if (!Array.isArray(this.state.verifiedSpotIds)) this.state.verifiedSpotIds = [];
+        if (!Array.isArray(this.state.unlockedAchievements)) this.state.unlockedAchievements = [];
+
+        if (!Array.isArray(this.state.registeredSpotIds) || this.state.registeredSpotIds.length === 0) {
+            this.state.registeredSpotIds = [];
+            if (typeof initialSpots !== 'undefined' && Array.isArray(initialSpots)) {
                 initialSpots.forEach(s => {
                     if (s.id > 10000000) {
                         this.state.registeredSpotIds.push(s.id);
                     }
                 });
             }
-            if (!this.state.photographedSpotIds) {
-                this.state.photographedSpotIds = [];
+        }
+        if (!Array.isArray(this.state.photographedSpotIds) || this.state.photographedSpotIds.length === 0) {
+            this.state.photographedSpotIds = [];
+            if (typeof initialSpots !== 'undefined' && Array.isArray(initialSpots)) {
                 initialSpots.forEach(s => {
                     if (s.photos && s.photos.length > 0) {
                         this.state.photographedSpotIds.push(s.id);
                     }
                 });
             }
-            if (!this.state.commentedSpotIds) {
-                this.state.commentedSpotIds = [];
+        }
+        if (!Array.isArray(this.state.commentedSpotIds) || this.state.commentedSpotIds.length === 0) {
+            this.state.commentedSpotIds = [];
+            if (typeof initialSpots !== 'undefined' && Array.isArray(initialSpots)) {
                 initialSpots.forEach(s => {
                     if (s.comments && s.comments.length > 0) {
                         this.state.commentedSpotIds.push(s.id);
                     }
                 });
             }
-            if (!this.state.boughtSpotIds) {
-                this.state.boughtSpotIds = [];
+        }
+        if (!Array.isArray(this.state.boughtSpotIds) || this.state.boughtSpotIds.length === 0) {
+            this.state.boughtSpotIds = [];
+            if (typeof initialSpots !== 'undefined' && Array.isArray(initialSpots)) {
                 initialSpots.forEach(s => {
                     if (s.owner) {
                         this.state.boughtSpotIds.push(s.id);
                     }
                 });
             }
-        } else {
-            this.save();
         }
         this.updateUI();
         this.checkAchievements();
@@ -406,7 +440,15 @@ const VendiGamification = {
         return "新米ハンター 🐣";
     },
     getUserInteractedSpots() {
-        const userVotedSpotIds = Object.keys(JSON.parse(localStorage.getItem('user_rarity_votes') || '{}')).map(id => isNaN(id) ? id : Number(id));
+        let userVotedSpotIds = [];
+        try {
+            const votes = JSON.parse(localStorage.getItem('user_rarity_votes') || '{}');
+            if (votes && typeof votes === 'object') {
+                userVotedSpotIds = Object.keys(votes).map(id => isNaN(id) ? id : Number(id));
+            }
+        } catch (e) {
+            console.error("Failed to parse user rarity votes:", e);
+        }
         const verifiedSpotIds = this.state.verifiedSpotIds || [];
         const photographedSpotIds = this.state.photographedSpotIds || [];
         const commentedSpotIds = this.state.commentedSpotIds || [];
@@ -1227,18 +1269,28 @@ const VendiMissions = {
     init() {
         const saved = localStorage.getItem(this.KEYS.STATE);
         const today = new Date().toISOString().split('T')[0];
+        const defaultState = { date: '', missions: [] };
         
+        this.state = defaultState;
         if (saved) {
             try {
-                this.state = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === 'object') {
+                    this.state = {
+                        ...defaultState,
+                        ...parsed
+                    };
+                }
             } catch(e) {
-                this.state = { date: '', missions: [] };
+                // Ignore and fallback to defaultState
             }
         }
         
-        if (this.state.date !== today || !this.state.missions || this.state.missions.length === 0) {
-            this.state.date = today;
-            this.state.missions = this.generateMissions();
+        if (!this.state || this.state.date !== today || !this.state.missions || !Array.isArray(this.state.missions) || this.state.missions.length === 0) {
+            this.state = {
+                date: today,
+                missions: this.generateMissions()
+            };
             this.save();
         }
     },
@@ -2228,32 +2280,40 @@ function initMap() {
 
         const savedSpots = localStorage.getItem('vendimap_local_spots');
         if (savedSpots) {
-            const loaded = JSON.parse(savedSpots);
-            loaded.forEach(ls => {
-                if (ls.id > 10000000) {
-                    if (!initialSpots.some(s => s.id === ls.id)) {
-                        ls.isModified = true;
-                        initialSpots.push(ls);
-                    }
-                } else {
-                    const target = initialSpots.find(s => s.id === ls.id);
-                    if (target) {
-                        target.isModified = true;
-                        target.owner = ls.owner;
-                        target.namingRightsAvailable = ls.namingRightsAvailable;
-                        target.verifiedCount = ls.verifiedCount || 0;
-                        target.comments = ls.comments || [];
-                        target.rating = ls.rating || 3.0;
-                        target.photos = ls.photos || [];
-                        target.lineup = ls.lineup || [];
-                        target.priceRange = ls.priceRange || '不明';
-                        target.rarity = ls.rarity || 0;
-                        target.rarityVotesCount = ls.rarityVotesCount || 0;
-                        target.rarityVotesSum = ls.rarityVotesSum || 0;
-                        target.lastUpdated = ls.lastUpdated;
-                    }
+            try {
+                const loaded = JSON.parse(savedSpots);
+                if (Array.isArray(loaded)) {
+                    loaded.forEach(ls => {
+                        if (ls && typeof ls === 'object') {
+                            if (ls.id > 10000000) {
+                                if (!initialSpots.some(s => s.id === ls.id)) {
+                                    ls.isModified = true;
+                                    initialSpots.push(ls);
+                                }
+                            } else {
+                                const target = initialSpots.find(s => s.id === ls.id);
+                                if (target) {
+                                    target.isModified = true;
+                                    target.owner = ls.owner;
+                                    target.namingRightsAvailable = ls.namingRightsAvailable;
+                                    target.verifiedCount = ls.verifiedCount || 0;
+                                    target.comments = ls.comments || [];
+                                    target.rating = ls.rating || 3.0;
+                                    target.photos = ls.photos || [];
+                                    target.lineup = ls.lineup || [];
+                                    target.priceRange = ls.priceRange || '不明';
+                                    target.rarity = ls.rarity || 0;
+                                    target.rarityVotesCount = ls.rarityVotesCount || 0;
+                                    target.rarityVotesSum = ls.rarityVotesSum || 0;
+                                    target.lastUpdated = ls.lastUpdated;
+                                }
+                            }
+                        }
+                    });
                 }
-            });
+            } catch (e) {
+                console.error("Failed to parse local spots:", e);
+            }
         }
 
         const savedKey = localStorage.getItem('vendimap_license_key');
@@ -3603,9 +3663,19 @@ function handleLogout() {
 function loadSavedUser() {
     const saved = localStorage.getItem('vendimap_user');
     if (saved) {
-        currentUser = JSON.parse(saved);
-        updateAuthUI();
-        VendiGamification.updateUI();
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object') {
+                currentUser = parsed;
+                updateAuthUI();
+                VendiGamification.updateUI();
+            } else {
+                currentUser = null;
+            }
+        } catch (e) {
+            console.error("Failed to load saved user:", e);
+            currentUser = null;
+        }
     }
 }
 
@@ -4238,10 +4308,19 @@ function renderSuggestions(spots, predictions, dropdown) {
 // Sync and Auto-Save System
 let syncTimeout = null;
 
+function getOfflineQueue() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem('vendimap_offline_queue') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
+    }
+}
+
 function queueOfflineTask(task) {
-    const queue = JSON.parse(localStorage.getItem('vendimap_offline_queue') || '[]');
+    const queue = getOfflineQueue();
     const isDuplicate = queue.some(item => {
-        if (item.type !== task.type) return false;
+        if (!item || item.type !== task.type) return false;
         if (item.type === 'add-spot') {
             return String(item.spot.id) === String(task.spot.id);
         }
@@ -4259,7 +4338,7 @@ function queueOfflineTask(task) {
 
 async function processOfflineQueue() {
     if (!navigator.onLine) return;
-    const queue = JSON.parse(localStorage.getItem('vendimap_offline_queue') || '[]');
+    const queue = getOfflineQueue();
     if (queue.length === 0) return;
     
     console.log("Processing offline sync queue...", queue.length, "tasks");
@@ -4313,19 +4392,31 @@ function triggerAutoSync() {
         clearTimeout(syncTimeout);
     }
     syncTimeout = setTimeout(async () => {
-        await processOfflineQueue();
-        const syncUserId = localStorage.getItem('vendimap_sync_user_id');
-        if (!syncUserId) return;
-        
-        const syncData = {
-            local_spots: JSON.parse(localStorage.getItem('vendimap_local_spots') || '[]'),
-            rarity_votes: JSON.parse(localStorage.getItem('user_rarity_votes') || '{}'),
-            user: JSON.parse(localStorage.getItem('vendimap_user') || 'null'),
-            gamification: JSON.parse(localStorage.getItem('vendimap_gamification_state') || 'null'),
-            license_key: localStorage.getItem('vendimap_license_key') || ''
-        };
-        
         try {
+            await processOfflineQueue();
+            const syncUserId = localStorage.getItem('vendimap_sync_user_id');
+            if (!syncUserId) return;
+            
+            let syncData;
+            try {
+                syncData = {
+                    local_spots: JSON.parse(localStorage.getItem('vendimap_local_spots') || '[]'),
+                    rarity_votes: JSON.parse(localStorage.getItem('user_rarity_votes') || '{}'),
+                    user: JSON.parse(localStorage.getItem('vendimap_user') || 'null'),
+                    gamification: JSON.parse(localStorage.getItem('vendimap_gamification_state') || 'null'),
+                    license_key: localStorage.getItem('vendimap_license_key') || ''
+                };
+            } catch (parseErr) {
+                console.error("Auto-sync: Failed to parse state for sync payload, using defaults", parseErr);
+                syncData = {
+                    local_spots: [],
+                    rarity_votes: {},
+                    user: null,
+                    gamification: null,
+                    license_key: localStorage.getItem('vendimap_license_key') || ''
+                };
+            }
+            
             const res = await fetch(`${backendApiUrl}/api/sync`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
