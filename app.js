@@ -1509,7 +1509,7 @@ const VendiTerritory = {
                     <span>所有: ${area.owned} / ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
                     ${area.distance !== null ? `<span style="font-weight: bold; color: var(--accent-color);"><i class="fas fa-location-dot"></i> ${(area.distance / 1000).toFixed(1)} km</span>` : ''}
                 </div>
-                ${area.status === 'fighting' ? `
+                ${area.status === 'fighting' || area.status === 'unexplored' ? `
                     <div style="font-size: 0.7rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 4px;">
                         <i class="fas fa-hand-fist" style="color: #ef4444;"></i>
                         <span>ライバル <strong style="color: var(--text-primary);">${area.rivalName}</strong> が ${area.rivalCount}台 支配しています！</span>
