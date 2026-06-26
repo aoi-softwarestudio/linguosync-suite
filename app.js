@@ -1372,19 +1372,24 @@ const VendiTerritory = {
         container.innerHTML = '';
         
         const areaGroups = {};
+        const gridSize = 0.05; // Grid size: 0.05 is about 5.5km
         initialSpots.forEach(s => {
             const latNum = Number(s.lat);
             const lngNum = Number(s.lng);
             if (isNaN(latNum) || isNaN(lngNum)) return;
-            const latKey = latNum.toFixed(2);
-            const lngKey = lngNum.toFixed(2);
+            
+            const latRounded = Math.round(latNum / gridSize) * gridSize;
+            const lngRounded = Math.round(lngNum / gridSize) * gridSize;
+            
+            const latKey = latRounded.toFixed(3);
+            const lngKey = lngRounded.toFixed(3);
             const areaKey = `${latKey}_${lngKey}`;
             
             if (!areaGroups[areaKey]) {
                 // Remove generic terms and get simple clean area base name
                 let areaName = (s.name || '').replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
                 if (!areaName || areaName.length < 2) {
-                    areaName = `${latNum.toFixed(2)}, ${lngNum.toFixed(2)}`;
+                    areaName = `${latRounded.toFixed(2)}, ${lngRounded.toFixed(2)}`;
                 } else {
                     areaName = areaName.substring(0, 10);
                 }
