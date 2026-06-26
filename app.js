@@ -1386,8 +1386,8 @@ const VendiTerritory = {
             const areaKey = `${latKey}_${lngKey}`;
             
             if (!areaGroups[areaKey]) {
-                // Remove generic terms and get simple clean area base name
-                let areaName = (s.name || '').replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
+                // Remove generic terms and manufacturer names to get clean base name
+                let areaName = (s.name || '').replace(/サントリー|コカ・コーラ|コカコーラ|ダイドー|アサヒ|キリン|伊藤園|ポッカ|DyDo|SUNTORY|KIRIN|Coca|自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/gi, '').trim();
                 if (!areaName || areaName.length < 2) {
                     areaName = `${latRounded.toFixed(2)}, ${lngRounded.toFixed(2)}`;
                 } else {
@@ -5359,6 +5359,40 @@ function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
                 const userName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.name : 'ゲストハンター';
                 const ownedInPolygon = spotsInPolygon.filter(s => s.owner && s.owner === userName).length;
                 const pctInPolygon = (ownedInPolygon / totalInPolygon) * 100;
+
+                // 地名解決 (Nominatim から得られた正確な地名を優先してカード名およびポップアップのタイトルにする)
+                let resolvedName = name;
+                if (data && data.address) {
+                    const addr = data.address;
+                    const districtName = addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || addr.town || addr.village || addr.city || "";
+                    if (districtName) {
+                        resolvedName = `${districtName} エリア`;
+                    }
+                }
+                
+                // 重複する他の縄張りカードをマージして非表示にする
+                let mergedAny = false;
+                if (areaKey) {
+                    const cards = document.querySelectorAll('.territory-card');
+                    cards.forEach(c => {
+                        const cLat = Number(c.getAttribute('data-lat'));
+                        const cLng = Number(c.getAttribute('data-lng'));
+                        const cKey = c.getAttribute('data-key');
+                        
+                        if (cKey !== areaKey && !isNaN(cLat) && !isNaN(cLng)) {
+                            // そのカードの代表座標がこのポリゴンの内側にある場合、重複カードとみなす
+                            if (isPointInGeoJSON(cLat, cLng, data.geojson)) {
+                                c.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                                c.style.opacity = '0';
+                                c.style.transform = 'scale(0.95)';
+                                setTimeout(() => {
+                                    c.style.display = 'none';
+                                }, 300);
+                                mergedAny = true;
+                            }
+                        }
+                    });
+                }
                 
                 // Leaflet の L.geoJSON を使って実際の地区の形を描画
                 territoryPolygon = L.geoJSON(data.geojson, {
@@ -5374,7 +5408,7 @@ function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
                 // 境界ポリゴンにポップアップを付与 (再集計した正確な自販機数を表示)
                 const popupContent = `
                     <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 6px; min-width: 180px;">
-                        <strong style="color: #fbbf24; font-size: 0.95rem;">🛡️ ${name}</strong><br>
+                        <strong style="color: #fbbf24; font-size: 0.95rem;">🛡️ ${resolvedName}</strong><br>
                         <div style="margin-top: 6px; font-size: 0.8rem; border-top: 1px solid #1f2937; padding-top: 6px;">
                             <span style="color: #9ca3af;">この地区内の自販機:</span><br>
                             <strong style="color: #fff; font-size: 0.9rem;">${ownedInPolygon} / ${totalInPolygon} 台 (${pctInPolygon.toFixed(0)}%)</strong>
@@ -5402,10 +5436,14 @@ function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
                 
                 // カードの表示を実際のポリゴン内集計値に動的にアップデート
                 if (areaKey) {
+                    const nameEl = document.getElementById(`areaName_${areaKey}`);
                     const progressEl = document.getElementById(`areaProgressBar_${areaKey}`);
                     const metaEl = document.getElementById(`areaMetaText_${areaKey}`);
                     const statusEl = document.getElementById(`areaStatus_${areaKey}`);
                     
+                    if (nameEl) {
+                        nameEl.innerText = resolvedName;
+                    }
                     if (metaEl) {
                         metaEl.innerHTML = `所有: ${ownedInPolygon} / ${totalInPolygon} 台 (${pctInPolygon.toFixed(0)}%)`;
                     }
@@ -5427,8 +5465,10 @@ function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
                     }
                 }
                 
-                if (typeof showToast === 'function') {
-                    showToast(`🗺️ ${name}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
+                if (mergedAny && typeof showToast === 'function') {
+                    showToast(`🔄 重複する隣接エリアの縄張りを「${resolvedName}」に統合しました`, 'success');
+                } else if (typeof showToast === 'function') {
+                    showToast(`🗺️ ${resolvedName}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
                 }
             } else {
                 // Polygon が得られなかった場合は、次のズームレベルを試す
