@@ -184,7 +184,7 @@ def poll_for_urls():
         # Check if university or corporate firewall is blocking Cloudflare Tunnel port 7844
         if check_firewall_blocked():
             print("\n[FIREWALL] Outbound connection to port 7844 is BLOCKED by your network firewall.")
-            print("           (This is common on university networks like Hokkaido University or corporate Wi-Fi.)")
+            print("           (This is common on university networks or corporate Wi-Fi.)")
             print("           Switching to high-performance LOCAL MODE seamlessly...")
             is_local_mode = True
             
@@ -292,7 +292,7 @@ __      __  ______   _   _   _______   _    _   _____    ______    ____     ____
     print(border)
     print("   [EMPIRE] AI EMPIRE OPERATIONAL COMMAND CENTER - DEPLOYED SUCCESS")
     print(border)
-    print(f"   Chairman: KOJIMA SOTA")
+    print(f"   Chairman: ADMIN")
     if is_local_mode:
         print(f"   System Status: ACTIVE IN LOCAL INTEGRATED MODE (Firewall Bypass Active)")
     else:
@@ -302,7 +302,7 @@ __      __  ______   _   _   _______   _    _   _____    ______    ____     ____
     print(border)
     
     if is_local_mode:
-        print("   [NOTICE] You are currently on a restricted network (Hokkaido Univ. Wi-Fi).")
+        print("   [NOTICE] You are currently on a restricted network (Restricted Wi-Fi).")
         print("            Please open the following local links in your browser:")
         print("            --------------------------------------------------------")
         print(f"    [Venture OS Center] : http://localhost:8004/index.html")
