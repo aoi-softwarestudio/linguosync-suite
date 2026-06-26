@@ -1430,6 +1430,11 @@ const VendiTerritory = {
                     status = 'fighting';
                 }
                 
+                let distance = null;
+                if (userLocation) {
+                    distance = haversineDistance(userLocation.lat, userLocation.lng, area.lat, area.lng);
+                }
+                
                 myAreas.push({
                     name: area.name,
                     total: total,
@@ -1437,12 +1442,22 @@ const VendiTerritory = {
                     rivalCount: rivalCount,
                     rivalName: rivalName,
                     pct: pct,
-                    status: status
+                    status: status,
+                    distance: distance
                 });
             }
         });
         
-        myAreas.sort((a, b) => b.pct - a.pct || b.owned - a.owned);
+        if (userLocation) {
+            myAreas.sort((a, b) => {
+                if (a.distance !== null && b.distance !== null) {
+                    return a.distance - b.distance;
+                }
+                return b.pct - a.pct || b.owned - a.owned;
+            });
+        } else {
+            myAreas.sort((a, b) => b.pct - a.pct || b.owned - a.owned);
+        }
         
         const displayAreas = myAreas.slice(0, 10);
         
@@ -1475,8 +1490,8 @@ const VendiTerritory = {
                     <div class="territory-progress-bar" style="width: ${area.pct}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width 0.4s ease-out;"></div>
                 </div>
                 <div class="territory-meta" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">
-                    <span>あなたの所有: ${area.owned} 台</span>
-                    <span>エリア総数: ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
+                    <span>所有: ${area.owned} / ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
+                    ${area.distance !== null ? `<span style="font-weight: bold; color: var(--accent-color);"><i class="fas fa-location-dot"></i> ${(area.distance / 1000).toFixed(1)} km</span>` : ''}
                 </div>
                 ${area.status === 'fighting' ? `
                     <div style="font-size: 0.7rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 4px;">
