@@ -1376,15 +1376,15 @@ const VendiTerritory = {
             const latNum = Number(s.lat);
             const lngNum = Number(s.lng);
             if (isNaN(latNum) || isNaN(lngNum)) return;
-            const latKey = latNum.toFixed(3);
-            const lngKey = lngNum.toFixed(3);
+            const latKey = latNum.toFixed(2);
+            const lngKey = lngNum.toFixed(2);
             const areaKey = `${latKey}_${lngKey}`;
             
             if (!areaGroups[areaKey]) {
                 // Remove generic terms and get simple clean area base name
                 let areaName = (s.name || '').replace(/自販機|じはんき|OSMノード|ノード|［.*?］|\[.*?\]/g, '').trim();
                 if (!areaName || areaName.length < 2) {
-                    areaName = `${latNum.toFixed(3)}, ${lngNum.toFixed(3)}`;
+                    areaName = `${latNum.toFixed(2)}, ${lngNum.toFixed(2)}`;
                 } else {
                     areaName = areaName.substring(0, 10);
                 }
