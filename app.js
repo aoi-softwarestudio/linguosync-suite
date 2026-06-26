@@ -5280,53 +5280,73 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
         showToast(`🗺️ ${name}の行政境界を取得中...`, 'info');
     }
     
-    // Nominatim から境界ポリゴン GeoJSON を取得する
-    // zoom=16 で町丁目・大字レベルを指定し、polygon_geojson=1 で多角形データを要求
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1&polygon_geojson=1`;
+    // 段階的にズームレベルを下げて、Polygon/MultiPolygon を探索する
+    // zoom=15 (町丁目レベル) -> zoom=14 (大字レベル) -> zoom=13 (より広い行政区画) -> zoom=12 (市区町村)
+    const zoomLevels = [15, 14, 13, 12];
     
-    fetch(url, {
-        headers: {
-            'User-Agent': 'VendiMap-App-Release-Client'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data && data.geojson) {
-            // Leaflet の L.geoJSON を使って実際の地区の形を描画
-            territoryPolygon = L.geoJSON(data.geojson, {
-                style: {
-                    color: '#fbbf24',       // ゴールドの境界線
-                    fillColor: '#fbbf24',   // ゴールドの塗りつぶし
-                    fillOpacity: 0.15,      // 半透明
-                    weight: 2.5,
-                    dashArray: '4, 4'
-                }
-            }).addTo(window.map);
-            
-            // 境界ポリゴンにポップアップを付与
-            territoryPolygon.bindPopup(`
-                <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
-                    <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
-                    <span style="font-size: 0.75rem; color: #9ca3af;">実際の地区境界（行政区画内）を表示中</span>
-                </div>
-            `, { className: 'custom-popup-dark' });
-            
-            // ポリゴンの範囲に合わせて自動で地図をズーム・移動
-            const bounds = territoryPolygon.getBounds();
-            window.map.fitBounds(bounds, { maxZoom: 15, animate: true });
-            
-            if (typeof showToast === 'function') {
-                showToast(`🗺️ ${name}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
-            }
-        } else {
-            // 万が一ポリゴンデータが取れなかった場合は、従来の円（サークル）で安全にフォールバック
+    function tryFetch(index) {
+        if (index >= zoomLevels.length) {
+            console.warn("Could not find any polygon boundary, falling back to circle.");
             drawFallbackCircle(lat, lng, name, gridSize);
+            return;
         }
-    })
-    .catch(err => {
-        console.warn("Failed to fetch district polygon:", err);
-        drawFallbackCircle(lat, lng, name, gridSize);
-    });
+        
+        const zoom = zoomLevels[index];
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=${zoom}&addressdetails=1&polygon_geojson=1`;
+        
+        fetch(url, {
+            headers: {
+                'User-Agent': 'VendiMap-App-Release-Client'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.geojson && (data.geojson.type === 'Polygon' || data.geojson.type === 'MultiPolygon')) {
+                // Leaflet の L.geoJSON を使って実際の地区の形を描画
+                territoryPolygon = L.geoJSON(data.geojson, {
+                    style: {
+                        color: '#fbbf24',       // ゴールドの境界線
+                        fillColor: '#fbbf24',   // ゴールドの塗りつぶし
+                        fillOpacity: 0.15,      // 半透明
+                        weight: 2.5,
+                        dashArray: '4, 4'
+                    }
+                }).addTo(window.map);
+                
+                // 境界ポリゴンにポップアップを付与
+                territoryPolygon.bindPopup(`
+                    <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
+                        <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
+                        <span style="font-size: 0.75rem; color: #9ca3af;">実際の地区境界（行政区画内）を表示中</span>
+                    </div>
+                `, { className: 'custom-popup-dark' });
+                
+                // ポリゴンの範囲に合わせて自動で地図をズーム・移動
+                const bounds = territoryPolygon.getBounds();
+                window.map.fitBounds(bounds, { maxZoom: 15, animate: true });
+                
+                // ズームアウトしすぎを防ぐ（市区町村全体が広すぎる場合、最小ズームを12に制限）
+                setTimeout(() => {
+                    if (window.map.getZoom() < 12) {
+                        window.map.setZoom(12, { animate: true });
+                    }
+                }, 400);
+                
+                if (typeof showToast === 'function') {
+                    showToast(`🗺️ ${name}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
+                }
+            } else {
+                // Polygon が得られなかった場合は、次のズームレベルを試す
+                tryFetch(index + 1);
+            }
+        })
+        .catch(err => {
+            console.warn(`Failed to fetch polygon at zoom ${zoom}:`, err);
+            tryFetch(index + 1);
+        });
+    }
+    
+    tryFetch(0);
 }
 window.showTerritoryOnMap = showTerritoryOnMap;
 
