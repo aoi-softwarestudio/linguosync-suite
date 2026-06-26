@@ -148,7 +148,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadProductionUrl() {
-        webView.loadUrl("https://vendimap-app.onrender.com/index.html")
+        val timestamp = System.currentTimeMillis()
+        webView.loadUrl("https://vendimap-app.onrender.com/index.html?t=$timestamp")
     }
 
     override fun onBackPressed() {
