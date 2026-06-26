@@ -1441,6 +1441,7 @@ const VendiTerritory = {
                 }
                 
                 myAreas.push({
+                    key: area.key,
                     name: area.name,
                     lat: area.lat,
                     lng: area.lng,
@@ -5265,22 +5266,75 @@ const CustomScrollbarEngine = {
     }
 };
 
-let territoryCircle = null;
+let territoryPolygon = null;
 
 function showTerritoryOnMap(lat, lng, name, gridSize) {
     if (!window.map) return;
     
-    // 既存の縄張りサークルを消去
-    if (territoryCircle) {
-        window.map.removeLayer(territoryCircle);
+    // 既存の縄張りポリゴン/サークルを消去
+    if (territoryPolygon) {
+        window.map.removeLayer(territoryPolygon);
     }
     
-    // gridSize（度）をメートルに近似換算（1度≒111,000m。半径はグリッド幅の半分より少し広めにカバー）
-    const radiusInMeters = (gridSize * 111000) * 0.7; // 約2.3kmの探索カバー半径
+    if (typeof showToast === 'function') {
+        showToast(`🗺️ ${name}の行政境界を取得中...`, 'info');
+    }
     
-    // サークルを描画
-    territoryCircle = L.circle([lat, lng], {
-        color: '#fbbf24', // ゴールド
+    // Nominatim から境界ポリゴン GeoJSON を取得する
+    // zoom=16 で町丁目・大字レベルを指定し、polygon_geojson=1 で多角形データを要求
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1&polygon_geojson=1`;
+    
+    fetch(url, {
+        headers: {
+            'User-Agent': 'VendiMap-App-Release-Client'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.geojson) {
+            // Leaflet の L.geoJSON を使って実際の地区の形を描画
+            territoryPolygon = L.geoJSON(data.geojson, {
+                style: {
+                    color: '#fbbf24',       // ゴールドの境界線
+                    fillColor: '#fbbf24',   // ゴールドの塗りつぶし
+                    fillOpacity: 0.15,      // 半透明
+                    weight: 2.5,
+                    dashArray: '4, 4'
+                }
+            }).addTo(window.map);
+            
+            // 境界ポリゴンにポップアップを付与
+            territoryPolygon.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
+                    <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
+                    <span style="font-size: 0.75rem; color: #9ca3af;">実際の地区境界（行政区画内）を表示中</span>
+                </div>
+            `, { className: 'custom-popup-dark' });
+            
+            // ポリゴンの範囲に合わせて自動で地図をズーム・移動
+            const bounds = territoryPolygon.getBounds();
+            window.map.fitBounds(bounds, { maxZoom: 15, animate: true });
+            
+            if (typeof showToast === 'function') {
+                showToast(`🗺️ ${name}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
+            }
+        } else {
+            // 万が一ポリゴンデータが取れなかった場合は、従来の円（サークル）で安全にフォールバック
+            drawFallbackCircle(lat, lng, name, gridSize);
+        }
+    })
+    .catch(err => {
+        console.warn("Failed to fetch district polygon:", err);
+        drawFallbackCircle(lat, lng, name, gridSize);
+    });
+}
+window.showTerritoryOnMap = showTerritoryOnMap;
+
+// 安全なフォールバック用サークル描画関数
+function drawFallbackCircle(lat, lng, name, gridSize) {
+    const radiusInMeters = (gridSize * 111000) * 0.7;
+    territoryPolygon = L.circle([lat, lng], {
+        color: '#fbbf24',
         fillColor: '#fbbf24',
         fillOpacity: 0.15,
         radius: radiusInMeters,
@@ -5288,23 +5342,15 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
         dashArray: '6, 6'
     }).addTo(window.map);
     
-    // ポップアップを表示
-    territoryCircle.bindPopup(`
+    territoryPolygon.bindPopup(`
         <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
             <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
             <span style="font-size: 0.75rem; color: #9ca3af;">縄張り範囲（半径: ${(radiusInMeters/1000).toFixed(1)} km）</span>
         </div>
     `, { className: 'custom-popup-dark' }).openPopup();
     
-    // マップの視点をその位置に移動
     window.map.setView([lat, lng], 14);
-    
-    // トーストで案内
-    if (typeof showToast === 'function') {
-        showToast(`🗺️ ${name}の範囲を表示しました（半径約${(radiusInMeters/1000).toFixed(1)}km）`, 'info');
-    }
 }
-window.showTerritoryOnMap = showTerritoryOnMap;
 
 const resolvedAreaNames = {};
 
