@@ -13,11 +13,11 @@ const SuiteGatekeeper = {
     // Set your Lemon Squeezy store checkout URLs here.
     // Replace XXXXXXXX with your actual variant IDs from your LS dashboard.
     CHECKOUT_URLS: {
-        studyflow:    "https://kojimasota.lemonsqueezy.com/buy/studyflow-pro",    // 要設定
-        socialintent: "https://kojimasota.lemonsqueezy.com/buy/socialintent-pro", // 要設定
-        linguosync:   "https://kojimasota.lemonsqueezy.com/buy/linguosync-pro",   // 要設定
-        novacapital:  "https://kojimasota.lemonsqueezy.com/buy/novacapital-pro",  // 要設定
-        vendimap:     "https://kojimasota.lemonsqueezy.com/buy/vendimap-pro",     // 要設定
+        studyflow:    "https://empire.lemonsqueezy.com/buy/studyflow-pro",    // 要設定
+        socialintent: "https://empire.lemonsqueezy.com/buy/socialintent-pro", // 要設定
+        linguosync:   "https://empire.lemonsqueezy.com/buy/linguosync-pro",   // 要設定
+        novacapital:  "https://empire.lemonsqueezy.com/buy/novacapital-pro",  // 要設定
+        vendimap:     "https://empire.lemonsqueezy.com/buy/vendimap-pro",     // 要設定
     },
     // ================================================
 
