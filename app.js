@@ -1482,7 +1482,7 @@ const VendiTerritory = {
             card.onclick = () => {
                 const modal = document.getElementById('achievementsModal');
                 if (modal) modal.style.display = 'none';
-                showTerritoryOnMap(area.lat, area.lng, area.name, gridSize);
+                showTerritoryOnMap(area.lat, area.lng, area.name, gridSize, area.key);
             };
             
             let statusText = '未進出 🗺️';
@@ -1501,13 +1501,13 @@ const VendiTerritory = {
             card.innerHTML = `
                 <div class="territory-info">
                     <span id="${nameElementId}" class="territory-name" style="font-weight: 800; font-size: 0.95rem;">${area.name}</span>
-                    <span class="territory-status ${statusClass}" style="font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">${statusText}</span>
+                    <span id="areaStatus_${area.key}" class="territory-status ${statusClass}" style="font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">${statusText}</span>
                 </div>
                 <div class="territory-progress-bar-wrap" style="background: var(--border-color); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; margin-bottom: 6px;">
-                    <div class="territory-progress-bar" style="width: ${area.pct}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width 0.4s ease-out;"></div>
+                    <div id="areaProgressBar_${area.key}" class="territory-progress-bar" style="width: ${area.pct}%; height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width 0.4s ease-out;"></div>
                 </div>
                 <div class="territory-meta" style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px;">
-                    <span>所有: ${area.owned} / ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
+                    <span id="areaMetaText_${area.key}">所有: ${area.owned} / ${area.total} 台 (${area.pct.toFixed(0)}%)</span>
                     ${area.distance !== null ? `<span style="font-weight: bold; color: var(--accent-color);"><i class="fas fa-location-dot"></i> ${(area.distance / 1000).toFixed(1)} km</span>` : ''}
                 </div>
                 ${area.status === 'fighting' || area.status === 'unexplored' ? `
@@ -5268,7 +5268,44 @@ const CustomScrollbarEngine = {
 
 let territoryPolygon = null;
 
-function showTerritoryOnMap(lat, lng, name, gridSize) {
+// ヘルパー関数: 点がポリゴン（輪郭線）の内側にあるか判定する (Ray-casting algorithm)
+// polygonCoords は [[lng, lat], [lng, lat], ...] の配列
+function isPointInPolygon(lat, lng, polygonCoords) {
+    let x = lng, y = lat;
+    let inside = false;
+    for (let i = 0, j = polygonCoords.length - 1; i < polygonCoords.length; j = i++) {
+        let xi = polygonCoords[i][0], yi = polygonCoords[i][1];
+        let xj = polygonCoords[j][0], yj = polygonCoords[j][1];
+        
+        let intersect = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+// ヘルパー関数: 点が GeoJSON (Polygon または MultiPolygon) の内側にあるか判定する
+function isPointInGeoJSON(lat, lng, geojson) {
+    if (!geojson) return false;
+    
+    if (geojson.type === 'Polygon') {
+        if (geojson.coordinates && geojson.coordinates.length > 0) {
+            return isPointInPolygon(lat, lng, geojson.coordinates[0]);
+        }
+    } else if (geojson.type === 'MultiPolygon') {
+        if (geojson.coordinates) {
+            for (let i = 0; i < geojson.coordinates.length; i++) {
+                const polygon = geojson.coordinates[i];
+                if (polygon.length > 0 && isPointInPolygon(lat, lng, polygon[0])) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
     if (!window.map) return;
     
     // 既存の縄張りポリゴン/サークルを消去
@@ -5281,8 +5318,8 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
     }
     
     // 段階的にズームレベルを下げて、Polygon/MultiPolygon を探索する
-    // zoom=15 (町丁目レベル) -> zoom=14 (大字レベル) -> zoom=13 (より広い行政区画) -> zoom=12 (市区町村)
-    const zoomLevels = [15, 14, 13, 12];
+    // zoom=13 (行政区・大広域レベル) -> zoom=14 (町丁目・大字レベル) -> zoom=12 (市区町村全体)
+    const zoomLevels = [13, 14, 12];
     
     function tryFetch(index) {
         if (index >= zoomLevels.length) {
@@ -5302,6 +5339,27 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
         .then(res => res.json())
         .then(data => {
             if (data && data.geojson && (data.geojson.type === 'Polygon' || data.geojson.type === 'MultiPolygon')) {
+                
+                // --- 境界線（ポリゴン）内にある自販機の数を動的に再集計 ---
+                const spotsInPolygon = initialSpots.filter(s => {
+                    const sLat = Number(s.lat);
+                    const sLng = Number(s.lng);
+                    return isPointInGeoJSON(sLat, sLng, data.geojson);
+                });
+                
+                const totalInPolygon = spotsInPolygon.length;
+                
+                // もしポリゴン内に自販機が1台もヒットしない場合は、境界の探索スケールが合っていない可能性が高いため、
+                // 次のズームレベル（あるいはサークルフォールバック）を試す
+                if (totalInPolygon === 0) {
+                    tryFetch(index + 1);
+                    return;
+                }
+                
+                const userName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.name : 'ゲストハンター';
+                const ownedInPolygon = spotsInPolygon.filter(s => s.owner && s.owner === userName).length;
+                const pctInPolygon = (ownedInPolygon / totalInPolygon) * 100;
+                
                 // Leaflet の L.geoJSON を使って実際の地区の形を描画
                 territoryPolygon = L.geoJSON(data.geojson, {
                     style: {
@@ -5313,24 +5371,61 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
                     }
                 }).addTo(window.map);
                 
-                // 境界ポリゴンにポップアップを付与
-                territoryPolygon.bindPopup(`
-                    <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
-                        <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
-                        <span style="font-size: 0.75rem; color: #9ca3af;">実際の地区境界（行政区画内）を表示中</span>
+                // 境界ポリゴンにポップアップを付与 (再集計した正確な自販機数を表示)
+                const popupContent = `
+                    <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 6px; min-width: 180px;">
+                        <strong style="color: #fbbf24; font-size: 0.95rem;">🛡️ ${name}</strong><br>
+                        <div style="margin-top: 6px; font-size: 0.8rem; border-top: 1px solid #1f2937; padding-top: 6px;">
+                            <span style="color: #9ca3af;">この地区内の自販機:</span><br>
+                            <strong style="color: #fff; font-size: 0.9rem;">${ownedInPolygon} / ${totalInPolygon} 台 (${pctInPolygon.toFixed(0)}%)</strong>
+                        </div>
+                        <div style="margin-top: 4px; font-size: 0.72rem; color: #9ca3af;">
+                            状態: <span style="color: ${pctInPolygon === 100 ? '#10b981' : pctInPolygon > 0 ? '#fbbf24' : '#ef4444'}; font-weight: bold;">
+                                ${pctInPolygon === 100 ? '支配中 👑' : pctInPolygon > 0 ? '争奪中 ⚡' : '未進出 🗺️'}
+                            </span>
+                        </div>
+                        <span style="font-size: 0.65rem; color: #6b7280; display: block; margin-top: 6px;">実際の地区境界（行政区画）を表示中</span>
                     </div>
-                `, { className: 'custom-popup-dark' });
+                `;
+                territoryPolygon.bindPopup(popupContent, { className: 'custom-popup-dark' }).openPopup();
                 
                 // ポリゴンの範囲に合わせて自動で地図をズーム・移動
                 const bounds = territoryPolygon.getBounds();
                 window.map.fitBounds(bounds, { maxZoom: 15, animate: true });
                 
-                // ズームアウトしすぎを防ぐ（市区町村全体が広すぎる場合、最小ズームを12に制限）
+                // ズームアウトしすぎを防ぐ
                 setTimeout(() => {
                     if (window.map.getZoom() < 12) {
                         window.map.setZoom(12, { animate: true });
                     }
                 }, 400);
+                
+                // カードの表示を実際のポリゴン内集計値に動的にアップデート
+                if (areaKey) {
+                    const progressEl = document.getElementById(`areaProgressBar_${areaKey}`);
+                    const metaEl = document.getElementById(`areaMetaText_${areaKey}`);
+                    const statusEl = document.getElementById(`areaStatus_${areaKey}`);
+                    
+                    if (metaEl) {
+                        metaEl.innerHTML = `所有: ${ownedInPolygon} / ${totalInPolygon} 台 (${pctInPolygon.toFixed(0)}%)`;
+                    }
+                    if (progressEl) {
+                        progressEl.style.width = `${pctInPolygon}%`;
+                    }
+                    if (statusEl) {
+                        let newStatusText = '未進出 🗺️';
+                        let newStatusClass = 'unexplored';
+                        if (pctInPolygon === 100) {
+                            newStatusText = '支配中 👑';
+                            newStatusClass = 'dominating';
+                        } else if (ownedInPolygon > 0) {
+                            newStatusText = '争奪中 ⚡';
+                            newStatusClass = 'fighting';
+                        }
+                        statusEl.className = `territory-status ${newStatusClass}`;
+                        statusEl.innerText = newStatusText;
+                    }
+                }
                 
                 if (typeof showToast === 'function') {
                     showToast(`🗺️ ${name}の範囲（地区境界ポリゴン）を地図に描画しました`, 'success');
