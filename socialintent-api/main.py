@@ -90,7 +90,7 @@ def create_checkout():
         return jsonify({"error": "Too many requests. Please try again later."}), 429
         
     data = request.get_json(force=True) or {}
-    email = data.get("email", "sota.kojima@empire.com")
+    email = data.get("email", "support@empire.com")
     origin = data.get("origin")
     
     if not origin:
