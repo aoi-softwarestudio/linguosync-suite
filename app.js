@@ -1405,10 +1405,55 @@ const VendiTerritory = {
             areaGroups[areaKey].spots.push(s);
         });
         
+        // ----------------------------------------------------
+        // 初期マージ: 非常に距離が近い（2.2km以内）、または同じ地名ベースで始まるグループ同士を最初から統合する
+        // ----------------------------------------------------
+        const mergedGroups = {};
+        
+        Object.values(areaGroups).forEach(group => {
+            let foundMatch = null;
+            
+            for (const merged of Object.values(mergedGroups)) {
+                // 緯度経度の単純な差分で距離を大まかに判定 (0.02度は約2.2km)
+                const latDiff = Math.abs(merged.lat - group.lat);
+                const lngDiff = Math.abs(merged.lng - group.lng);
+                const isVeryClose = (latDiff < 0.02 && lngDiff < 0.02);
+                
+                // 名前の前方2文字一致チェック（地名ベース）
+                const name1 = merged.name.replace(/周辺エリア/g, '').trim();
+                const name2 = group.name.replace(/周辺エリア/g, '').trim();
+                
+                const nameMatch = (name1.substring(0, 2) === name2.substring(0, 2) && name1.length > 1);
+                
+                if (isVeryClose || nameMatch) {
+                    foundMatch = merged;
+                    break;
+                }
+            }
+            
+            if (foundMatch) {
+                // 既存のグループに spots を統合
+                foundMatch.spots = foundMatch.spots.concat(group.spots);
+                // 重心（平均座標）を更新
+                const totalSpots = foundMatch.spots.length;
+                foundMatch.lat = foundMatch.spots.reduce((sum, s) => sum + Number(s.lat), 0) / totalSpots;
+                foundMatch.lng = foundMatch.spots.reduce((sum, s) => sum + Number(s.lng), 0) / totalSpots;
+            } else {
+                // 新規グループとして登録
+                mergedGroups[group.key] = {
+                    key: group.key,
+                    lat: group.lat,
+                    lng: group.lng,
+                    name: group.name,
+                    spots: [...group.spots]
+                };
+            }
+        });
+
         const myAreas = [];
         const userName = currentUser ? currentUser.name : 'ゲストハンター';
         
-        Object.values(areaGroups).forEach(area => {
+        Object.values(mergedGroups).forEach(area => {
             const total = area.spots.length;
             const owned = area.spots.filter(s => s.owner && s.owner === userName).length;
             
