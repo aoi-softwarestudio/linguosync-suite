@@ -1495,9 +1495,11 @@ const VendiTerritory = {
                 statusClass = 'fighting';
             }
             
+            const nameElementId = `areaName_${area.key}`;
+            
             card.innerHTML = `
                 <div class="territory-info">
-                    <span class="territory-name" style="font-weight: 800; font-size: 0.95rem;">${area.name}</span>
+                    <span id="${nameElementId}" class="territory-name" style="font-weight: 800; font-size: 0.95rem;">${area.name}</span>
                     <span class="territory-status ${statusClass}" style="font-size: 0.72rem; font-weight: 900; padding: 3px 8px; border-radius: 8px; text-transform: uppercase;">${statusText}</span>
                 </div>
                 <div class="territory-progress-bar-wrap" style="background: var(--border-color); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; margin-bottom: 6px;">
@@ -1515,6 +1517,14 @@ const VendiTerritory = {
                 ` : ''}
             `;
             container.appendChild(card);
+            
+            // 数値（座標）表記や汎用的な文字列の場合、非同期で実地名を取得
+            const isNumeric = /^\d+\.\d+/.test(area.name) || area.name.includes("35.") || area.name.includes("139.");
+            if (isNumeric) {
+                setTimeout(() => {
+                    resolveAreaName(area.key, area.lat, area.lng, nameElementId);
+                }, 50);
+            }
         });
     }
 };
@@ -5295,5 +5305,52 @@ function showTerritoryOnMap(lat, lng, name, gridSize) {
     }
 }
 window.showTerritoryOnMap = showTerritoryOnMap;
+
+const resolvedAreaNames = {};
+
+function resolveAreaName(areaKey, lat, lng, elementId) {
+    if (resolvedAreaNames[areaKey]) {
+        const el = document.getElementById(elementId);
+        if (el && resolvedAreaNames[areaKey] !== "取得中...") {
+            el.innerText = resolvedAreaNames[areaKey];
+        }
+        return;
+    }
+    
+    resolvedAreaNames[areaKey] = "取得中...";
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`;
+    
+    fetch(url, {
+        headers: {
+            'User-Agent': 'VendiMap-App-Release-Client'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        let displayName = "";
+        if (data && data.address) {
+            const addr = data.address;
+            displayName = addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || addr.town || addr.village || addr.city || "";
+        }
+        
+        if (!displayName) {
+            displayName = `${lat.toFixed(2)}, ${lng.toFixed(2)}周辺`;
+        } else {
+            displayName = `${displayName}周辺`;
+        }
+        
+        resolvedAreaNames[areaKey] = displayName;
+        
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.innerText = displayName;
+        }
+    })
+    .catch(err => {
+        console.warn("Failed to reverse geocode area name:", err);
+        resolvedAreaNames[areaKey] = `${lat.toFixed(2)}, ${lng.toFixed(2)}周辺`;
+    });
+}
+window.resolveAreaName = resolveAreaName;
 
 export { initialSpots, CustomScrollbarEngine };
