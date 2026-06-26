@@ -1372,7 +1372,7 @@ const VendiTerritory = {
         container.innerHTML = '';
         
         const areaGroups = {};
-        const gridSize = 0.02; // Grid size: 0.02 is about 2.2km (district level)
+        const gridSize = 0.03; // Grid size: 0.03 is about 3.3km (wider district level)
         initialSpots.forEach(s => {
             const latNum = Number(s.lat);
             const lngNum = Number(s.lng);
@@ -1442,6 +1442,8 @@ const VendiTerritory = {
                 
                 myAreas.push({
                     name: area.name,
+                    lat: area.lat,
+                    lng: area.lng,
                     total: total,
                     owned: owned,
                     rivalCount: rivalCount,
@@ -1474,6 +1476,13 @@ const VendiTerritory = {
         displayAreas.forEach(area => {
             const card = document.createElement('div');
             card.className = 'territory-card';
+            card.style.cursor = 'pointer';
+            card.title = "タップして地図上で範囲を表示";
+            card.onclick = () => {
+                const modal = document.getElementById('achievementsModal');
+                if (modal) modal.style.display = 'none';
+                showTerritoryOnMap(area.lat, area.lng, area.name, gridSize);
+            };
             
             let statusText = '未進出 🗺️';
             let statusClass = 'unexplored';
@@ -5245,5 +5254,46 @@ const CustomScrollbarEngine = {
         }
     }
 };
+
+let territoryCircle = null;
+
+function showTerritoryOnMap(lat, lng, name, gridSize) {
+    if (!window.map) return;
+    
+    // 既存の縄張りサークルを消去
+    if (territoryCircle) {
+        window.map.removeLayer(territoryCircle);
+    }
+    
+    // gridSize（度）をメートルに近似換算（1度≒111,000m。半径はグリッド幅の半分より少し広めにカバー）
+    const radiusInMeters = (gridSize * 111000) * 0.7; // 約2.3kmの探索カバー半径
+    
+    // サークルを描画
+    territoryCircle = L.circle([lat, lng], {
+        color: '#fbbf24', // ゴールド
+        fillColor: '#fbbf24',
+        fillOpacity: 0.15,
+        radius: radiusInMeters,
+        weight: 2,
+        dashArray: '6, 6'
+    }).addTo(window.map);
+    
+    // ポップアップを表示
+    territoryCircle.bindPopup(`
+        <div style="font-family: 'Inter', sans-serif; color: #fff; background: #0a0a0f; padding: 4px;">
+            <strong style="color: #fbbf24; font-size: 0.9rem;">🛡️ ${name}</strong><br>
+            <span style="font-size: 0.75rem; color: #9ca3af;">縄張り範囲（半径: ${(radiusInMeters/1000).toFixed(1)} km）</span>
+        </div>
+    `, { className: 'custom-popup-dark' }).openPopup();
+    
+    // マップの視点をその位置に移動
+    window.map.setView([lat, lng], 14);
+    
+    // トーストで案内
+    if (typeof showToast === 'function') {
+        showToast(`🗺️ ${name}の範囲を表示しました（半径約${(radiusInMeters/1000).toFixed(1)}km）`, 'info');
+    }
+}
+window.showTerritoryOnMap = showTerritoryOnMap;
 
 export { initialSpots, CustomScrollbarEngine };
