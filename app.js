@@ -5363,8 +5363,9 @@ function showTerritoryOnMap(lat, lng, name, gridSize, areaKey) {
     }
     
     // 段階的にズームレベルを下げて、Polygon/MultiPolygon を探索する
-    // zoom=13 (行政区・大広域レベル) -> zoom=14 (町丁目・大字レベル) -> zoom=12 (市区町村全体)
-    const zoomLevels = [13, 14, 12];
+    // 領海や港湾水域（海）を含んでしまう行政区（zoom=13）や市区町村全体（zoom=12）は海面はみ出しを防ぐため除外し、
+    // 海岸線で閉じている陸地の町丁目・大字（zoom=14, 15）のみを取得する。Polygonが無ければ安全にサークルへフォールバックする
+    const zoomLevels = [14, 15];
     
     function tryFetch(index) {
         if (index >= zoomLevels.length) {
