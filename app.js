@@ -182,21 +182,24 @@ let currentRankingTab = 'count';
 let currentUser = null;
 let isAwaitingLocationForAdd = false;
 
-const dummyRankings = {
-    count: [
-        { name: "ベンディ・マスター", value: "24台", avatar: "👑" },
-        { name: "自販機探検隊", value: "18台", avatar: "🥈" },
-        { name: "Shibuya_User", value: "12台", avatar: "🥉" },
-        { name: "ドリンクマニア", value: "9台", avatar: "" },
-        { name: "Rider_K", value: "5台", avatar: "" }
-    ],
-    rating: [
-        { name: "優良ベンダー協会", value: "★ 4.9", avatar: "👑" },
-        { name: "ベンディ・マスター", value: "★ 4.7", avatar: "🥈" },
-        { name: "クリーン自販機隊", value: "★ 4.5", avatar: "🥉" },
-        { name: "Tokyo_Vending", value: "★ 4.2", avatar: "" }
-    ]
-};
+function getRankingData() {
+    const userName = currentUser ? currentUser.name : 'ゲストハンター';
+    
+    // Calculate actual owned spots
+    const ownedCount = (typeof initialSpots !== 'undefined' && initialSpots) ? initialSpots.filter(s => s.owner === userName).length : 0;
+    
+    // Default dynamic user statistics for production release
+    let ratingValue = "★ 5.0";
+    
+    return {
+        count: [
+            { name: userName, value: `${ownedCount}台`, avatar: "👑", isSelf: true }
+        ],
+        rating: [
+            { name: userName, value: ratingValue, avatar: "👑", isSelf: true }
+        ]
+    };
+}
 
 // ----------------------------------------------------
 // 1. Unified Toast Notification Engine & Custom Positions
@@ -1461,18 +1464,8 @@ const VendiTerritory = {
                 let status = 'unexplored';
                 let pct = (owned / total) * 100;
                 
-                let rivalName = 'Shibuya_User';
+                let rivalName = '';
                 let rivalCount = 0;
-                
-                if (owned < total) {
-                    // Seed-based pseudo random count of rival machines
-                    const seed = Math.abs(Math.sin(area.lat * area.lng) * 1000);
-                    rivalCount = Math.min(total - owned, Math.floor((seed % (total - owned)) + 1));
-                    if (rivalCount > 0) {
-                        const rivals = ['Shibuya_User', '自販機探検隊', '優良ベンダー協会', 'ドリンクマニア', 'Rider_K'];
-                        rivalName = rivals[Math.floor(seed % rivals.length)];
-                    }
-                }
                 
                 if (pct === 100) {
                     status = 'dominating';
@@ -3897,14 +3890,15 @@ function renderRankingContent() {
     const container = document.getElementById('rankingContent');
     if (!container) return;
     container.innerHTML = '';
-    const data = dummyRankings[currentRankingTab];
+    const rankingData = getRankingData();
+    const data = rankingData[currentRankingTab];
     data.forEach((item, index) => {
         const div = document.createElement('div');
-        div.className = 'ranking-item';
+        div.className = `ranking-item ${item.isSelf ? 'self-user' : ''}`;
         div.innerHTML = `
             <div class="rank-number">${index + 1}</div>
             <div class="rank-info">
-                <span class="rank-name">${item.avatar} ${item.name}</span>
+                <span class="rank-name">${item.avatar} ${item.name} ${item.isSelf ? '<span style="color: var(--accent-color); font-size: 0.7rem; font-weight: bold; margin-left: 5px;">(あなた)</span>' : ''}</span>
                 <span class="rank-value">${item.value}</span>
             </div>
             <i class="fas fa-chevron-right" style="color: var(--border-color);"></i>
