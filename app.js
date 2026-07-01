@@ -3922,7 +3922,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 3000) {
             ...options,
             signal: controller.signal,
             headers: {
-                'User-Agent': 'VendiMapApp/1.0 (contact@aoisoftware.com)',
+                'User-Agent': 'VendiMapApp/1.0 (contact: vendimap.support@gmail.com; aoi-softwarestudio)',
                 'Accept-Language': 'ja',
                 ...(options.headers || {})
             }
@@ -4033,7 +4033,7 @@ function handleSearch(e) {
 
             // Compliance headers for Nominatim usage policy (avoids 403 Forbidden blocking on mobile/webviews)
             const requestHeaders = {
-                "User-Agent": "VendiMapApp/1.0 (contact: support@vendi-map.com; private app) WebEngine/Mobile",
+                "User-Agent": "VendiMapApp/1.0 (contact: vendimap.support@gmail.com; aoi-softwarestudio) WebEngine/Mobile",
                 "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
             };
 
