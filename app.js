@@ -5594,4 +5594,64 @@ function resolveAreaName(areaKey, lat, lng, elementId) {
 }
 window.resolveAreaName = resolveAreaName;
 
+// ----------------------------------------------------
+// PWA Install Prompt Handlers & UI Controller
+// ----------------------------------------------------
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const installBanner = document.getElementById('pwaInstallBanner');
+    if (installBanner && !isStandalone) {
+        installBanner.style.display = 'flex';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const installBtn = document.getElementById('pwaInstallBtn');
+    const closeBtn = document.getElementById('pwaCloseBtn');
+    const installBanner = document.getElementById('pwaInstallBanner');
+    
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`PWA user choice: ${outcome}`);
+            deferredPrompt = null;
+            if (installBanner) {
+                installBanner.style.display = 'none';
+            }
+        });
+    }
+    
+    if (closeBtn && installBanner) {
+        closeBtn.addEventListener('click', () => {
+            installBanner.style.display = 'none';
+        });
+    }
+    
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const iosGuide = document.getElementById('pwaIosGuide');
+    const iosCloseBtn = document.getElementById('pwaIosCloseBtn');
+    
+    if (isIos && !isStandalone && iosGuide) {
+        iosGuide.style.display = 'flex';
+        
+        if (iosCloseBtn) {
+            iosCloseBtn.addEventListener('click', () => {
+                iosGuide.style.display = 'none';
+            });
+        }
+        
+        setTimeout(() => {
+            iosGuide.style.display = 'none';
+        }, 25000);
+    }
+});
+
 export { initialSpots, CustomScrollbarEngine };
